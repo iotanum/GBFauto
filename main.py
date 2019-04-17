@@ -80,7 +80,14 @@ def gw_sub_options():
 
 
 if __name__ == '__main__':
-    game_handler = game()
+    try:
+        game_handler = game()
+    except:
+        try:
+            game_handler.driver.close()
+        except:
+            pass
+
     option_num = pick_option()
     try:
         if option_num == 'Raids':
