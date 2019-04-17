@@ -98,11 +98,11 @@ class GW:
         self.Press.results_button()
 
     def handle_support_manual_pick(self):
-        picking = True
         print("Waiting till you pick your supports...")
-        while picking is True:
-            if "#raid/" in str(self.driver.current_url):
-                picking = False
+        while True:
+            url = str(self.driver.current_url)
+            if "#raid" in url:
+                break
 
     def handle_pre_fight_support_summons(self):
         self.Wait.for_loading_screen()
