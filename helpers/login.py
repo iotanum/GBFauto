@@ -13,7 +13,8 @@ from dotenv import load_dotenv
 
 load_dotenv('config.env')
 
-HEADLESS_MODE = os.getenv('HEADLESS_MODE')
+HEADLESS_MODE = int(os.getenv('HEADLESS_MODE'))
+MANUAL_LOGIN = int(os.getenv('MANUAL_LOGIN'))
 
 
 class GBFGame:
@@ -22,9 +23,8 @@ class GBFGame:
     def __init__(self):
         self.chrome_options = Options()
         self.headless_chrome_options()
-        # , options=self.chrome_options
         self.driver = webdriver.Chrome(executable_path='utils/chromedriver.exe', options=self.chrome_options
-                                       if int(HEADLESS_MODE) == 0 else None)
+                                       if HEADLESS_MODE == 1 else None)
         self.login_page = "http://game.granbluefantasy.jp/#authentication"
 
     def headless_chrome_options(self):
@@ -102,13 +102,19 @@ class GBFGame:
         gbf_window = self.driver.window_handles[0]
         self.driver.switch_to.window(gbf_window)
 
+    def handle_manual_login(self):
+        input("Type 'yes' when you're done: ")
+
     def login(self, login, password):
         if GBFGame.started is False:
             self.driver.get(self.login_page)
             GBFGame.started = True
             print("Logging in w/ Google+ log-in method.")
             self.press_login()
-            self.press_google_login()
-            self.enter_login_email(login, password)
+            if MANUAL_LOGIN is 1:
+                self.handle_manual_login()
+            else:
+                self.press_google_login()
+                self.enter_login_email(login, password)
             self.switch_window_to_gbf()
             print("Successfuly logged-in!")
