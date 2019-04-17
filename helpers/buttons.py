@@ -264,7 +264,6 @@ class Press:
 
         raid_type_xpath = f'//*[@id="cnt-teamraid-top"]/div[4]/div[{type_num}]'
         search_by = By.XPATH
-
         self._wait_for_button(search_by, raid_type_xpath)
         self._driver.find_element_by_xpath(raid_type_xpath).click()
 
