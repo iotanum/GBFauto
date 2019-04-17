@@ -20,6 +20,7 @@ config = load_dotenv(dotenv_path='config.env')
 gbf_login = os.getenv('GBF_LOGIN')
 gbf_password = os.getenv('GBF_PASSWORD')
 raid_boss_name = os.getenv('RAID_BOSS_NAME')
+headless = os.getenv('HEADLESS_MODE')
 
 options = {1: 'Raids',
            2: 'Slime Blast',
@@ -82,6 +83,9 @@ def gw_sub_options():
 if __name__ == '__main__':
     try:
         game_handler = game()
+        # Headless chrome options resizes default window size
+        if int(headless) == 1:
+            game_handler.driver.set_window_size(500, 900)
     except:
         try:
             game_handler.driver.close()
