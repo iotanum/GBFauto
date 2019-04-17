@@ -115,12 +115,9 @@ class GW:
             self.Press.confirm_support_summon()
 
     def convert_gain_to_int(self, gain):
-        # to_remove_chars = " +)sEXPYougothonors!tokensforwinning\t"
-        # extracted_numbers = str(gain)[-5:].strip(to_remove_chars)
         regex_num_pattern = r'\d+'
         gains = re.findall(regex_num_pattern, gain)
         gain = [int(s) for s in gains]
-        print(gain, sum(gain))
         return sum(gain)
 
     def convert_seconds_to_hms_format(self, seconds):
