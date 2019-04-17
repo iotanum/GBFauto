@@ -5,7 +5,7 @@ venv/*
 utils/*
 errors/*
 verification/*
-!utils/.gitkee
+!utils/.gitkeep
 !errors/.gitkeep
 !verification/.gitkeep
 *.pyc
