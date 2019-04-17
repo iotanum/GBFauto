@@ -133,4 +133,5 @@ class Skills:
                     time.sleep(0.3)
                     summon_was_used = True
             except (selenium_err.exceptions.ElementNotVisibleException, selenium_err.exceptions.WebDriverException) as e:
+                print(f"Skill queue didn't finish {e}")
                 break
