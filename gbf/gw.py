@@ -18,6 +18,7 @@ from dotenv import load_dotenv
 
 load_dotenv('config.env')
 SUPPORT_ELEMENT = os.getenv('SUPPORT_ELEMENT')
+PICKING_YOURSELF = int(os.getenv('PICKING_SUPPORT_YOURSELF'))
 
 
 class GW:
@@ -96,12 +97,22 @@ class GW:
         self.finish_fight()
         self.Press.results_button()
 
+    def handle_support_manual_pick(self):
+        picking = True
+        print("Waiting till you pick your supports...")
+        while picking is True:
+            if "#raid/" in str(self.driver.current_url):
+                picking = False
+
     def handle_pre_fight_support_summons(self):
         self.Wait.for_loading_screen()
-        self.Press.support_element(SUPPORT_ELEMENT)
-        # TODO
-        self.Press.first_support_summon()
-        self.Press.confirm_support_summon()
+        if PICKING_YOURSELF == 1:
+            self.handle_support_manual_pick()
+        else:
+            self.Press.support_element(SUPPORT_ELEMENT)
+            # TODO
+            self.Press.first_support_summon()
+            self.Press.confirm_support_summon()
 
     def convert_gain_to_int(self, gain):
         # to_remove_chars = " +)sEXPYougothonors!tokensforwinning\t"
