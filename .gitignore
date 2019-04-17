@@ -5,9 +5,9 @@ venv/*
 utils/*
 errors/*
 verification/*
-!utils/.gitkeep
-!errors/.gitkeep
-!verification/.gitkeep
+!utils/.keep
+!errors/.keep
+!verification/.keep
 *.pyc
 *.log
 .idea
