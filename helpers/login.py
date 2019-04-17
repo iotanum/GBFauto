@@ -7,6 +7,13 @@ from selenium.webdriver.common.keys import Keys
 from selenium import common as selenium_err
 
 import time
+import os
+
+from dotenv import load_dotenv
+
+load_dotenv('config.env')
+
+HEADLESS_MODE = os.getenv('HEADLESS_MODE')
 
 
 class GBFGame:
@@ -16,7 +23,8 @@ class GBFGame:
         self.chrome_options = Options()
         self.headless_chrome_options()
         # , options=self.chrome_options
-        self.driver = webdriver.Chrome(executable_path='utils/chromedriver.exe')
+        self.driver = webdriver.Chrome(executable_path='utils/chromedriver.exe', options=self.chrome_options
+                                       if int(HEADLESS_MODE) == 0 else None)
         self.login_page = "http://game.granbluefantasy.jp/#authentication"
 
     def headless_chrome_options(self):

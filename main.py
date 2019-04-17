@@ -9,8 +9,12 @@ from dotenv import load_dotenv
 import os
 import sys
 import traceback
+import logging
 from datetime import datetime
 
+
+logger = logging.getLogger()
+logger.propagate = False
 
 config = load_dotenv(dotenv_path='config.env')
 gbf_login = os.getenv('GBF_LOGIN')
