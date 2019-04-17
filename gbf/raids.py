@@ -17,6 +17,8 @@ from helpers.skill_queue import Skills
 
 load_dotenv('config.env')
 
+MANUAL_SUPPORT_PICK = int(os.getenv('PICKING_SUPPORT_YOURSELF'))
+
 
 class Raids:
     def __init__(self, driver, finder):
@@ -55,7 +57,7 @@ class Raids:
 
         # TODO
         self.Wait.for_test_fight_ready_mask()
-        queue = os.getenv('QUEUE_SECOND_FIGHT')
+        queue = os.getenv('QUEUE_FIRST_FIGHT')
         self.Queue.do_queue(queue)
 
         raid_boss_is_alive = True
@@ -192,9 +194,24 @@ class Raids:
         # returns raid ID on what you searched
         self.raid_id = self.raid_finder.get_raid(self.raid_name)
 
+    def handle_manual_support_pick(self):
+        print("Waiting till you pick your supports...")
+        while True:
+            url = str(self.driver.current_url)
+            popup = self.Popup.pre_raid_popup()
+            if popup is True:
+                break
+            elif "#raid" in url:
+                break
+
     def handle_picking_summon(self):
-        self.Press.support_element(5)
-        self.Press.first_support_summon()
+        if MANUAL_SUPPORT_PICK != 1:
+            self.Press.support_element(5)
+            self.Press.first_support_summon()
+            return 'auto'
+        else:
+            self.handle_manual_support_pick()
+            return 'manual'
 
     def type_and_join_raid(self):
         self.get_raid_id()
@@ -216,7 +233,10 @@ class Raids:
         # Also 'queueing' is hardcoded with functions and actions, AKA not for dynamic usage
         while done is False:
             for func in processed_queue:
-                run_queue[func]()
+                summon_pick_method = run_queue[func]()
+                if summon_pick_method == 'manual':
+                    done = True
+                    break
                 popup = self.handle_pre_raid_popups()
                 if popup is True:
                     if func == 'enter_raid_func':
