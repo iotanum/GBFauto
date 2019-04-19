@@ -79,7 +79,12 @@ class Skills:
         self.remove_ability_log_element()
         self.remove_backup_request_element()
 
-        self._queue = self.parse_queue(queue_from_config)
+        # Handle empty queue string in config
+        try:
+            self._queue = self.parse_queue(queue_from_config)
+        except ValueError:
+            self._queue = {1: {'Character': 7, 'Ability': 8}}
+            pass
         summon_was_used = False
         current_char_num = None
 
@@ -88,6 +93,9 @@ class Skills:
             try:
                 char_num = self._queue[step]['Character']
                 ability_num = self._queue[step]['Ability']
+                # Instantly break if queue in config is empty
+                if char_num == 7:
+                    break
                 print('Running', step, char_num, ability_num)
                 # Click on a first character in the queue to open up it's abilities 'menu'
                 if step == 1 and char_num != 5 or summon_was_used is True:
