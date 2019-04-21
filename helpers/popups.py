@@ -5,8 +5,8 @@ from helpers.timeout import Timeout
 
 
 class Popup:
-    def __init__(self, obj):
-        self._driver = obj.driver
+    def __init__(self, game_handler):
+        self._driver = game_handler.driver
         self._Timeout = Timeout(self._driver)
         self._resume_quest_xpath = "//div[@class='pop-usual popRestartQuest pop-show']" \
                                    "[contains(@style,'display: block')]"

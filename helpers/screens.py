@@ -15,8 +15,8 @@ class Wait:
             :bool if screen has appeared/disappeared.
     """
 
-    def __init__(self, obj):
-        self._driver = obj.driver
+    def __init__(self, game_handler):
+        self._driver = game_handler.driver
         self._Timeout = Timeout(self._driver)
         self._loading_screen_xpath = "//div[@id='loading'][@style='display: none;']"
         self._fight_end_screen_xpath = "//div[@id='main-mask'][contains(@style,'display: none')]"

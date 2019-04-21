@@ -6,8 +6,8 @@ from .timeout import Timeout
 
 
 class Press:
-    def __init__(self, obj):
-        self._driver = obj.driver
+    def __init__(self, game_handler):
+        self._driver = game_handler.driver
         self._Actions = ActionChains(self._driver)
         self._Timeout = Timeout(self._driver)
         self._quest_button_main_menu_class = "prt-link-quest"
@@ -30,13 +30,12 @@ class Press:
         self._next_char_class = "ico-next"
         self._previous_char_class = "ico-pre"
         self._special_quests_class = 'btn-extra-quest'
-        self._slime_special_quest_xpath = '//*[@id="cnt-normal-quest"]/div/div/div[2]/div/div[4]'
-        self._slime_special_quest_option_3_xpath = '//*[@id="pop"]/div/div[2]/div/div/div[3]/div[4]'
         self._fight_advice_class = 'prt-advice'
         self._log_ability_css = ".prt-raid-log.log-ability"
         self._play_again_quest_css = ".btn-retry.cnt-quest"
         self._confirm_summon_battle_xpath = '//*[@id="wrapper"]/div[3]/div[14]/div[3]/div[2]'
-        self._guild_wars_xpath = '//*[@id="wrapper"]/div[3]/div[2]/div[4]/div[3]/div/img'
+        # TODO
+        self._guild_wars_xpath = '//*[@id="wrapper"]/div[3]/div[2]/div[4]/div[2]/div/img'
 
     def _wait_for_button(self, search_by, element_name, timeout=4):
         timeout = timeout
@@ -214,17 +213,25 @@ class Press:
         self._wait_for_button(search_by, self._special_quests_class)
         self._driver.find_element_by_class_name(self._special_quests_class).click()
 
-    def slime_special_quest(self):
+    def specific_treasure_quest(self, treasure_quest_num):
+        # treasure_quest_num is in accordance to menu dict at when launching the bot
         search_by = By.XPATH
 
-        self._wait_for_button(search_by, self._slime_special_quest_xpath)
-        self._driver.find_element_by_xpath(self._slime_special_quest_xpath).click()
+        specific_treasure_quest_xpath = f'//*[@id="cnt-normal-quest"]/div/div/div[{treasure_quest_num}]/div/div[4]'
+        self._wait_for_button(search_by, specific_treasure_quest_xpath)
+        self._driver.find_element_by_xpath(specific_treasure_quest_xpath).click()
 
-    def slime_option_3(self):
+    def treasure_quest_diff(self, treasure_quest_diff_num):
+        # treasure_quest_diff_num is in accordance to menu dict at when launching the bot
         search_by = By.XPATH
 
-        self._wait_for_button(search_by, self._slime_special_quest_option_3_xpath)
-        self._driver.find_element_by_xpath(self._slime_special_quest_option_3_xpath).click()
+        treasure_quest_diff_xpath = f'//*[@id="pop"]/div/div[2]/div/div/div[{treasure_quest_diff_num}]/div[3]'
+        self._wait_for_button(search_by, treasure_quest_diff_xpath)
+        self._driver.find_element_by_xpath(treasure_quest_diff_xpath).click()
+        # TODO
+        # #####################################################
+        # self._wait_for_button(search_by, '//div[@data-chapter-id="40006"]')
+        # self._driver.find_element_by_xpath('//div[@data-chapter-id="40006"]').click()
 
     def fight_advice(self):
         search_by = By.CLASS_NAME

@@ -7,10 +7,10 @@ import time
 
 
 class Action:
-    def __init__(self, obj, screen_timeouts):
-        self._driver = obj.driver
+    def __init__(self, game_handler):
+        self._bot = game_handler
+        self._driver = game_handler.driver
         self._Timeout = Timeout(self._driver)
-        self._Wait = screen_timeouts
         self._x_option_list_button_xpath = '//*[@id="pop"]/div/div[2]/div/div[2]/div[2]/div[4]/select'
         self._x_use_button_xpath = '//*[@id="pop"]/div/div[2]/div/div[2]/div[2]/div[5]/div'
         self._input_raid_id_class = "frm-battle-key"
@@ -34,6 +34,6 @@ class Action:
         self._Timeout.wait_for_element(timeout, expected_behaviour, search_by, ep_amount_option_xpath)
         self._driver.find_element_by_xpath(ep_amount_option_xpath).click()
         # Click 'Use'
-        self._Wait.for_loading_screen()
+        self._bot.wait.for_loading_screen()
         self._Timeout.wait_for_element(timeout, expected_behaviour, search_by, self._x_use_button_xpath)
         self._driver.find_element_by_xpath(self._x_use_button_xpath).click()

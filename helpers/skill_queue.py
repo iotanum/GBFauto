@@ -2,13 +2,12 @@ from selenium import common as selenium_err
 
 import sys
 import time
-import traceback
+
 
 class Skills:
-    def __init__(self, game_obj, buttons, popups):
-        self._driver = game_obj.driver
-        self._Press = buttons
-        self._Popup = popups
+    def __init__(self, game_handler):
+        self._bot = game_handler
+        self._driver = game_handler.driver
         self._queue = None
         self._queue_from_config = None
 
@@ -42,21 +41,21 @@ class Skills:
                 sys.exit('Please check your queue, number of playables cannot be more than 5')
 
     def handle_skill_press(self, char_num, ability_num):
-        self._Press.char_skill(char_num, ability_num)
+        self._bot.press.char_skill(char_num, ability_num)
         # self.handle_ability_log_popup()
 
     def handle_char_switching(self, direction=None):
         if direction is 'next':
-            self._Press.next_char()
+            self._bot.press.next_char()
         else:
-            self._Press.previous_char()
+            self._bot.press.previous_char()
         time.sleep(0.5)
         # self.handle_ability_log_popup()
 
     def handle_ability_log_popup(self):
-        popup = self._Popup.log_ability()
+        popup = self._bot.popup.log_ability()
         if popup is True:
-            self._Press.log_ability()
+            self._bot.press.log_ability()
             print("Clicked log ability")
 
     def remove_ability_log_element(self):
@@ -100,7 +99,7 @@ class Skills:
                 # Click on a first character in the queue to open up it's abilities 'menu'
                 if step == 1 and char_num != 5 or summon_was_used is True:
                     print('starter char tiem!')
-                    self._Press.char_to_start_queue(char_num)
+                    self._bot.press.char_to_start_queue(char_num)
                     self.handle_skill_press(char_num, ability_num)
                     current_char_num = char_num
                     # Set this variable to false so it wouldn't spam char_to_start_queue
@@ -131,13 +130,13 @@ class Skills:
                 else:
                     # Skip pressing 'back' button if support summon is your starter 'char'
                     if summon_was_used is True:
-                        self._Press.back()
+                        self._bot.press.back()
                     time.sleep(0.2)
-                    self._Press.summon_card()
+                    self._bot.press.summon_card()
                     time.sleep(0.3)
-                    self._Press.summon_num(ability_num)
+                    self._bot.press.summon_num(ability_num)
                     time.sleep(0.3)
-                    self._Press.confirm_summon_fight()
+                    self._bot.press.confirm_summon_fight()
                     time.sleep(0.3)
                     summon_was_used = True
             except (selenium_err.exceptions.ElementNotVisibleException, selenium_err.exceptions.WebDriverException) as e:
