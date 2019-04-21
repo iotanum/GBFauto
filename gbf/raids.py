@@ -349,7 +349,7 @@ class Raids:
 
     def handle_after_fight(self):
         self.bot.wait.for_loading_screen()
-        loot = self.bot.wait.quest_results_screen()
+        loot = self.bot.for_wait.quest_results_screen()
         if loot is True:
             self.collect_raid_results()
             self.handle_extended_mastery()
