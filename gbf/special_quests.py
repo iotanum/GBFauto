@@ -86,6 +86,10 @@ class SpecialQuests:
             self.bot.queue.do_queue(queue)
             self.finish_fight()
             self.bot.press.results_button()
+            # Slime blasting has only 2 fights
+            # bad implementation btw
+            if self.sub_option == 'Shiny Slime Search!' and idx == 2:
+                break
 
     def handle_pre_fight_support_summons(self):
         self.bot.wait.for_loading_screen()
