@@ -168,8 +168,6 @@ class Press:
         search_by = By.CLASS_NAME
 
         self._wait_for_button(search_by, self._next_char_class)
-        # btn = self._driver.find_element_by_class_name(self._next_char_class)
-        # self._Actions.double_click(btn).perform()
         self._driver.find_element_by_class_name(self._next_char_class).click()
         print("clicked next char")
 
@@ -177,8 +175,6 @@ class Press:
         search_by = By.CLASS_NAME
 
         self._wait_for_button(search_by, self._previous_char_class)
-        # btn = self._driver.find_element_by_class_name(self._previous_char_class)
-        # self._Actions.double_click(btn).perform()
         self._driver.find_element_by_class_name(self._previous_char_class).click()
         print("clicked previous char")
 
@@ -222,17 +218,33 @@ class Press:
         self._wait_for_button(search_by, specific_treasure_quest_xpath)
         self._driver.find_element_by_xpath(specific_treasure_quest_xpath).click()
 
-    def treasure_quest_diff(self, treasure_quest_diff_num):
+    def treasure_quest_diff(self, treasure_quest_diff_num, treasure_quest_diff):
         # treasure_quest_diff_num is in accordance to menu dict at when launching the bot
         search_by = By.XPATH
 
-        treasure_quest_diff_xpath = f'//*[@id="pop"]/div/div[2]/div/div/div[{treasure_quest_diff_num}]/div[3]'
+        # TODO
+        # Get the element which contains data-chapter-id tag with
+        # pre-defined value
+        if treasure_quest_diff == 'Elemental Treasure Quests':
+            diff_quest_ids = {1: 59981,
+                              2: 59982,
+                              3: 59983,
+                              4: 59984,
+                              5: 59985,
+                              6: 59986}
+
+            quest_id = diff_quest_ids[treasure_quest_diff_num]
+
+        elif treasure_quest_diff == 'Shiny Slime Search!':
+            diff_quest_ids = {1: 400131,
+                              2: 400141,
+                              3: 400151}
+
+            quest_id = diff_quest_ids[treasure_quest_diff_num]
+
+        treasure_quest_diff_xpath = f"//div[@data-chapter-id='{quest_id}']"
         self._wait_for_button(search_by, treasure_quest_diff_xpath)
         self._driver.find_element_by_xpath(treasure_quest_diff_xpath).click()
-        # TODO
-        # #####################################################
-        # self._wait_for_button(search_by, '//div[@data-chapter-id="40006"]')
-        # self._driver.find_element_by_xpath('//div[@data-chapter-id="40006"]').click()
 
     def fight_advice(self):
         search_by = By.CLASS_NAME

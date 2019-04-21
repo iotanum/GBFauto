@@ -66,13 +66,13 @@ class Wait:
 
         return self._wait_for_screen(timeout, expected_behaviour, search_by, self._fight_ready_screen_xpath)
 
-    def quest_results_screen(self):
+    def for_quest_results_screen(self):
         timeout = 5
         expected_behaviour = EC.url_contains("empty")
 
         return self._Timeout.wait_for_element_no_search_by(timeout, expected_behaviour)
 
-    def quest_advencment_screen(self):
+    def for_quest_advencment_screen(self):
         timeout = 5
         expected_behaviour = EC.presence_of_element_located
         search_by = By.XPATH
@@ -80,7 +80,7 @@ class Wait:
         return self._Timeout.wait_for_element(timeout, expected_behaviour, search_by,
                                               self._quest_advancement_screen_xpath)
 
-    def fight_main_mask(self):
+    def for_fight_main_mask(self):
         timeout = 5
         expected_behaviour = EC.presence_of_element_located
         search_by = By.XPATH
