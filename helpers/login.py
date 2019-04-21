@@ -6,6 +6,12 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium import common as selenium_err
 
+from helpers.buttons import Press
+from helpers.screens import Wait
+from helpers.popups import Popup
+from helpers.skill_queue import Skills
+from helpers.actions import Action
+
 import time
 import os
 
@@ -26,6 +32,11 @@ class GBFGame:
         self.driver = webdriver.Chrome(executable_path='utils/chromedriver.exe', options=self.chrome_options
                                        if HEADLESS_MODE == 1 else None)
         self.login_page = "http://game.granbluefantasy.jp/#authentication"
+        self.press = Press(self)
+        self.wait = Wait(self)
+        self.popup = Popup(self)
+        self.action = Action(self)
+        self.queue = Skills(self)
 
     def headless_chrome_options(self):
         self.chrome_options.add_argument("--headless")

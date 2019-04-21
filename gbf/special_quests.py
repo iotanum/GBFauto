@@ -28,14 +28,17 @@ class Slimes:
         self.start_time = time.time()
 
     def handle_to_slimes(self):
-        self.Press.quest_button_main_menu()
+        self.driver.execute_script("window.location.href = '#quest/extra'")
+        # self.Press.quest_button_main_menu()
         self.Wait.for_loading_screen()
         resume = self.Popup.resume_quest()
         if resume is True:
             self.Press.usual_cancel()
             time.sleep(1)
-        self.Press.special_quests()
-        self.Press.slime_special_quest()
+
+        # self.Press.special_quests()
+        # TODO
+        self.Press.treasure_quest_handle()
         self.Press.slime_option_3()
         self.handle_not_enough_ap()
 
@@ -59,14 +62,6 @@ class Slimes:
             mob_hps = parser.find_all('span', 'txt-gauge-value')
             mob_hps = [int(hp.text) for hp in mob_hps]
 
-            # advice = self.Popup.fight_advice()
-            # if advice:
-            #     self.Press.fight_advice()
-
-            # if time.time() - fight_start > 20:
-            #     self.driver.refresh()
-            #     self.Wait.for_loading_screen()
-
             if not all(hp == 0 for hp in mob_hps):
                 try:
                     self.Press.attack_button()
@@ -85,9 +80,11 @@ class Slimes:
     def handle_fight(self):
         first_queue_from_config = os.getenv("QUEUE_FIRST_FIGHT")
         second_queue_from_config = os.getenv("QUEUE_SECOND_FIGHT")
-        queues = [first_queue_from_config, second_queue_from_config]
+        #
+        third_queue_from_config = os.getenv('QUEUE_THIRD_FIGHT')
+        #
+        queues = [first_queue_from_config, second_queue_from_config, third_queue_from_config]
         for queue in queues:
-            print('running', queue)
             self.wait_before_fight()
             self.queue.do_queue(queue)
             self.finish_fight()
