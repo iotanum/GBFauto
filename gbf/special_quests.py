@@ -78,9 +78,7 @@ class SpecialQuests:
     def handle_fight(self):
         first_queue_from_config = os.getenv("QUEUE_FIRST_FIGHT")
         second_queue_from_config = os.getenv("QUEUE_SECOND_FIGHT")
-        #
         third_queue_from_config = os.getenv('QUEUE_THIRD_FIGHT')
-        #
         queues = [first_queue_from_config, second_queue_from_config, third_queue_from_config]
         for idx, queue in enumerate(queues, 1):
             print(f"Fight #{idx}.")
@@ -114,6 +112,7 @@ class SpecialQuests:
             try:
                 parser = bs(self.driver.page_source, features="lxml")
                 gains = parser.find('div', {'class': 'prt-exp-gain'}).find_all('span')
+                break
             except AttributeError:
                 time.sleep(2)
                 continue
