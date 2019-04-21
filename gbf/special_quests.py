@@ -81,11 +81,12 @@ class SpecialQuests:
         third_queue_from_config = os.getenv('QUEUE_THIRD_FIGHT')
         queues = [first_queue_from_config, second_queue_from_config, third_queue_from_config]
         for idx, queue in enumerate(queues, 1):
-            print(f"Fight #{idx}.")
             self.wait_before_fight()
             self.bot.queue.do_queue(queue)
             self.finish_fight()
+            self.bot.wait.for_fight_main_mask()
             self.bot.press.results_button()
+            print(f"Fight #{idx}.")
             # Slime blasting has only 2 fights
             # bad implementation btw
             if self.sub_option == 'Shiny Slime Search!' and idx == 2:
@@ -118,7 +119,8 @@ class SpecialQuests:
                 gains = parser.find('div', {'class': 'prt-exp-gain'}).find_all('span')
                 break
             except AttributeError:
-                time.sleep(2)
+                time.sleep(3)
+                gains = None
                 continue
 
         if gains:
