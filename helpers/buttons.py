@@ -34,6 +34,7 @@ class Press:
         self._log_ability_css = ".prt-raid-log.log-ability"
         self._play_again_quest_css = ".btn-retry.cnt-quest"
         self._confirm_summon_battle_xpath = '//*[@id="wrapper"]/div[3]/div[14]/div[3]/div[2]'
+        self._retreat_class = 'btn-withdraw'
         # TODO
         self._guild_wars_xpath = '//*[@id="wrapper"]/div[3]/div[2]/div[4]/div[2]/div/img'
 
@@ -293,3 +294,9 @@ class Press:
 
         self._wait_for_button(search_by, ex_diff_xpath)
         self._driver.find_element_by_xpath(ex_diff_xpath).click()
+
+    def usual_retreat(self):
+        search_by = By.CLASS_NAME
+
+        self._wait_for_button(search_by, self._retreat_class)
+        self._driver.find_element_by_class_name(self._retreat_class).click()
