@@ -109,18 +109,24 @@ class SpecialQuests:
 
     def handle_after_fight(self):
         self.bot.wait.for_loading_screen()
-        print(self.bot.popup.after_fight_xp(), 'xp after fight')
-        parser = bs(self.driver.page_source, features="lxml")
-        gains = parser.find('div', {'class': 'prt-exp-gain'}).find_all('span')
 
-        for gain in gains:
-            if gain is not None:
-                gain_name = str(gain['class'])
-                gain = self.convert_gains_to_int(gain.text)
-                if 'rank' in gain_name:
-                    self.total_ranks += gain
-                elif 'exp' in gain_name:
-                    self.total_exp += gain
+        for retry_no in range(3):
+            try:
+                parser = bs(self.driver.page_source, features="lxml")
+                gains = parser.find('div', {'class': 'prt-exp-gain'}).find_all('span')
+            except AttributeError:
+                time.sleep(2)
+                continue
+
+        if gains:
+            for gain in gains:
+                if gain is not None:
+                    gain_name = str(gain['class'])
+                    gain = self.convert_gains_to_int(gain.text)
+                    if 'rank' in gain_name:
+                        self.total_ranks += gain
+                    elif 'exp' in gain_name:
+                        self.total_exp += gain
 
         self.total_fights += 1
         run_time = time.time() - self.start_time
@@ -141,7 +147,7 @@ class SpecialQuests:
         extended_mastery = self.bot.popup.extended_mastery()
         if extended_mastery is True:
             print("New extended mastery!")
-            time.sleep(2)
+            time.sleep(4)
             self.driver.find_element_by_id('cjs-lp-rankup').click()
 
         self.bot.wait.for_loot_screen()
