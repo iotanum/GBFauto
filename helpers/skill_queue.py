@@ -56,7 +56,6 @@ class Skills:
         popup = self._bot.popup.log_ability()
         if popup is True:
             self._bot.press.log_ability()
-            print("Clicked log ability")
 
     def remove_ability_log_element(self):
         try:
@@ -95,10 +94,8 @@ class Skills:
                 # Instantly break if queue in config is empty
                 if char_num == 7:
                     break
-                print('Running', step, char_num, ability_num)
                 # Click on a first character in the queue to open up it's abilities 'menu'
                 if step == 1 and char_num != 5 or summon_was_used is True:
-                    print('starter char tiem!')
                     self._bot.press.char_to_start_queue(char_num)
                     self.handle_skill_press(char_num, ability_num)
                     current_char_num = char_num
@@ -112,14 +109,11 @@ class Skills:
                         num_of_actions_to_take = current_char_num - char_num
                         # Convert possible negative number to positive
                         num_of_actions_to_take = max(num_of_actions_to_take, -num_of_actions_to_take)
-                        print("char num != current_char_num", num_of_actions_to_take)
                         if current_char_num < char_num:
-                            print('Moving to next char')
                             for _ in range(num_of_actions_to_take):
                                 self.handle_char_switching(direction='next')
                                 time.sleep(0.15)
                         else:
-                            print("moving to previous char")
                             for _ in range(num_of_actions_to_take):
                                 self.handle_char_switching(direction='previous')
                                 time.sleep(0.15)
@@ -140,5 +134,5 @@ class Skills:
                     time.sleep(0.3)
                     summon_was_used = True
             except (selenium_err.exceptions.ElementNotVisibleException, selenium_err.exceptions.WebDriverException) as e:
-                print(f"Skill queue didn't finish {e}")
+                print(f"Broke on {step} step.")
                 break
