@@ -57,6 +57,7 @@ class RaidFinder:
         found = False
         start_time = time.time()
 
+        print(f"Searching for '{self.raid_name}'...")
         while found is False:
             # It likes to hang for some reason ?
             if time.time() - start_time > 30 and len(self.raid) < 2:
@@ -87,7 +88,7 @@ class RaidFinder:
         else:
             self.parse_for_ids()
         rid = list(self.raid)[-1]
-        print(f"Trying {rid}, '{self.raid_name}'.")
+        print(f"Trying '{rid}'...")
         return rid
 
     def clean_raid_var(self):
