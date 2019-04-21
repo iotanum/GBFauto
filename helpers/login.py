@@ -116,6 +116,12 @@ class GBFGame:
     def handle_manual_login(self):
         input("Type 'yes' when you're done: ")
 
+    def wait_for_main_menu_page(self):
+        while True:
+            url = str(self.driver.current_url)
+            if '#mypage' in url:
+                break
+
     def login(self, login, password):
         if GBFGame.started is False:
             self.driver.get(self.login_page)
@@ -128,4 +134,6 @@ class GBFGame:
                 self.press_google_login()
                 self.enter_login_email(login, password)
             self.switch_window_to_gbf()
+            self.wait_for_main_menu_page()
+            self.wait.for_loading_screen()
             print("Successfuly logged-in!")
