@@ -18,17 +18,13 @@ from dotenv import load_dotenv
 
 load_dotenv('config.env')
 SUPPORT_ELEMENT = os.getenv('SUPPORT_ELEMENT')
-PICKING_YOURSELF = int(os.getenv('PICKING_SUPPORT_YOURSELF'))
+PICKING_YOURSELF = int(os.getenv('MANUAL_SUPPORT_PICKING'))
 
 
 class GW:
     def __init__(self, game_handler):
+        self.bot = game_handler
         self.driver = game_handler.driver
-        self.Press = Press(game_handler)
-        self.Wait = Wait(game_handler)
-        self.Popup = Popup(game_handler)
-        self.Actions = Action(game_handler, self.Wait)
-        self.queue = Skills(game_handler, self.Press, self.Popup)
         ###########################
         self.gw_raid_type_num = None
         self.gw_raid_type = None
@@ -44,16 +40,17 @@ class GW:
 
     # TODO
     def handle_to_gw(self):
-        self.Press.guild_wars()
-        self.Wait.for_loading_screen()
-        self.Press.gw_raid_type(self.gw_raid_type_num)
+        # self.bot.press.guild_wars()
+        self.bot.driver.execute_script("window.location.href = '#event/teamraid044'")
+        self.bot.wait.for_loading_screen()
+        self.bot.press.gw_raid_type(self.gw_raid_type_num)
         if self.gw_raid_type == 'Dimorphodon (Easiest)':
-            self.Press.gw_dimorphodon_diff(self.gw_raid_diff_num)
+            self.bot.press.gw_dimorphodon_diff(self.gw_raid_diff_num)
         elif self.gw_raid_type == 'EX (Normal)':
-            self.Press.gw_ex_diff(self.gw_raid_diff_num)
+            self.bot.press.gw_ex_diff(self.gw_raid_diff_num)
         else:
             # For Cybele, since she doesn't have any diffs
-            self.Press.usual_ok()
+            self.bot.press.usual_ok()
 
     def remove_battle_scene_element(self):
         try:
@@ -77,25 +74,25 @@ class GW:
 
             if not all(hp == 0 for hp in mob_hps):
                 try:
-                    self.Press.attack_button()
-                    self.Wait.fight_main_mask()
+                    self.bot.press.attack_button()
+                    self.bot.wait.for_fight_main_mask()
                 except (selenium_err.exceptions.NoSuchElementException, selenium_err.exceptions.WebDriverException):
                     pass
             else:
                 mobs_alive = False
 
     def wait_before_fight(self):
-        self.Wait.for_loading_screen()
-        self.Wait.quest_advencment_screen()
-        self.Wait.for_fight_ready_screen()
-        self.Wait.fight_main_mask()
+        self.bot.wait.for_loading_screen()
+        self.bot.wait.for_quest_advencment_screen()
+        self.bot.wait.for_fight_ready_screen()
+        self.bot.wait.for_fight_main_mask()
 
     def handle_fight(self):
         first_queue_from_config = os.getenv("QUEUE_FIRST_FIGHT")
         self.wait_before_fight()
-        self.queue.do_queue(first_queue_from_config)
+        self.bot.queue.do_queue(first_queue_from_config)
         self.finish_fight()
-        self.Press.results_button()
+        self.bot.press.results_button()
 
     def handle_support_manual_pick(self):
         print("Waiting till you pick your supports...")
@@ -105,14 +102,14 @@ class GW:
                 break
 
     def handle_pre_fight_support_summons(self):
-        self.Wait.for_loading_screen()
+        self.bot.wait.for_loading_screen()
         if PICKING_YOURSELF == 1:
             self.handle_support_manual_pick()
         else:
-            self.Press.support_element(SUPPORT_ELEMENT)
+            self.bot.press.support_element(SUPPORT_ELEMENT)
             # TODO
-            self.Press.first_support_summon()
-            self.Press.confirm_support_summon()
+            self.bot.press.first_support_summon()
+            self.bot.press.confirm_support_summon()
 
     def convert_gain_to_int(self, gain):
         regex_num_pattern = r'\d+'
@@ -128,7 +125,7 @@ class GW:
         return int(round(hours, 2)), int(round(minutes, 2)), int(round(seconds, 2))
 
     def count_after_fight_exp(self):
-        print(self.Popup.after_fight_xp(), 'xp after fight')
+        print(self.bot.popup.after_fight_xp(), 'xp after fight')
 
         parser = bs(self.driver.page_source, features="lxml")
         gains = parser.find('div', {'class': 'prt-exp-gain'}).find_all('span')
@@ -142,10 +139,10 @@ class GW:
                 elif 'exp' in gain_name:
                     self.total_exp += gain
 
-        self.Press.usual_ok()
+        self.bot.press.usual_ok()
 
     def count_after_fight_event_items(self):
-        self.Popup.event_items()
+        self.bot.popup.event_items()
 
         parser = bs(self.driver.page_source, features="lxml")
         gains = parser.find_all('div', {'class': 'prt-event-point'})
@@ -159,10 +156,10 @@ class GW:
                 elif 'honors' in gain_name:
                     self.total_honors += gain_num
 
-        self.Press.usual_ok()
+        self.bot.press.usual_ok()
 
     def handle_after_fight(self):
-        self.Wait.for_loading_screen()
+        self.bot.wait.for_loading_screen()
         self.count_after_fight_exp()
         self.count_after_fight_event_items()
 
@@ -177,39 +174,39 @@ class GW:
         # TODO
         # If after pressing a button certain popup appears
         # ignore and/or handle other popups accordingly
-        rank_up = self.Popup.new_rank()
+        rank_up = self.bot.popup.new_rank()
         if rank_up is True:
             print("New rank!")
-            self.Press.usual_ok()
+            self.bot.press.usual_ok()
 
-        extended_mastery = self.Popup.extended_mastery()
+        extended_mastery = self.bot.popup.extended_mastery()
         if extended_mastery is True:
             print("New extended mastery!")
-            time.sleep(2)
+            time.sleep(5)
             self.driver.find_element_by_id('cjs-lp-rankup').click()
 
-        self.Wait.for_loot_screen()
-        self.Press.play_again_quest()
+        self.bot.wait.for_loot_screen()
+        self.bot.press.play_again_quest()
 
-        achievement = self.Popup.achievement()
+        achievement = self.bot.popup.achievement()
         if achievement is True:
             print('New achievement!')
-            self.Press.usual_close()
+            self.bot.press.usual_close()
 
-        friend_request = self.Popup.friend_request()
+        friend_request = self.bot.popup.friend_request()
         if friend_request is True:
-            self.Press.usual_cancel()
+            self.bot.press.usual_cancel()
 
         self.handle_not_enough_ap()
 
     def handle_not_enough_ap(self):
-        self.Wait.for_loading_screen()
-        not_enough_ap = self.Popup.not_enough_x()
+        self.bot.wait.for_loading_screen()
+        not_enough_ap = self.bot.popup.not_enough_x()
         if not_enough_ap is True:
             potion_amount = random.randint(1, 5)
-            self.Actions.use_potions_or_pills(potion_amount)
-            self.Wait.for_loading_screen()
-            self.Press.usual_ok()
+            self.bot.action.use_potions_or_pills(potion_amount)
+            self.bot.wait.for_loading_screen()
+            self.bot.press.usual_ok()
 
     def gw(self, raid_type_num, raid_type, raid_diff_num, raid_diff):
         self.gw_raid_type_num = raid_type_num

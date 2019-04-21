@@ -9,26 +9,17 @@ import sys
 import random
 import os
 
-from helpers.popups import Popup
-from helpers.buttons import Press
-from helpers.screens import Wait
-from helpers.actions import Action
-from helpers.skill_queue import Skills
-
 load_dotenv('config.env')
 
-MANUAL_SUPPORT_PICK = int(os.getenv('PICKING_SUPPORT_YOURSELF'))
+MANUAL_SUPPORT_PICK = int(os.getenv('MANUAL_SUPPORT_PICKING'))
 
 
 class Raids:
-    def __init__(self, driver, finder):
-        self.driver = driver
-        self.raid_finder = finder
-        self.Popup = Popup(self)
-        self.Press = Press(self)
-        self.Wait = Wait(self)
-        self.Action = Action(self, self.Wait)
-        self.Queue = Skills(self, self.Press, self.Popup)
+    def __init__(self, game_handler, finder_handler):
+        self.bot = game_handler
+        self.driver = game_handler.driver
+        self.raid_finder = finder_handler
+        #########################
         self.raid_id = None
         self.raid_name = ""
         self.total_kills = 0
@@ -36,16 +27,16 @@ class Raids:
         self.total_pendants = 0
 
     def handle_backup_request_screen(self):
-        backup_popup = self.Popup.backup_request()
+        backup_popup = self.bot.popup.backup_request()
 
         if backup_popup is True:
             try:
                 # approve_request_backup_css = ".btn-usual-text.with-potion"
                 try:
-                    self.Press.approve_backup_request()
-                    self.Press.usual_ok()
+                    self.bot.press.approve_backup_request()
+                    self.bot.press.usual_ok()
                 except selenium_err.exceptions.NoSuchElementException:
-                    self.Press.usual_ok()
+                    self.bot.press.usual_ok()
                 # self.driver.find_element_by_css_selector(approve_request_backup_css).click()
                 # self.find_and_handle_div("btn-usual-ok", arg='class')
             except selenium_err.exceptions.TimeoutException:
@@ -56,9 +47,9 @@ class Raids:
         # waits until it's dead
 
         # TODO
-        self.Wait.for_test_fight_ready_mask()
+        self.bot.wait.for_test_fight_ready_mask()
         queue = os.getenv('QUEUE_FIRST_FIGHT')
-        self.Queue.do_queue(queue)
+        self.bot.queue.do_queue(queue)
 
         raid_boss_is_alive = True
         made_a_leech_hit = False
@@ -85,7 +76,7 @@ class Raids:
                 if "#result_multi" in page:
                     raid_boss_is_alive = False
                 elif "#raid_multi" in page:
-                    self.Press.attack_button()
+                    self.bot.press.attack_button()
                 else:
                     return False
 
@@ -110,25 +101,25 @@ class Raids:
             if stale_hp_time >= 30:
                 print("Raid boss HP didn't change for 30 seconds, refreshing.")
                 self.driver.refresh()
-                self.Wait.for_loading_screen()
-                self.Wait.for_fight_ready_screen()
+                self.bot.wait.for_loading_screen()
+                self.bot.wait.for_fight_ready_screen()
                 stale_hp_time = 0
                 times_refreshed += 1
 
             if times_refreshed == 2:
                 try:
-                    self.Press.attack_button()
+                    self.bot.press.attack_button()
                 except selenium_err.exceptions.NoSuchElementException:
                     pass
                 times_refreshed = 0
 
-            battle_finished = self.Popup.battle_concluded()
+            battle_finished = self.bot.popup.battle_concluded()
             if battle_finished is True:
-                self.Press.usual_ok()
+                self.bot.press.usual_ok()
 
             if any(0 < hp <= 50 for hp in raid_boss_hps) and made_a_leech_hit is False:
                 try:
-                    self.Press.attack_button()
+                    self.bot.press.attack_button()
                     print('Made the leech hit.')
                     made_a_leech_hit = True
                 except selenium_err.exceptions.WebDriverException:
@@ -142,17 +133,17 @@ class Raids:
             time.sleep(0.15)
 
     def handle_not_enough_ep(self):
-        ep_popup = self.Popup.not_enough_x()
+        ep_popup = self.bot.popup.not_enough_x()
         print(ep_popup, 'ep')
         rand = random.randint(10, 15)
 
         if ep_popup is True:
-            self.Action.use_potions_or_pills(rand)
-            self.Press.usual_ok()
+            self.bot.action.use_potions_or_pills(rand)
+            self.bot.press.usual_ok()
             return True
 
     def handle_pre_raid_popups(self):
-        pre_raid_popup = self.Popup.pre_raid_popup()
+        pre_raid_popup = self.bot.popup.pre_raid_popup()
 
         if pre_raid_popup is True:
             parser = bs(self.driver.page_source, features='lxml')
@@ -162,13 +153,13 @@ class Raids:
             verification = self.handle_verification(parser)
             if verification is True:
                 return True
-            self.Press.usual_ok()
+            self.bot.press.usual_ok()
             return True
         else:
             return False
 
     def handle_verification(self, parser):
-        verification = self.Popup.human_verification()
+        verification = self.bot.popup.human_verification()
 
         if verification is True:
             for popup in parser.find_all('div', {'class': ['pop-usual', 'common-pop-error', 'pop-show']}):
@@ -198,7 +189,7 @@ class Raids:
         print("Waiting till you pick your supports...")
         while True:
             url = str(self.driver.current_url)
-            popup = self.Popup.pre_raid_popup()
+            popup = self.bot.popup.pre_raid_popup()
             if popup is True:
                 break
             elif "#raid" in url:
@@ -206,8 +197,8 @@ class Raids:
 
     def handle_picking_summon(self):
         if MANUAL_SUPPORT_PICK != 1:
-            self.Press.support_element(5)
-            self.Press.first_support_summon()
+            self.bot.press.support_element(5)
+            self.bot.press.first_support_summon()
             return 'auto'
         else:
             self.handle_manual_support_pick()
@@ -215,13 +206,13 @@ class Raids:
 
     def type_and_join_raid(self):
         self.get_raid_id()
-        self.Action.input_raid_id(self.raid_id)
+        self.bot.action.input_raid_id(self.raid_id)
         self.driver.find_element_by_class_name("btn-post-key").click()
 
     def handle_entering_raid(self):
         run_queue = {'enter_raid_func': self.type_and_join_raid,
                      'select_first_summon_func': self.handle_picking_summon,
-                     'confirm_support_func': self.Press.confirm_support_summon}
+                     'confirm_support_func': self.bot.press.confirm_support_summon}
 
         processed_queue = ['enter_raid_func']
         done = False
@@ -253,7 +244,7 @@ class Raids:
                         done = True
 
     def handle_return_page(self):
-        self.Wait.for_loading_screen()
+        self.bot.wait.for_loading_screen()
         return_page = str(self.driver.current_url)
         print(return_page)
 
@@ -276,7 +267,7 @@ class Raids:
         return int(extracted_numbers)
 
     def collect_raid_results(self):
-        xp = self.Popup.after_fight_xp()
+        xp = self.bot.popup.after_fight_xp()
         print(xp, 'xp popup after fight')
         if xp is True:
             parser = bs(self.driver.page_source, features="lxml")
@@ -303,9 +294,9 @@ class Raids:
                     elif 'pendants' in gain_name:
                         self.total_pendants += gain
             self.total_kills += 1
-            self.Press.usual_ok()
+            self.bot.press.usual_ok()
         else:
-            loot_after_fight = self.Wait.for_loot_screen()
+            loot_after_fight = self.bot.wait.for_loot_screen()
             if loot_after_fight is True:
                 self.total_kills += 1
                 print("Loot is present, but no XP/Pendants.")
@@ -315,8 +306,8 @@ class Raids:
     # help
     # TODO
     def handle_raid_mechanics(self):
-        self.Wait.for_loading_screen()
-        boss_alive = self.Wait.for_fight_ready_screen()
+        self.bot.wait.for_loading_screen()
+        boss_alive = self.bot.wait.for_fight_ready_screen()
         # no_loot_screen = self.handle_no_loot_screen()
 
         if boss_alive is True:
@@ -326,25 +317,25 @@ class Raids:
                 if result is False:
                     return False
                 try:
-                    self.Wait.for_fight_end_screen()
-                    self.Press.results_button()
+                    self.bot.wait.for_fight_end_screen()
+                    self.bot.press.results_button()
                 except selenium_err.exceptions.NoSuchElementException:
                     print('After refresh I landed in results page.')
             except selenium_err.exceptions.ElementNotVisibleException:
                 try:
-                    self.Press.attack_button()
-                    self.Press.results_button()
+                    self.bot.press.attack_button()
+                    self.bot.press.results_button()
                 except selenium_err.exceptions.NoSuchElementException:
-                    self.Press.results_button()
+                    self.bot.press.results_button()
 
     def handle_friend_request(self):
-        friend_request = self.Popup.friend_request()
+        friend_request = self.bot.popup.friend_request()
 
         if friend_request is True:
-            self.Press.usual_cancel()
+            self.bot.press.usual_cancel()
 
     def handle_extended_mastery(self):
-        ex_mastery = self.Popup.extended_mastery()
+        ex_mastery = self.bot.popup.extended_mastery()
 
         if ex_mastery is True:
             print("New extended mastery level!")
@@ -357,26 +348,26 @@ class Raids:
             # action.click().perform()
 
     def handle_after_fight(self):
-        self.Wait.for_loading_screen()
-        loot = self.Wait.quest_results_screen()
+        self.bot.wait.for_loading_screen()
+        loot = self.bot.wait.quest_results_screen()
         if loot is True:
             self.collect_raid_results()
             self.handle_extended_mastery()
             self.handle_new_item_screen()
             self.handle_achievement_screen()
             print(f"Total kills: {self.total_kills}, XP: {self.total_xp}, Pendants: {self.total_pendants}")
-            self.Wait.for_loot_screen()
-            self.Press.quest_button_after_fight()
+            self.bot.wait.for_loot_screen()
+            self.bot.press.quest_button_after_fight()
             self.handle_friend_request()
         else:
-            self.Press.quest_button_after_fight_no_loot()
+            self.bot.press.quest_button_after_fight_no_loot()
 
     def handle_achievement_screen(self):
-        achievement = self.Popup.achievement()
+        achievement = self.bot.popup.achievement()
 
         if achievement is True:
             print("New achievement!")
-            self.Press.usual_close()
+            self.bot.press.usual_close()
 
     def get_new_item_image_url(self):
         parser = bs(self.driver.page_source, features='lxml')
@@ -384,39 +375,38 @@ class Raids:
         return image_src['src']
 
     def handle_new_item_screen(self):
-        new_item = self.Popup.new_item()
+        new_item = self.bot.popup.new_item()
 
         if new_item is True:
             url = self.get_new_item_image_url()
             print(f'New item drop! {url}')
-            self.Press.usual_ok()
+            self.bot.press.usual_ok()
             time.sleep(2)
 
     def handle_resume_quest_popup(self):
-        resume_quest = self.Popup.resume_quest()
+        resume_quest = self.bot.popup.resume_quest()
 
         if resume_quest is True:
-            self.Press.usual_cancel()
+            self.bot.press.usual_cancel()
             time.sleep(1)
 
     def handle_to_raids(self):
-        self.Wait.for_loading_screen()
+        self.bot.wait.for_loading_screen()
         try:
-            self.Press.quest_button_main_menu()
+            self.bot.press.quest_button_main_menu()
             self.handle_resume_quest_popup()
         except selenium_err.exceptions.NoSuchElementException:
             self.handle_resume_quest_popup()
-            self.Press.raid_button()
-            self.Press.enter_raid_id()
+            self.bot.press.raid_button()
+            self.bot.press.enter_raid_id()
         else:
-            self.Press.raid_button()
-            self.Press.enter_raid_id()
+            self.bot.press.raid_button()
+            self.bot.press.enter_raid_id()
 
     def set_raid_name(self, raid_boss_name):
         self.raid_name = raid_boss_name
 
     def raids(self):
-        self.Wait.for_loading_screen()
         while True:
             self.do_raids()
 
