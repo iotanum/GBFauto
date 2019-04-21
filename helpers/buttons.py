@@ -233,9 +233,9 @@ class Press:
             quest_id = diff_quest_ids[treasure_quest_diff_num]
 
         elif treasure_quest_diff == 'Shiny Slime Search!':
-            diff_quest_ids = {1: 400131,
-                              2: 400141,
-                              3: 400151}
+            diff_quest_ids = {1: 40013,
+                              2: 40014,
+                              3: 40015}
 
             quest_id = diff_quest_ids[treasure_quest_diff_num]
 
