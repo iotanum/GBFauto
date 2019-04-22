@@ -3,6 +3,7 @@ from helpers.login import GBFGame
 from gbf.raids import Raids
 from gbf.special_quests import SpecialQuests
 from gbf.gw import GW
+from gbf.quest_on_repeat import QuestOnRepeat
 
 from dotenv import load_dotenv
 
@@ -24,7 +25,8 @@ headless = os.getenv('HEADLESS_MODE')
 
 options = {1: 'Raids',
            2: 'Special Quests',
-           3: 'GW'}
+           3: 'GW',
+           4: 'Repeatable Quest'}
 
 
 def game():
@@ -172,6 +174,9 @@ if __name__ == '__main__':
             raid_type_num, raid_type, raid_diff_num, raid_diff = gw_sub_options()
             gw_handler = GW(game_handler)
             gw_handler.gw(raid_type_num, raid_type, raid_diff_num, raid_diff)
+        elif option_num == 'Repeatable Quest':
+            questing_handler = QuestOnRepeat(game_handler)
+            questing_handler.repeatable_quest()
     except Exception as e:
         timestamp = str(datetime.now()).replace(":", "'")[:-7]
         game_handler.driver.save_screenshot(f'errors/{timestamp}.png')

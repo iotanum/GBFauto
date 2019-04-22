@@ -30,6 +30,7 @@ class Wait:
                                       "[contains(@style,'display: none')]"
         self._test_fight_ready_mask = "//div[@class='mask']" \
                                       "[contains(@style,'display: none')]"
+        self._side_scroll_screen_entry_xpath = "//div[@class='anim-title anim'][contains(@style,'opacity: 0')]"
 
     # Main method used by all other methods
     def _wait_for_screen(self, timeout, expected_behaviour, search_by, element_name):
@@ -93,3 +94,11 @@ class Wait:
         search_by = By.XPATH
 
         return self._Timeout.wait_for_element(timeout, expected_behaviour, search_by, self._test_fight_ready_mask)
+
+    def for_side_scroll_entry(self):
+        timeout = 10
+        expected_behaviour = EC.presence_of_element_located
+        search_by = By.XPATH
+
+        return self._Timeout.wait_for_element(timeout, expected_behaviour, search_by,
+                                              self._side_scroll_screen_entry_xpath)

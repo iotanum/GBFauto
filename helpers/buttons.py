@@ -35,6 +35,7 @@ class Press:
         self._play_again_quest_css = ".btn-retry.cnt-quest"
         self._confirm_summon_battle_xpath = '//*[@id="wrapper"]/div[3]/div[14]/div[3]/div[2]'
         self._retreat_class = 'btn-withdraw'
+        self._skip_button_class = 'btn-command-skip'
         # TODO
         self._guild_wars_xpath = '//*[@id="wrapper"]/div[3]/div[2]/div[4]/div[2]/div/img'
 
@@ -308,3 +309,9 @@ class Press:
 
         self._wait_for_button(search_by, self._retreat_class)
         self._driver.find_element_by_class_name(self._retreat_class).click()
+
+    def usual_skip(self):
+        search_by = By.CLASS_NAME
+
+        self._wait_for_button(search_by, self._skip_button_class)
+        self._driver.find_element_by_class_name(self._skip_button_class).click()

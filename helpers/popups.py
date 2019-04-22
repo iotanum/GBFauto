@@ -32,6 +32,10 @@ class Popup:
                                        "[contains(@style,'display: block')]"
         self._event_items_xpath = "//div[@class='pop-usual pop-event-item pop-show']" \
                                   "[contains(@style,'display: block')]"
+        self._side_scroll_xpath = "//div[@class='pop-usual pop-skip-confirm pop-show']" \
+                                  "[contains(@style,'display: block')]"
+        self._side_scroll_results_xpath = "//div[@class='pop-usual pop-skip-result pop-show']" \
+                                          "[contains(@style,'display: block')]"
 
     def _wait_for_popup(self, timeout, search_by, element_name, expected_behaviour=EC.visibility_of_element_located):
         expected_behaviour = expected_behaviour
@@ -135,3 +139,15 @@ class Popup:
         search_by = By.XPATH
 
         return self._wait_for_popup(timeout, search_by, self._event_items_xpath)
+
+    def skip_side_scroll(self):
+        timeout = 2
+        search_by = By.XPATH
+
+        return self._wait_for_popup(timeout, search_by, self._side_scroll_xpath)
+
+    def side_scroll_results(self):
+        timeout = 2
+        search_by = By.XPATH
+
+        return self._wait_for_popup(timeout, search_by, self._side_scroll_results_xpath)
