@@ -131,7 +131,6 @@ class Press:
         self._driver.find_element_by_css_selector(self._attack_button_css).click()
 
     def results_button(self):
-        # attack_button_css = ".btn-attack-start.display-on"
         timeout = 10
         search_by = By.CLASS_NAME
 
@@ -233,9 +232,9 @@ class Press:
             quest_id = diff_quest_ids[treasure_quest_diff_num]
 
         elif treasure_quest_diff == 'Shiny Slime Search!':
-            diff_quest_ids = {1: 40013,
-                              2: 40014,
-                              3: 40015}
+            diff_quest_ids = {1: 40016,
+                              2: 40017,
+                              3: 40018}
 
             quest_id = diff_quest_ids[treasure_quest_diff_num]
 
