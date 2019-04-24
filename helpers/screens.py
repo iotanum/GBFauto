@@ -24,8 +24,10 @@ class Wait:
         self._loot_screen_xpath = "//div[@class='cnt-get-treasure'][contains(@style,'display: block')]"
         self._fight_ready_screen_xpath = "//div[@class='prt-start-direction disable-ready-auto-setting']" \
                                          "[contains(@style,'display: none')]"
-        self._quest_advancement_screen_xpath = "//div[@class='opaque-mask']" \
-                                               "[contains(@style,'display: none')]"
+        self._quest_advancement_screen_off_xpath = "//div[@class='prt-start-direction disable-ready-auto-setting']" \
+                                                   "[contains(@style,'display: none')]"
+        self._quest_advancement_screen_on_xpath = "//div[@class='prt-start-direction disable-ready-auto-setting']" \
+                                                  "[contains(@style,'display: block')]"
         self._fight_main_mask_xpath = "//div[@class='active-mask']" \
                                       "[contains(@style,'display: none')]"
         self._test_fight_ready_mask = "//div[@class='mask']" \
@@ -73,13 +75,19 @@ class Wait:
 
         return self._Timeout.wait_for_element_no_search_by(timeout, expected_behaviour)
 
-    def for_quest_advencment_screen(self):
+    def for_quest_advencment_screen(self, start=False):
         timeout = 5
         expected_behaviour = EC.presence_of_element_located
         search_by = By.XPATH
 
-        return self._Timeout.wait_for_element(timeout, expected_behaviour, search_by,
-                                              self._quest_advancement_screen_xpath)
+        # Start = True - screen appearing
+        # Start = False - screen disappearing
+        if start is False:
+            return self._Timeout.wait_for_element(timeout, expected_behaviour, search_by,
+                                                  self._quest_advancement_screen_off_xpath)
+        else:
+            return self._Timeout.wait_for_element(timeout, expected_behaviour, search_by,
+                                                  self._quest_advancement_screen_on_xpath)
 
     def for_fight_main_mask(self):
         timeout = 5
