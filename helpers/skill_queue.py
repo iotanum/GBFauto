@@ -2,7 +2,7 @@ from selenium import common as selenium_err
 
 import sys
 import time
-import traceback
+
 
 class Skills:
     def __init__(self, game_handler):

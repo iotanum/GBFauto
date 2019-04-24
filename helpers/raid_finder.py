@@ -28,6 +28,7 @@ class RaidFinder:
         self.chrome_options.add_argument("--disable-gpu")
 
     def set_up(self):
+        # initialize selenium
         self.driver.get(self.raid_finder_url)
 
         try:
@@ -35,6 +36,14 @@ class RaidFinder:
             self.handle_clicks(elem)
         except selenium_err.exceptions.NoSuchElementException:
             sys.exit("It seems that 'Granblue Raid Finder' site is down, try again later.")
+
+    def wait_for_element(self, search_by, element_name):
+        try:
+            wait = WebDriverWait(self.driver, 5)
+            wait.until(EC.visibility_of_element_located((search_by, element_name)))
+            return True
+        except selenium_err.exceptions.TimeoutException:
+            return False
 
     def click_on_raid(self):
         try:
@@ -62,6 +71,7 @@ class RaidFinder:
             # It likes to hang for some reason ?
             if time.time() - start_time > 30 and len(self.raid) < 2:
                 self.driver.refresh()
+                self.wait_for_element(By.XPATH, '//*[@id="gbfrf-dialog__follow"]/ul/li[1]/span/span[2]')
                 start_time = time.time()
 
             # wait for the list to update itself to get the most recent raid
