@@ -2,7 +2,7 @@ from selenium import common as selenium_err
 
 import sys
 import time
-
+import traceback
 
 class Skills:
     def __init__(self, game_handler):
@@ -73,9 +73,17 @@ class Skills:
         except selenium_err.exceptions.NoSuchElementException:
             pass
 
+    def remove_active_mask_element(self):
+        try:
+            mask = self._driver.find_element_by_id('main-mask')
+            self._driver.execute_script('arguments[0].parentNode.removeChild(arguments[0]);', mask)
+        except selenium_err.exceptions.NoSuchElementException:
+            pass
+
     def do_queue(self, queue_from_config):
         self.remove_ability_log_element()
         self.remove_backup_request_element()
+        self.remove_active_mask_element()
 
         # Handle empty queue string in config
         try:
@@ -125,14 +133,14 @@ class Skills:
                     # Skip pressing 'back' button if support summon is your starter 'char'
                     if summon_was_used is True:
                         self._bot.press.back()
-                    time.sleep(0.2)
-                    self._bot.press.summon_card()
-                    time.sleep(0.3)
-                    self._bot.press.summon_num(ability_num)
-                    time.sleep(0.3)
-                    self._bot.press.confirm_summon_fight()
-                    time.sleep(0.3)
+                    actions_for_summon = [self._bot.press.summon_card,
+                                          self._bot.press.summon_num,
+                                          self._bot.press.confirm_summon_fight]
+                    for summ_action in actions_for_summon:
+                        summ_action()
+                        time.sleep(0.25)
                     summon_was_used = True
             except (selenium_err.exceptions.ElementNotVisibleException, selenium_err.exceptions.WebDriverException) as e:
                 print(f"Broke on {step} step.")
+                print(F"Reason: {e}")
                 break

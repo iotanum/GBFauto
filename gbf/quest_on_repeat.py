@@ -88,7 +88,6 @@ class QuestOnRepeat:
         for fight_num, queue in enumerate(queues, 1):
             # Don't need to wait on first iteration
             if fight_num != 1:
-                print('waiting')
                 self.wait_before_fight(in_fight=True)
             print(f"Fight #{fight_num}.")
             self.bot.queue.do_queue(queue)
