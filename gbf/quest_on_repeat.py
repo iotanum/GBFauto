@@ -4,6 +4,7 @@ from bs4 import SoupStrainer as ss
 import os
 import time
 import random
+import re
 
 from selenium import common as selenium_err
 
@@ -56,35 +57,57 @@ class QuestOnRepeat:
             else:
                 mobs_alive = False
 
-    def wait_before_fight(self):
+    def wait_before_fight(self, in_fight=False):
+        if in_fight is True:
+            self.bot.wait.for_quest_advencment_screen(start=True)
         self.bot.wait.for_loading_screen()
         self.bot.wait.for_quest_advencment_screen()
         self.bot.wait.for_fight_ready_screen()
         self.bot.wait.for_fight_main_mask()
 
+    def count_quest_fight_parts(self):
+        parser = bs(self.driver.page_source, 'lxml')
+
+        progress_bar = parser.find('div', {'class': 'prt-position'})
+        quest_parts = progress_bar.find_all('div', {'class': ['lis-spot']})
+
+        if quest_parts == 0:
+            quest_parts = 1
+
+        return len(quest_parts)
+
     def handle_fight(self):
+        self.wait_before_fight()
+        num_of_fights = self.count_quest_fight_parts()
         first_queue_from_config = os.getenv("QUEUE_FIRST_FIGHT")
         second_queue_from_config = os.getenv("QUEUE_SECOND_FIGHT")
         third_queue_from_config = os.getenv('QUEUE_THIRD_FIGHT')
         queues = [first_queue_from_config, second_queue_from_config, third_queue_from_config]
-        for idx, queue in enumerate(queues, 1):
-            self.wait_before_fight()
+        for fight_num, queue in enumerate(queues, 1):
+            # Don't need to wait on first iteration
+            if fight_num != 1:
+                print('waiting')
+                self.wait_before_fight(in_fight=True)
+            print(f"Fight #{fight_num}.")
             self.bot.queue.do_queue(queue)
             self.finish_fight()
             self.bot.wait.for_fight_main_mask()
             self.bot.press.results_button()
-            print(f"Fight #{idx}.")
+            if fight_num == num_of_fights:
+                break
 
     def handle_pre_fight_support_summons(self):
         self.bot.wait.for_loading_screen()
         self.bot.press.support_element(5)
+        time.sleep(0.5)
         self.bot.press.first_support_summon()
         self.bot.press.confirm_support_summon()
 
-    def convert_gains_to_int(self, gain):
-        to_remove_chars = " +)sEXP"
-        extracted_numbers = str(gain)[-5:].strip(to_remove_chars)
-        return int(extracted_numbers)
+    def convert_gain_to_int(self, gain):
+        regex_num_pattern = r'\d+'
+        gains = re.findall(regex_num_pattern, gain)
+        gain = [int(s) for s in gains]
+        return sum(gain)
 
     def convert_seconds_to_hms_format(self, seconds):
         seconds = round(seconds, 2)
