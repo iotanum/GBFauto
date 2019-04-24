@@ -17,6 +17,9 @@ class QuestOnRepeat:
         self.total_ranks = 0
         self.total_exp = 0
         self.total_fights = 0
+        self.total_tokens = 0
+        self.total_honors = 0
+        self.total_pendants = 0
         self.start_time = time.time()
 
     def wait_for_repeatable_quest(self):
@@ -39,7 +42,6 @@ class QuestOnRepeat:
         mobs_alive = True
         # remove the battle scene/advice element from the fight, less clutter
         self.remove_battle_scene_element()
-        # fight_start = time.time()
 
         while mobs_alive is True:
             strainer = ss('div', attrs={'class': 'prt-targeting-area'})
@@ -116,6 +118,25 @@ class QuestOnRepeat:
 
         return int(round(hours, 2)), int(round(minutes, 2)), int(round(seconds, 2))
 
+    def count_after_fight_event_items(self):
+        self.bot.popup.event_items()
+
+        parser = bs(self.driver.page_source, features="lxml")
+        gains = parser.find_all('div', {'class': 'prt-event-point'})
+
+        for gain in gains:
+            if gain is not None:
+                gain_name = str(gain.text)
+                gain_num = self.convert_gain_to_int(gain_name)
+                if 'tokens' in gain_name:
+                    self.total_tokens += gain_num
+                elif 'honors' in gain_name:
+                    self.total_honors += gain_num
+                elif 'pendants' in gain_name:
+                    self.total_pendants += gain_num
+
+        self.bot.press.usual_ok()
+
     def handle_after_fight(self):
         self.bot.wait.for_loading_screen()
 
@@ -133,11 +154,18 @@ class QuestOnRepeat:
             for gain in gains:
                 if gain is not None:
                     gain_name = str(gain['class'])
-                    gain = self.convert_gains_to_int(gain.text)
+                    gain = self.convert_gain_to_int(gain.text)
                     if 'rank' in gain_name:
                         self.total_ranks += gain
                     elif 'exp' in gain_name:
                         self.total_exp += gain
+            self.bot.press.usual_ok()
+
+        # ???
+        try:
+            self.count_after_fight_event_items()
+        except selenium_err.exceptions.NoSuchElementException:
+            pass
 
         self.total_fights += 1
         run_time = time.time() - self.start_time
@@ -145,7 +173,6 @@ class QuestOnRepeat:
         print(f"Total fights: {self.total_fights}, EXP: {self.total_exp}, Rank points: {self.total_ranks}\n"
               f"Running for {hours}h:{minutes}min:{seconds}s, "
               f"Average time per quest: {round(run_time / self.total_fights, 2)}s")
-        self.bot.press.usual_ok()
 
         # TODO
         # If after pressing a button certain popup appears
