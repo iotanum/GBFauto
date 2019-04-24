@@ -95,6 +95,7 @@ class SpecialQuests:
     def handle_pre_fight_support_summons(self):
         self.bot.wait.for_loading_screen()
         self.bot.press.support_element(5)
+        time.sleep(0.5)
         self.bot.press.first_support_summon()
         self.bot.press.confirm_support_summon()
 
