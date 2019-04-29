@@ -13,11 +13,6 @@ class SpecialQuests:
         self.bot = game_handler
         self.driver = game_handler.driver
         #######################
-        self.total_ranks = 0
-        self.total_exp = 0
-        self.total_fights = 0
-        self.start_time = time.time()
-        #######################
         self.sub_option_num = None
         self.sub_option = None
         self.sub_option_diff_num = None
@@ -28,17 +23,38 @@ class SpecialQuests:
         # relative path'ing
         self.driver.execute_script("window.location.href = '#quest/extra'")
         self.bot.wait.for_loading_screen()
-        resume = self.bot.popup.resume_quest()
-        if resume is True:
-            self.bot.press.usual_retreat()
-            self.bot.press.usual_ok()
-            self.bot.press.usual_ok()
-            self.bot.wait.for_loading_screen()
+        # resume = self.bot.popup.resume_quest()
+        # if resume is True:
+        #     self.bot.press.usual_retreat()
+        #     self.bot.press.usual_ok()
+        #     self.bot.press.usual_ok()
+        #     self.bot.wait.for_loading_screen()
 
         # TODO
         self.bot.press.specific_treasure_quest(self.sub_option_num)
-        self.bot.press.treasure_quest_diff(self.sub_option_diff_num, self.sub_option)
+
+        # Since every app update (update varies from 5h to 24h) all of the quest ids
+        # gets updated to whatever
+        quest_ids = self.get_quest_ids()
+        quest_id = self.get_required_quest_id(quest_ids, self.sub_option_diff_num)
+
+        self.bot.press.treasure_quest_diff(quest_id)
         self.handle_not_enough_ap()
+
+    def get_quest_ids(self):
+        # wait until special quest sub diff popup appears
+        self.bot.popup.special_quest_popup()
+        parser = bs(self.driver.page_source, 'lxml')
+
+        elems = parser.find_all('div', {'data-chapter-id': True})
+        quest_ids = [elem['data-chapter-id'] for elem in elems]
+
+        # return a list of ids in an order from top to bottom
+        return quest_ids
+
+    def get_required_quest_id(self, quest_ids, sub_option_diff_num):
+        # list item by index starts from 0
+        return quest_ids[sub_option_diff_num - 1]
 
     def remove_battle_scene_element(self):
         try:
@@ -51,7 +67,6 @@ class SpecialQuests:
         mobs_alive = True
         # remove the battle scene/advice element from the fight, less clutter
         self.remove_battle_scene_element()
-        # fight_start = time.time()
 
         while mobs_alive is True:
             strainer = ss('div', attrs={'class': 'prt-targeting-area'})
@@ -69,28 +84,44 @@ class SpecialQuests:
             else:
                 mobs_alive = False
 
-    def wait_before_fight(self):
+    def wait_before_fight(self, in_fight=False):
+        if in_fight is True:
+            self.bot.wait.for_quest_advencment_screen(start=True)
         self.bot.wait.for_loading_screen()
         self.bot.wait.for_quest_advencment_screen()
         self.bot.wait.for_fight_ready_screen()
         self.bot.wait.for_fight_main_mask()
 
     def handle_fight(self):
+        # Count the number of fights that X special quest has
+        num_of_fights = self.count_quest_fight_parts()
         first_queue_from_config = os.getenv("QUEUE_FIRST_FIGHT")
         second_queue_from_config = os.getenv("QUEUE_SECOND_FIGHT")
         third_queue_from_config = os.getenv('QUEUE_THIRD_FIGHT')
         queues = [first_queue_from_config, second_queue_from_config, third_queue_from_config]
-        for idx, queue in enumerate(queues, 1):
-            self.wait_before_fight()
+        for fight_num, queue in enumerate(queues, 1):
+            # Don't need to wait on first iteration since getting the number of fights already did that
+            self.wait_before_fight(in_fight=True)
+            print(f"Fight #{fight_num}.")
             self.bot.queue.do_queue(queue)
             self.finish_fight()
             self.bot.wait.for_fight_main_mask()
             self.bot.press.results_button()
-            print(f"Fight #{idx}.")
-            # Slime blasting has only 2 fights
-            # bad implementation btw
-            if self.sub_option == 'Shiny Slime Search!' and idx == 2:
+            if fight_num == num_of_fights:
+                self.bot.wait.for_fight_end_screen()
                 break
+
+    def count_quest_fight_parts(self):
+        self.bot.wait.for_quest_advencment_screen(start=True)
+        parser = bs(self.driver.page_source, 'lxml')
+
+        progress_bar = parser.find('div', {'class': 'prt-position'})
+        quest_parts = progress_bar.find_all('div', {'class': ['lis-spot']})
+
+        if quest_parts == 0:
+            quest_parts = 1
+
+        return len(quest_parts)
 
     def handle_pre_fight_support_summons(self):
         self.bot.wait.for_loading_screen()
@@ -99,13 +130,8 @@ class SpecialQuests:
         self.bot.press.first_support_summon()
         self.bot.press.confirm_support_summon()
 
-    def convert_gains_to_int(self, gain):
-        to_remove_chars = " +)sEXP"
-        extracted_numbers = str(gain)[-5:].strip(to_remove_chars)
-        return int(extracted_numbers)
-
-    def convert_seconds_to_hms_format(self, seconds):
-        seconds = round(seconds, 2)
+    def convert_seconds_to_hms_format(self):
+        seconds = round(self.bot.run_time(), 2)
         minutes, seconds = divmod(seconds, 60)
         hours, minutes = divmod(minutes, 60)
 
@@ -114,59 +140,17 @@ class SpecialQuests:
     def handle_after_fight(self):
         self.bot.wait.for_loading_screen()
 
-        for retry_no in range(3):
-            try:
-                parser = bs(self.driver.page_source, features="lxml")
-                gains = parser.find('div', {'class': 'prt-exp-gain'}).find_all('span')
-                break
-            except AttributeError:
-                time.sleep(3)
-                gains = None
-                continue
+        self.bot.handle.after_fight_popups()
 
-        if gains:
-            for gain in gains:
-                if gain is not None:
-                    gain_name = str(gain['class'])
-                    gain = self.convert_gains_to_int(gain.text)
-                    if 'rank' in gain_name:
-                        self.total_ranks += gain
-                    elif 'exp' in gain_name:
-                        self.total_exp += gain
-
-        self.total_fights += 1
-        run_time = time.time() - self.start_time
-        hours, minutes, seconds = self.convert_seconds_to_hms_format(run_time)
-        print(f"Total fights: {self.total_fights}, EXP: {self.total_exp}, Rank points: {self.total_ranks}\n"
+        hours, minutes, seconds = self.convert_seconds_to_hms_format()
+        print(f"Total fights: {self.bot.total_fights}, EXP: {self.bot.total_exp}, Rank points: {self.bot.total_ranks}\n"
               f"Running for {hours}h:{minutes}min:{seconds}s, "
-              f"Average time per quest: {round(run_time / self.total_fights, 2)}s")
-        self.bot.press.usual_ok()
-
-        # TODO
-        # If after pressing a button certain popup appears
-        # ignore and/or handle other popups accordingly
-        rank_up = self.bot.popup.new_rank()
-        if rank_up is True:
-            print("New rank!")
-            self.bot.press.usual_ok()
-
-        extended_mastery = self.bot.popup.extended_mastery()
-        if extended_mastery is True:
-            print("New extended mastery!")
-            time.sleep(4)
-            self.driver.find_element_by_id('cjs-lp-rankup').click()
+              f"Average time per quest: {round(self.bot.run_time() / self.bot.total_fights, 2)}s")
 
         self.bot.wait.for_loot_screen()
         self.bot.press.play_again_quest()
 
-        achievement = self.bot.popup.achievement()
-        if achievement is True:
-            print('New achievement!')
-            self.bot.press.usual_close()
-
-        friend_request = self.bot.popup.friend_request()
-        if friend_request is True:
-            self.bot.press.usual_cancel()
+        self.bot.handle.after_fight_popups()
 
         self.handle_not_enough_ap()
 
@@ -179,7 +163,7 @@ class SpecialQuests:
             self.bot.wait.for_loading_screen()
             self.bot.press.usual_ok()
 
-    def slime_blast(self, sub_option_num, sub_option, sub_option_diff_num, sub_option_diff):
+    def special_quests(self, sub_option_num, sub_option, sub_option_diff_num, sub_option_diff):
         # Assign user input to class vars
         self.sub_option_num = sub_option_num
         self.sub_option = sub_option
@@ -187,10 +171,10 @@ class SpecialQuests:
         self.sub_option_diff = sub_option_diff
 
         while True:
-            self.do_slime_blasting(repeat=True if self.total_fights > 0 else False)
+            self.do_special_quests(repeat=True if self.bot.total_fights > 0 else False)
 
-    def do_slime_blasting(self, repeat=False):
-        # HANDLE PATH TO SLIME QUEST
+    def do_special_quests(self, repeat=False):
+        # HANDLE PATH TO SPECIAL QUESTS
         if repeat is False:
             self.handle_to_special_quests()
 
