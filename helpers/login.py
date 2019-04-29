@@ -11,6 +11,7 @@ from helpers.screens import Wait
 from helpers.popups import Popup
 from helpers.skill_queue import Skills
 from helpers.actions import Action
+from helpers.handles import Handle
 
 import time
 import os
@@ -32,11 +33,23 @@ class GBFGame:
         self.driver = webdriver.Chrome(executable_path='utils/chromedriver.exe', options=self.chrome_options
                                        if HEADLESS_MODE == 1 else None)
         self.login_page = "http://game.granbluefantasy.jp/#authentication"
+        self._start_time = time.time()
         self.press = Press(self)
         self.wait = Wait(self)
         self.popup = Popup(self)
         self.action = Action(self)
         self.queue = Skills(self)
+        self.handle = Handle(self)
+        ##############################################
+        self.total_ranks = 0
+        self.total_exp = 0
+        self.total_tokens = 0
+        self.total_honors = 0
+        self.total_pendants = 0
+        self.total_fights = 0
+
+    def run_time(self):
+        return time.time() - self._start_time
 
     def headless_chrome_options(self):
         self.chrome_options.add_argument("--headless")
