@@ -15,7 +15,6 @@ class Press:
         self._raid_button_class = "prt-multi-button"
         self._enter_raid_id_id = "tab-id"
         self._join_raid_room_class = "btn-post-key"
-        self._first_support_summon_xpath = '//*[@id="cnt-quest"]/div[2]/div[8]/div[1]/div[4]'
         self._support_summon_confirm_xpath = '//*[@id="wrapper"]/div[3]/div[3]/div[3]/div[2]'
         self._attack_button_css = '.btn-attack-start.display-on'
         self._results_button_class = "btn-result"
@@ -93,15 +92,16 @@ class Press:
         self._Actions.double_click(btn).perform()
         # self._driver.find_element_by_class_name(self._join_raid_room_class).click()
 
-    def first_support_summon(self):
+    def first_support_summon(self, support_element_num):
         # TODO
         # Bot should be able to pick a specific support summon
         # Also I'm testing double_click on how it performs in game
+        first_support_summon_xpath = f'//*[@id="cnt-quest"]/div[2]/div[{support_element_num + 3}]/div[1]/div[4]'
 
         search_by = By.XPATH
 
-        self._wait_for_button(search_by, self._first_support_summon_xpath)
-        self._driver.find_element_by_xpath(self._first_support_summon_xpath).click()
+        self._wait_for_button(search_by, first_support_summon_xpath)
+        self._driver.find_element_by_xpath(first_support_summon_xpath).click()
 
     def support_element(self, element_num):
         # Support element tabs in order:

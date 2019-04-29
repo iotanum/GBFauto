@@ -116,7 +116,7 @@ class QuestOnRepeat:
         self.bot.wait.for_loading_screen()
         self.bot.press.support_element(SUPPORT_ELEMENT)
         time.sleep(0.5)
-        self.bot.press.first_support_summon()
+        self.bot.press.first_support_summon(SUPPORT_ELEMENT)
         captcha = self.bot.handle.human_verification()
         # if verification is required - need to repeat the last step
         if captcha is True:
