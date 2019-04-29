@@ -11,6 +11,7 @@ import os
 import sys
 import traceback
 import logging
+import time
 from datetime import datetime
 
 
@@ -134,7 +135,7 @@ def special_quest_sub_options():
     # Needs some work
     # This is for quests where it's div tree looks like:
     # Quest -> Inner Quest -> Inner Quest diff
-    # Default behaviour is:
+    # 'Considered Default' tree is:
     # Quest -> Quest diff
     sub_options_with_inner_diffs = [1]
 
@@ -165,18 +166,25 @@ if __name__ == '__main__':
             raid_handler = Raids(game_handler, finder_handler)
             raid_handler.set_raid_name(raid_boss_name)
             raid_handler.raids()
+
         elif option_num == 'Special Quests':
             sub_option_num, sub_option, sub_option_diff_num, sub_option_diff, \
             sub_option_inner_diff_num, sub_option_inner_diff = special_quest_sub_options()
             special_quest_handler = SpecialQuests(game_handler)
-            special_quest_handler.slime_blast(sub_option_num, sub_option, sub_option_diff_num, sub_option_diff)
+            special_quest_handler.special_quests(sub_option_num, sub_option, sub_option_diff_num, sub_option_diff)
+
         elif option_num == 'GW':
             raid_type_num, raid_type, raid_diff_num, raid_diff = gw_sub_options()
             gw_handler = GW(game_handler)
             gw_handler.gw(raid_type_num, raid_type, raid_diff_num, raid_diff)
+
         elif option_num == 'Repeatable Quest':
             questing_handler = QuestOnRepeat(game_handler)
             questing_handler.repeatable_quest()
+
+        # After choosing an option the 'real' bot start time is assigned
+        game_handler._start_time = time.time()
+
     except Exception as e:
         timestamp = str(datetime.now()).replace(":", "'")[:-7]
         game_handler.driver.save_screenshot(f'errors/{timestamp}.png')
