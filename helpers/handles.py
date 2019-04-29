@@ -1,0 +1,282 @@
+import time
+import re
+import os
+
+from selenium import common as selenium_err
+
+from bs4 import BeautifulSoup as bs
+from dotenv import load_dotenv
+
+load_dotenv('config.env')
+
+EXTREME_BATTLES = int(os.getenv('EXTREME_BATTLES'))
+REQUEST_BACKUP = int(os.getenv('REQUEST_BACKUP'))
+
+
+class Handle:
+    def __init__(self, game_handler):
+        self._bot = game_handler
+        self._driver = game_handler.driver
+
+    def after_fight_popups(self, kill=False):
+        popup_search_start = time.time()
+
+        while True:
+            parser = bs(self._driver.page_source, 'lxml')
+            popup = parser.find('div', {'class': ['pop-show']})
+
+            # Ignore 'Not enough AP/EP' popup for now.
+            if popup is not None and 'pop-stamina' in popup['class']:
+                popup = None
+
+            # Extended mastery 'popup' isn't actually a popup, but a canvas put on
+            # entirety of results screen, need to be handled separately
+            extended_mastery = parser.find('div', {'class': 'onm-anim-parts'})
+
+            page_url = str(self._driver.current_url)
+
+            # Extracts the button/buttons inside the popup
+            if popup:
+                popup_name = str(popup['class'])
+                # Reset popup search start timer if popup was found
+                popup_search_start = time.time()
+                # Get button
+                popup_footer = popup.find('div', {'class': 'prt-popup-footer'})
+                popup_button = popup_footer.find('div', {'class': True})
+                popup_button = popup_button['class']
+
+                # Check every type of popup
+                if 'event-item' in popup_name:
+                    self._count_after_fight_event_items(popup)
+                    self._bot.press.usual_ok()
+
+                elif 'pop-exp' in popup_name:
+                    self._count_after_fight_xp(popup)
+                    self._bot.press.usual_ok()
+
+                elif 'player-up' in popup_name:
+                    print('New rank!')
+                    self._bot.press.usual_ok()
+
+                elif 'notification-title' in popup_name:
+                    print('New achievement!')
+                    self._bot.press.usual_close()
+
+                elif 'friend-request' in popup_name:
+                    self._bot.press.usual_cancel()
+
+                elif 'zc-up' in popup_name:
+                    popup_body = popup.find('div', {'class': 'txt-zc-new'}).text
+                    print(popup_body)
+                    self._bot.press.usual_ok()
+
+                elif 'npc-change-ability' in popup_name:
+                    character_ability_change = popup.find('div', {'class': 'txt-change-ability'}).text
+                    character_ability_change_text = self._convert_html_element_to_text(character_ability_change)
+                    ability, change = character_ability_change_text.split(' from\n')
+                    print(f"{ability}. ({change})")
+                    self._bot.press_usual_ok()
+
+                elif 'open-fate' in popup_name:
+                    fate_ep_description = popup.find('div', {'class': 'prt-description'}).text
+                    fate_ep_description = self._convert_html_element_to_text(fate_ep_description)
+                    fate_ep_description = fate_ep_description.replace("'s", "'s ")
+                    print(fate_ep_description)
+                    self._bot.press.usual_ok()
+
+                elif 'hell-appearance' in popup_name:
+                    print('Nightmare battle!')
+                    if EXTREME_BATTLES == 1:
+                        try:
+                            self._bot.press.usual_next()
+                            self._extreme_fight()
+                            return True
+                        except selenium_err.exceptions.NoSuchElementException:
+                            pass
+                    else:
+                        self._bot.press.usual_close()
+
+                elif 'mission-check-treasureraid' in popup_name:
+                    mission_description = popup.find('div', {'class': 'txt-mission-description'}).text
+                    mission_progress = popup.find('div', {'class': 'prt-mission-progress'}).text
+                    print(mission_description, f"({mission_progress})")
+                    self._bot.press.usual_close()
+
+                elif 'trajectory-info' in popup_name:
+                    print('Game reset!')
+                    self._bot.press.usual_ok()
+
+                elif 'advent-proud-appearance' in popup_name:
+                    print('Proud+ battle unclocked!')
+                    self._bot.press.usual_close()
+
+                else:
+                    print("Unhandled popup!\nPage source and error picture in 'errors' folder.")
+                    # Placeholder handling of unhandled popup
+                    self._driver.find_element_by_class_name(popup_button).click()
+
+            if extended_mastery:
+                print('New extended mastery!')
+                # Wait a bit and just remove the element
+                time.sleep(4)
+                # Also needs a timer reset
+                popup_search_start = time.time()
+                elem = self._driver.find_element_by_class_name('onm-anim-parts')
+                elem.click()
+                time.sleep(1)
+
+            # If no popups for 2 seconds - exit while loop
+            # or if there was no popups
+            popup_search_time = time.time()
+            if popup_search_time - popup_search_start > 2.5 or '#quest/supporter' in page_url:
+                # 'After fight popup' means that the bot finished a quest
+                if kill is True:
+                    self._bot.total_fights += 1
+                break
+
+    def pre_fight_screens(self):
+        popup_search_start = time.time()
+
+        while True:
+            popup_search_time = time.time()
+
+            parser = bs(self._driver.page_source, 'lxml')
+
+            side_scroll_quest = parser.find('div', {'class': 'anim-title anim'})
+            if side_scroll_quest:
+                self._bot.press.usual_skip()
+                self._bot.popup.skip_side_scroll()
+                self._driver.find_element_by_xpath('//*[@id="pop"]/div/div[3]/div[2]').click()
+                self._bot.popup.side_scroll_results()
+                self._driver.find_element_by_xpath('//*[@id="pop"]/div/div[3]/div').click()
+
+            if popup_search_time - popup_search_start > 2:
+                break
+
+    def pre_fight_popup(self):
+        popup_search_start = time.time()
+        popup_present = False
+
+        while True:
+            popup_search_time = time.time()
+
+            parser = bs(self._driver.page_source, 'lxml')
+            popup = parser.find('div', {'class': ['common-pop-error']})
+
+            if popup:
+                popup_present = True
+                popup_search_start = time.time()
+
+                # Needed to distinguish between verification/typical error popups
+                popup_header = str(popup.find('div', {'class': 'prt-popup-header'}).text)
+
+                if 'Battle' in popup_header:
+                    self._bot.press.usual_ok()
+
+                elif 'Access Verification' in popup_header:
+                    self.human_verification()
+
+            if popup_search_time - popup_search_start > 2:
+                # If there was a pre-fight popup, need to return a bool
+                # and handle it appropriately (ex.: repeat last instruction)
+                if popup_present is True:
+                    return True
+                return False
+
+    def backup_request(self):
+        backup_request = self._bot.popup.backup_request()
+
+        if backup_request is True:
+            try:
+                # If user wants to request backups - go for it
+                if REQUEST_BACKUP == 1:
+                    try:
+                        self._bot.press.approve_backup_request()
+                        self._bot.press.usual_ok()
+                    except selenium_err.exceptions.NoSuchElementException:
+                        self._bot.press.usual_ok()
+                # otherwise - no.
+                else:
+                    try:
+                        self._bot.press.usual_cancel()
+                    except selenium_err.exceptions.NoSuchElementException:
+                        self._bot.press.usual_ok()
+            except selenium_err.exceptions.TimeoutException:
+                pass
+
+            return True
+        return False
+
+    def _convert_gain_to_int(self, gain):
+        regex_num_pattern = r'\d+'
+        gains = re.findall(regex_num_pattern, gain)
+        gain = [int(s) for s in gains]
+        return sum(gain)
+
+    def _count_after_fight_xp(self, xp_popup_element):
+        gains = xp_popup_element.find('div', {'class': 'prt-exp-gain'}).find_all('span')
+
+        if gains:
+            for gain in gains:
+                if gain is not None:
+                    gain_name = str(gain['class'])
+                    gain = self._convert_gain_to_int(gain.text)
+                    if 'rank' in gain_name:
+                        self._bot.total_ranks += gain
+                    elif 'exp' in gain_name:
+                        self._bot.total_exp += gain
+
+    def _convert_html_element_to_text(self, html_element):
+        return str(html_element).strip(' \t\n')
+
+    def _count_after_fight_event_items(self, event_item_element):
+        gains = event_item_element.find_all('div', {'class': 'prt-event-point'})
+
+        for gain in gains:
+            if gain is not None:
+                gain_name = str(gain.text)
+                gain_num = self._convert_gain_to_int(gain_name)
+                if 'tokens' in gain_name:
+                    self._bot.total_tokens += gain_num
+                elif 'honors' in gain_name:
+                    self._bot.total_honors += gain_num
+                elif 'pendants' in gain_name:
+                    self._bot.total_pendants += gain_num
+
+    def _extreme_fight(self):
+        self._bot.wait.for_loading_screen()
+        print('Waiting until you kill the boss...')
+
+        # Wait until bot exits the current results screen
+        while True:
+            url = str(self._driver.current_url)
+            if '#result' not in url:
+                break
+
+        # Then wait until the boss has been killed and the bot is at results screen
+        while True:
+            url = str(self._driver.current_url)
+            if '#result' in url:
+                self._bot.wait.for_loading_screen()
+                print('You killed the boss!')
+                self.after_fight_popups()
+                self._bot.press.usual_event_home()
+                self.after_fight_popups()
+                print('Now re-select the quest.')
+                break
+            time.sleep(0.8)
+
+    def human_verification(self):
+        verification = self._bot.popup.human_verification()
+
+        if verification is True:
+            # Need to sleep this, because the captcha image takes time to load
+            time.sleep(3)
+            self._driver.save_screenshot('verification/screenshot.png')
+            input_field = self._driver.find_element_by_class_name('frm-message')
+            verification_code = input('Input verification code: ')
+            input_field.send_keys(verification_code)
+            time.sleep(1)
+            self._driver.find_element_by_class_name('btn-talk-message').click()
+            time.sleep(1)
+            return True
