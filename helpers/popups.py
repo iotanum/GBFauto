@@ -36,6 +36,10 @@ class Popup:
                                   "[contains(@style,'display: block')]"
         self._side_scroll_results_xpath = "//div[@class='pop-usual pop-skip-result pop-show']" \
                                           "[contains(@style,'display: block')]"
+        self._special_quest_popup_xpath = "//div[@class='pop-usual pop-bundled-quest pop-show']" \
+                                          "[contains(@style,'display: block')]"
+        self._angel_halo_nightmare_xpath = "//div[@class='pop-usual pop-hell-appearance angel-halo pop-show']" \
+                                           "[contains(@style,'display: block')]"
 
     def _wait_for_popup(self, timeout, search_by, element_name, expected_behaviour=EC.visibility_of_element_located):
         expected_behaviour = expected_behaviour
@@ -50,7 +54,7 @@ class Popup:
         return self._wait_for_popup(timeout, search_by, self._resume_quest_xpath)
 
     def backup_request(self):
-        timeout = 7
+        timeout = 2
         search_by = By.XPATH
 
         return self._wait_for_popup(timeout, search_by, self._backup_request_xpath)
@@ -62,7 +66,7 @@ class Popup:
         return self._wait_for_popup(timeout, search_by, self._stamina_class)
 
     def human_verification(self):
-        timeout = 4
+        timeout = 2
         search_by = By.XPATH
 
         return self._wait_for_popup(timeout, search_by, self._verification_xpath)
@@ -151,3 +155,15 @@ class Popup:
         search_by = By.XPATH
 
         return self._wait_for_popup(timeout, search_by, self._side_scroll_results_xpath)
+
+    def special_quest_popup(self):
+        timeout = 2
+        search_by = By.XPATH
+
+        return self._wait_for_popup(timeout, search_by, self._special_quest_popup_xpath)
+
+    def angel_halo_nightmare(self):
+        timeout = 2
+        search_by = By.XPATH
+
+        return self._wait_for_popup(timeout, search_by, self._angel_halo_nightmare_xpath)

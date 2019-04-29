@@ -48,7 +48,7 @@ class Wait:
         return self._wait_for_screen(timeout, expected_behaviour, search_by, self._loading_screen_xpath)
 
     def for_fight_end_screen(self):
-        timeout = 5
+        timeout = 10
         expected_behaviour = EC.presence_of_element_located
         search_by = By.XPATH
 
@@ -56,7 +56,7 @@ class Wait:
 
     def for_loot_screen(self):
         # use with caution, only in methods that are triggered *AFTER* raid battles
-        timeout = 5
+        timeout = 7
         expected_behaviour = EC.presence_of_element_located
         search_by = By.XPATH
 

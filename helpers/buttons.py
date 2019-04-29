@@ -36,6 +36,7 @@ class Press:
         self._confirm_summon_battle_xpath = '//*[@id="wrapper"]/div[3]/div[14]/div[3]/div[2]'
         self._retreat_class = 'btn-withdraw'
         self._skip_button_class = 'btn-command-skip'
+        self._next_button_class = 'btn-usual-next'
         # TODO
         self._guild_wars_xpath = '//*[@id="wrapper"]/div[3]/div[2]/div[4]/div[2]/div/img'
 
@@ -59,7 +60,7 @@ class Press:
         self._wait_for_button(search_by, self._quest_button_main_menu_class)
         self._driver.find_element_by_class_name(self._quest_button_main_menu_class).click()
 
-    def quest_button_after_fight(self):
+    def usual_event_home(self):
         search_by = By.CLASS_NAME
 
         self._wait_for_button(search_by, self._quest_button_after_fight_class)
@@ -215,29 +216,9 @@ class Press:
         self._wait_for_button(search_by, specific_treasure_quest_xpath)
         self._driver.find_element_by_xpath(specific_treasure_quest_xpath).click()
 
-    def treasure_quest_diff(self, treasure_quest_diff_num, treasure_quest_diff):
-        # treasure_quest_diff_num is in accordance to menu dict at when launching the bot
+    def treasure_quest_diff(self, quest_id):
+        # quest_id parsed from page source code in accordance to what a bot user chose
         search_by = By.XPATH
-
-        # TODO
-        # Get the element which contains data-chapter-id tag with
-        # pre-defined value
-        if treasure_quest_diff == 'Elemental Treasure Quests':
-            diff_quest_ids = {1: 59981,
-                              2: 59982,
-                              3: 59983,
-                              4: 59984,
-                              5: 59985,
-                              6: 59986}
-
-            quest_id = diff_quest_ids[treasure_quest_diff_num]
-
-        elif treasure_quest_diff == 'Shiny Slime Search!':
-            diff_quest_ids = {1: 40016,
-                              2: 40017,
-                              3: 40018}
-
-            quest_id = diff_quest_ids[treasure_quest_diff_num]
 
         treasure_quest_diff_xpath = f"//div[@data-chapter-id='{quest_id}']"
         self._wait_for_button(search_by, treasure_quest_diff_xpath)
@@ -315,3 +296,8 @@ class Press:
 
         self._wait_for_button(search_by, self._skip_button_class)
         self._driver.find_element_by_class_name(self._skip_button_class).click()
+
+    def usual_next(self):
+        search_by = By.CLASS_NAME
+        self._wait_for_button(search_by, self._next_button_class)
+        self._driver.find_element_by_class_name(self._next_button_class).click()
