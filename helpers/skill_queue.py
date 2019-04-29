@@ -136,8 +136,12 @@ class Skills:
                     actions_for_summon = [self._bot.press.summon_card,
                                           self._bot.press.summon_num,
                                           self._bot.press.confirm_summon_fight]
-                    for summ_action in actions_for_summon:
-                        summ_action()
+                    for idx, summ_action in enumerate(actions_for_summon, 1):
+                        # second step is choosing which summon
+                        if idx == 2:
+                            summ_action(ability_num)
+                        else:
+                            summ_action()
                         time.sleep(0.25)
                     summon_was_used = True
             except (selenium_err.exceptions.ElementNotVisibleException, selenium_err.exceptions.WebDriverException) as e:
