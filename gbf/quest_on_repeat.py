@@ -7,6 +7,12 @@ import random
 
 from selenium import common as selenium_err
 
+from dotenv import load_dotenv
+
+load_dotenv('config.env')
+
+SUPPORT_ELEMENT = int(os.getenv('SUPPORT_ELEMENT'))
+
 
 class QuestOnRepeat:
     def __init__(self, game_handler):
@@ -108,7 +114,7 @@ class QuestOnRepeat:
 
     def handle_pre_fight_support_summons(self):
         self.bot.wait.for_loading_screen()
-        self.bot.press.support_element(5)
+        self.bot.press.support_element(SUPPORT_ELEMENT)
         time.sleep(0.5)
         self.bot.press.first_support_summon()
         captcha = self.bot.handle.human_verification()
