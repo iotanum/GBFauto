@@ -85,7 +85,7 @@ class QuestOnRepeat:
         # then it means that it's a raid.
         raid = self.bot.handle.backup_request()
         if raid is False:
-            self.bot.wait.for_quest_advencment_screen(start=True)
+            # self.bot.wait.for_quest_advencment_screen(start=True)
             num_of_fights = self.count_quest_fight_parts()
         else:
             num_of_fights = 1
