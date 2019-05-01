@@ -129,10 +129,10 @@ class Handle:
                 elem.click()
                 time.sleep(1)
 
-            # If no popups for 2 seconds - exit while loop
+            # If no popups for 3.5 seconds - exit while loop
             # or if there was no popups
             popup_search_time = time.time()
-            if popup_search_time - popup_search_start > 2.5 or '#quest/supporter' in page_url:
+            if popup_search_time - popup_search_start > 3.5 or '#quest/supporter' in page_url:
                 # 'After fight popup' means that the bot finished a quest
                 if kill is True:
                     self._bot.total_fights += 1
