@@ -75,7 +75,7 @@ class Handle:
                     character_ability_change_text = self._convert_html_element_to_text(character_ability_change)
                     ability, change = character_ability_change_text.split(' from\n')
                     print(f"{ability}. ({change})")
-                    self._bot.press_usual_ok()
+                    self._bot.press.usual_ok()
 
                 elif 'open-fate' in popup_name:
                     fate_ep_description = popup.find('div', {'class': 'prt-description'}).text
