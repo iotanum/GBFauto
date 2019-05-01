@@ -110,6 +110,10 @@ class Handle:
                     print('Proud+ battle unclocked!')
                     self._bot.press.usual_close()
 
+                elif 'zenith-bonus-open' in popup_name:
+                    print('Something something new!')
+                    self._bot.press.usual_close()
+
                 else:
                     print("Unhandled popup!\nPage source and error picture in 'errors' folder.")
                     # Placeholder handling of unhandled popup

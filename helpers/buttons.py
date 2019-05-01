@@ -98,6 +98,10 @@ class Press:
         # Also I'm testing double_click on how it performs in game
         first_support_summon_xpath = f'//*[@id="cnt-quest"]/div[2]/div[{support_element_num + 3}]/div[1]/div[4]'
 
+        # Misc. support
+        if support_element_num == 7:
+            first_support_summon_xpath = f'//*[@id="cnt-quest"]/div[2]/div[{3}]/div[1]/div[4]'
+
         search_by = By.XPATH
 
         self._wait_for_button(search_by, first_support_summon_xpath)
