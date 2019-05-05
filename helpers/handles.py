@@ -111,8 +111,29 @@ class Handle:
                     self._bot.press.usual_close()
 
                 elif 'zenith-bonus-open' in popup_name:
-                    print('Something something new!')
+                    print('EMP upgrade!')
                     self._bot.press.usual_close()
+
+                elif 'zenith-open' in popup_name:
+                    print('Unlocked EMP!')
+                    self._bot.press.usual_ok()
+
+                elif 'newitem' in popup_name:
+                    item_img_url = popup.find('img', {'class': 'img-newitem'}).text
+                    item_name = popup.find('div', {'class': 'txt-newitem-name'}).text
+                    print(f"New item! '{item_name}'.\n{item_img_url}")
+
+                elif 'job-ability' in popup_name:
+                    skill_name = popup.find('div', {'class': 'txt-jobability-name'}).text
+                    print(f"Learned a new skill '{skill_name}'.")
+                    self._bot.press.usual_ok()
+
+                elif 'job-master' in popup_name:
+                    class_name = popup.find('div', {'class': 'prt-bonus-box'}).text
+                    class_name = str(class_name)[4:]
+                    gained_bonus = popup.find('div', {'class': 'txt-bonus-name'}).text
+                    print(f"Maxed out '{class_name}', gained '{gained_bonus}'!")
+                    self._bot.press.usual_ok()
 
                 else:
                     print("Unhandled popup!\nPage source and error picture in 'errors' folder.")
