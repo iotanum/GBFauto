@@ -19,6 +19,7 @@ class QuestOnRepeat:
         self.bot = game_handler
         self.driver = game_handler.driver
         self.repeat = False
+        self.wait_result = True
 
     def wait_for_repeatable_quest(self):
         print('\nWaiting for you to enter a repeatable quest...')
@@ -57,14 +58,25 @@ class QuestOnRepeat:
             else:
                 mobs_alive = False
 
-    def wait_before_fight(self, in_fight=False, raid=False):
-        if in_fight is True and raid is False:
-            self.bot.wait.for_quest_advencment_screen(start=True)
+    def wait_before_fight(self, fight_start=True):
+        element_found = False
 
-        self.bot.wait.for_loading_screen()
-        self.bot.wait.for_quest_advencment_screen()
-        self.bot.wait.for_fight_ready_screen()
-        self.bot.wait.for_fight_main_mask()
+        while True:
+            strainer = ss('div', attrs={'id': 'cnt-raid-information'})
+            parser = bs(self.driver.page_source, 'lxml', parse_only=strainer)
+
+            if fight_start is True:
+                attack_button_on = parser.find('div', class_='btn-attack-start display-on')
+                if attack_button_on:
+                    break
+            else:
+                # attack_button_off = parser.find('div', {'class': ['btn-attack-start', 'display-off']})
+                attack_button = parser.find('div', class_='btn-attack-start')
+                if attack_button or element_found is True:
+                    element_found = True
+                    attack_button_on = parser.find('div', class_='btn-attack-start display-on')
+                    if attack_button_on:
+                        break
 
     def count_quest_fight_parts(self):
         parser = bs(self.driver.page_source, 'lxml')
@@ -79,13 +91,12 @@ class QuestOnRepeat:
         return len(quest_parts)
 
     def handle_fight(self):
-        self.wait_before_fight()
+        self.wait_before_fight(fight_start=True)
 
         # If 'Quest' has backup request screen
         # then it means that it's a raid.
         raid = self.bot.handle.backup_request()
         if raid is False:
-            # self.bot.wait.for_quest_advencment_screen(start=True)
             num_of_fights = self.count_quest_fight_parts()
         else:
             num_of_fights = 1
@@ -99,15 +110,14 @@ class QuestOnRepeat:
 
         for fight_num, queue in enumerate(queues, 1):
             # Don't need to wait on first iteration
-            # TODO less clutter
             if fight_num != 1 or raid is True:
-                self.wait_before_fight(in_fight=True, raid=True if raid else False)
+                self.wait_before_fight(fight_start=False)
 
             print(f"Fight #{fight_num}.")
             self.bot.queue.do_queue(queue)
             self.finish_fight()
             self.bot.wait.for_fight_main_mask()
-            time.sleep(1.5)
+            time.sleep(1)
             self.bot.press.results_button()
             if fight_num == num_of_fights:
                 break
