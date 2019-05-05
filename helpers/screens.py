@@ -18,7 +18,8 @@ class Wait:
     def __init__(self, game_handler):
         self._driver = game_handler.driver
         self._Timeout = Timeout(self._driver)
-        self._loading_screen_xpath = "//div[@id='loading'][@style='display: none;']"
+        self._loading_screen_xpath_end = "//div[@id='loading'][@style='display: none;']"
+        self._loading_screen_xpath_start = "//div[@id='loading'][@style='display: block;']"
         self._fight_end_screen_xpath = "//div[@id='main-mask'][contains(@style,'display: none')]"
 
         self._loot_screen_xpath = "//div[@class='cnt-get-treasure'][contains(@style,'display: block')]"
@@ -33,6 +34,7 @@ class Wait:
         self._test_fight_ready_mask = "//div[@class='mask']" \
                                       "[contains(@style,'display: none')]"
         self._side_scroll_screen_entry_xpath = "//div[@class='anim-title anim'][contains(@style,'opacity: 0')]"
+        self.default_timeout = 5
 
     # Main method used by all other methods
     def _wait_for_screen(self, timeout, expected_behaviour, search_by, element_name):
@@ -40,12 +42,18 @@ class Wait:
         # print(screen, element_name, "+++")
         return screen
 
-    def for_loading_screen(self):
+    def for_loading_screen(self, full=False):
         # use with caution, only in methods that are triggered *AFTER* loading screen
         timeout = 10
         expected_behaviour = EC.presence_of_element_located
         search_by = By.XPATH
-        return self._wait_for_screen(timeout, expected_behaviour, search_by, self._loading_screen_xpath)
+
+        if full is False:
+            return self._wait_for_screen(timeout, expected_behaviour, search_by, self._loading_screen_xpath_end)
+        else:
+            self._wait_for_screen(timeout, expected_behaviour, search_by, self._loading_screen_xpath_start)
+            return self._wait_for_screen(timeout, expected_behaviour, search_by, self._loading_screen_xpath_end)
+
 
     def for_fight_end_screen(self):
         timeout = 10
@@ -63,20 +71,19 @@ class Wait:
         return self._wait_for_screen(timeout, expected_behaviour, search_by, self._loot_screen_xpath)
 
     def for_fight_ready_screen(self):
-        timeout = 5
         expected_behaviour = EC.presence_of_element_located
         search_by = By.XPATH
 
-        return self._wait_for_screen(timeout, expected_behaviour, search_by, self._fight_ready_screen_xpath)
+        return self._wait_for_screen(self.default_timeout, expected_behaviour, search_by,
+                                     self._fight_ready_screen_xpath)
 
     def for_quest_results_screen(self):
-        timeout = 5
         expected_behaviour = EC.url_contains("empty")
 
-        return self._Timeout.wait_for_element_no_search_by(timeout, expected_behaviour)
+        return self._Timeout.wait_for_element_no_search_by(self.default_timeout, expected_behaviour)
 
     def for_quest_advencment_screen(self, start=False):
-        timeout = 5
+        timeout = self.default_timeout
         expected_behaviour = EC.presence_of_element_located
         search_by = By.XPATH
 
@@ -90,18 +97,18 @@ class Wait:
                                                   self._quest_advancement_screen_on_xpath)
 
     def for_fight_main_mask(self):
-        timeout = 5
         expected_behaviour = EC.presence_of_element_located
         search_by = By.XPATH
 
-        return self._Timeout.wait_for_element(timeout, expected_behaviour, search_by, self._fight_main_mask_xpath)
+        return self._Timeout.wait_for_element(self.default_timeout, expected_behaviour, search_by,
+                                              self._fight_main_mask_xpath)
 
     def for_test_fight_ready_mask(self):
-        timeout = 3
         expected_behaviour = EC.presence_of_element_located
         search_by = By.XPATH
 
-        return self._Timeout.wait_for_element(timeout, expected_behaviour, search_by, self._test_fight_ready_mask)
+        return self._Timeout.wait_for_element(self.default_timeout, expected_behaviour, search_by,
+                                              self._test_fight_ready_mask)
 
     def for_side_scroll_entry(self):
         timeout = 10
