@@ -144,6 +144,7 @@ class Handle:
 
                 else:
                     print("Unhandled popup!\nPage source and error picture in 'errors' folder.")
+                    print(f"Popup element: {popup}")
                     # Placeholder handling of unhandled popup
                     self._driver.find_element_by_class_name(popup_button).click()
 
