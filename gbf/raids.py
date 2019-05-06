@@ -91,9 +91,9 @@ class Raids:
                     pass
                 times_refreshed = 0
 
-            # battle_finished = self.bot.popup.battle_concluded()
-            # if battle_finished is True:
-            #     self.bot.press.usual_ok()
+            battle_finished = self.bot.popup.battle_concluded()
+            if battle_finished is True:
+                self.bot.press.usual_ok()
 
             if any(0 < hp <= 50 for hp in raid_boss_hps) and made_a_leech_hit is False:
                 try:
@@ -110,15 +110,6 @@ class Raids:
                 raid_boss_is_alive = False
             time.sleep(0.15)
 
-    def handle_not_enough_ep(self):
-        ep_popup = self.bot.popup.not_enough_x()
-        rand = random.randint(1, 5)
-
-        if ep_popup is True:
-            self.bot.action.use_potions_or_pills(rand)
-            self.bot.press.usual_ok()
-            return True
-
     def get_raid_id(self):
         # Get a RAID ID from raid_finder
         self.raid_id = self.raid_finder.get_raid(self.raid_name)
@@ -130,6 +121,7 @@ class Raids:
 
     def handle_entering_raid(self):
         self.type_and_join_raid()
+        self.handle_not_enough_ep()
         # Check if everything is ok after typing and entering the raid
         popup = self.bot.handle.pre_fight_popup()
         # If there was a popup, try another raid/repeat last instruction
@@ -185,20 +177,28 @@ class Raids:
         #     except selenium_err.exceptions.NoSuchElementException:
         #         self.bot.press.results_button()
 
+    def convert_seconds_to_hms_format(self):
+        seconds = round(self.bot.run_time(), 2)
+        minutes, seconds = divmod(seconds, 60)
+        hours, minutes = divmod(minutes, 60)
+
+        return int(round(hours, 2)), int(round(minutes, 2)), int(round(seconds, 2))
+
     def handle_after_fight(self):
         self.bot.wait.for_loading_screen()
         # if 'empty' not in str(self.driver.current_url):
         self.bot.handle.after_fight_popups(kill=True)
-            # self.handle_extended_mastery()
-            # self.handle_new_item_screen()
-            # self.handle_achievement_screen()
-            # print(f"Total kills: {self.total_kills}, XP: {self.total_xp}, Pendants: {self.total_pendants}")
+
+        hours, minutes, seconds = self.convert_seconds_to_hms_format()
+        avg_time_per_quest = round(self.bot.run_time() / self.bot.total_fights, 2)
+        print('-----------------------------------------------------------------------')
+        print(f"Total fights: {self.bot.total_fights}, EXP: {self.bot.total_exp}, Rank points: {self.bot.total_ranks}\n"
+              f"Pendants: {self.bot.total_pendants}\n"
+              f"Running for {hours}h:{minutes}min:{seconds}s, "
+              f"Average time per quest: {avg_time_per_quest}s")
+        print('-----------------------------------------------------------------------')
         self.bot.wait.for_loot_screen()
         return
-        # self.bot.handle.after_fight_popups()
-            # self.handle_friend_request()
-        # else:
-        #     self.bot.press.quest_button_after_fight_no_loot()
 
     def handle_to_raids(self):
         self.bot.wait.for_loading_screen()
@@ -206,6 +206,15 @@ class Raids:
         self.driver.execute_script("window.location.href = '#quest/assist'")
         # And then press the 'Enter ID' tab
         self.bot.press.enter_raid_id()
+
+    def handle_not_enough_ep(self):
+        self.bot.wait.for_loading_screen()
+        not_enough_ep = self.bot.popup.not_enough_x()
+        if not_enough_ep is True:
+            pill_amount = random.randint(1, 10)
+            self.bot.action.use_potions_or_pills(pill_amount)
+            self.bot.wait.for_loading_screen()
+            self.bot.press.usual_ok()
 
     def set_raid_name(self, raid_boss_name):
         self.raid_name = raid_boss_name
