@@ -19,6 +19,11 @@ class Handle:
         self._driver = game_handler.driver
 
     def after_fight_popups(self, kill=False):
+        # After the page loads, there's no way to 'tell' if there will be
+        # x popup or y popup, its load time depends on what popup it is
+        # so plain old 'sleep' will do the trick
+        time.sleep(3)
+
         popup_search_start = time.time()
 
         while True:
@@ -200,13 +205,67 @@ class Handle:
 
                 elif 'Access Verification' in popup_header:
                     self.human_verification()
+                    return 'verification'
 
-            if popup_search_time - popup_search_start > 2:
+            if popup_search_time - popup_search_start > 1:
                 # If there was a pre-fight popup, need to return a bool
                 # and handle it appropriately (ex.: repeat last instruction)
                 if popup_present is True:
                     return True
                 return False
+
+    def pre_fight_support_summons(self):
+        self._bot.wait.for_loading_screen()
+
+        instructions_to_run = {'support_element': self._bot.press.support_element,
+                               'first_summon': self._bot.press.first_support_summon,
+                               'confirm_summon': self._bot.press.confirm_support_summon}
+
+        instruction_to_run = 'support_element'
+
+        while True:
+            if instruction_to_run != 'confirm_summon':
+                instructions_to_run[instruction_to_run](SUPPORT_ELEMENT)
+            else:
+                instructions_to_run[instruction_to_run]()
+                time.sleep(0.5)
+
+            # Then check for popups/verification and handle accordingly
+            popup = self.pre_fight_popup()
+            # Repeat last instruction if verification
+            if popup == 'verification':
+                instruction_to_run = instruction_to_run
+            # Return if popup was present (needs to be handled elsewhere)
+            elif popup is True:
+                return False
+            # If no popup - continue with the 'next' instruction to be ran
+            else:
+                next_instruction_num = list(instructions_to_run.keys()).index(instruction_to_run) + 1
+                try:
+                    next_instruction = list(instructions_to_run)[next_instruction_num]
+                    instruction_to_run = next_instruction
+                except IndexError:
+                    break
+
+    def wait_before_fight(self, fight_start=True):
+        element_found = False
+
+        while True:
+            strainer = ss('div', attrs={'id': 'cnt-raid-information'})
+            parser = bs(self._driver.page_source, 'lxml', parse_only=strainer)
+
+            if fight_start is True:
+                attack_button_on = parser.find('div', class_='btn-attack-start display-on')
+                if attack_button_on:
+                    break
+            else:
+                # attack_button_off = parser.find('div', {'class': ['btn-attack-start', 'display-off']})
+                attack_button = parser.find('div', class_='btn-attack-start')
+                if attack_button or element_found is True:
+                    element_found = True
+                    attack_button_on = parser.find('div', class_='btn-attack-start display-on')
+                    if attack_button_on:
+                        break
 
     def backup_request(self):
         backup_request = self._bot.popup.backup_request()
@@ -224,8 +283,11 @@ class Handle:
                 else:
                     try:
                         self._bot.press.usual_cancel()
-                    except selenium_err.exceptions.NoSuchElementException:
+                    except selenium_err.exceptions.ElementNotVisibleException:
                         self._bot.press.usual_ok()
+
+                # Backup screen takes time to fully disappear from the DOM
+                time.sleep(0.8)
             except selenium_err.exceptions.TimeoutException:
                 pass
 

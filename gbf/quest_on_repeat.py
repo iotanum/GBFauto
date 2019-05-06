@@ -7,12 +7,6 @@ import random
 
 from selenium import common as selenium_err
 
-from dotenv import load_dotenv
-
-load_dotenv('config.env')
-
-SUPPORT_ELEMENT = int(os.getenv('SUPPORT_ELEMENT'))
-
 
 class QuestOnRepeat:
     def __init__(self, game_handler):
@@ -58,26 +52,6 @@ class QuestOnRepeat:
             else:
                 mobs_alive = False
 
-    def wait_before_fight(self, fight_start=True):
-        element_found = False
-
-        while True:
-            strainer = ss('div', attrs={'id': 'cnt-raid-information'})
-            parser = bs(self.driver.page_source, 'lxml', parse_only=strainer)
-
-            if fight_start is True:
-                attack_button_on = parser.find('div', class_='btn-attack-start display-on')
-                if attack_button_on:
-                    break
-            else:
-                # attack_button_off = parser.find('div', {'class': ['btn-attack-start', 'display-off']})
-                attack_button = parser.find('div', class_='btn-attack-start')
-                if attack_button or element_found is True:
-                    element_found = True
-                    attack_button_on = parser.find('div', class_='btn-attack-start display-on')
-                    if attack_button_on:
-                        break
-
     def count_quest_fight_parts(self):
         parser = bs(self.driver.page_source, 'lxml')
 
@@ -91,17 +65,15 @@ class QuestOnRepeat:
         return len(quest_parts)
 
     def handle_fight(self):
-        self.wait_before_fight(fight_start=True)
+        self.bot.handle.wait_before_fight(fight_start=True)
 
-        # If 'Quest' has backup request screen
+        # If 'Quest' has a backup request screen
         # then it means that it's a raid.
         raid = self.bot.handle.backup_request()
         if raid is False:
             num_of_fights = self.count_quest_fight_parts()
         else:
             num_of_fights = 1
-            # Raid screen takes time to fully disappear
-            time.sleep(0.8)
 
         first_queue_from_config = os.getenv("QUEUE_FIRST_FIGHT")
         second_queue_from_config = os.getenv("QUEUE_SECOND_FIGHT")
@@ -111,7 +83,7 @@ class QuestOnRepeat:
         for fight_num, queue in enumerate(queues, 1):
             # Don't need to wait on first iteration
             if fight_num != 1 or raid is True:
-                self.wait_before_fight(fight_start=False)
+                self.bot.handle.wait_before_fight(fight_start=False)
 
             print(f"Fight #{fight_num}.")
             self.bot.queue.do_queue(queue)
@@ -121,17 +93,6 @@ class QuestOnRepeat:
             self.bot.press.results_button()
             if fight_num == num_of_fights:
                 break
-
-    def handle_pre_fight_support_summons(self):
-        self.bot.wait.for_loading_screen()
-        self.bot.press.support_element(SUPPORT_ELEMENT)
-        time.sleep(0.5)
-        self.bot.press.first_support_summon(SUPPORT_ELEMENT)
-        captcha = self.bot.handle.human_verification()
-        # if verification is required - need to repeat the last step
-        if captcha is True:
-            self.bot.press.first_support_summon()
-        self.bot.press.confirm_support_summon()
 
     def convert_seconds_to_hms_format(self):
         seconds = round(self.bot.run_time(), 2)
@@ -143,10 +104,6 @@ class QuestOnRepeat:
     def handle_after_fight(self):
         self.bot.wait.for_loading_screen()
 
-        # After the page loads, there's no way to 'tell' if there will be
-        # x popup or y popup, it load time depends on what popup it is
-        # so plain old 'sleep' will do the trick
-        time.sleep(3)
         self.bot.handle.after_fight_popups(kill=True)
 
         hours, minutes, seconds = self.convert_seconds_to_hms_format()
@@ -181,7 +138,7 @@ class QuestOnRepeat:
             self.do_repeatable_quest()
 
     def handle_pre_fight(self):
-        self.handle_pre_fight_support_summons()
+        self.bot.handle.pre_fight_support_summons()
         self.bot.handle.pre_fight_screens()
 
     def do_repeatable_quest(self):
