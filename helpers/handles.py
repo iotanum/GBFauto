@@ -303,17 +303,25 @@ class Handle:
         return sum(gain)
 
     def _count_after_fight_xp(self, xp_popup_element):
+        # Declare 'span' element names for appropriate after fight gains
+        # First element: non-bonus points, second element: bonus points (during events)
+        rank = ['txt-rankpt-plus', 'exp-bonus']
+        exp = ['txt-exp-plus', 'host-bonus']
+        pendants = ['txt-mbp-plus', 'txt-add-bonus']
+
         gains = xp_popup_element.find('div', {'class': 'prt-exp-gain'}).find_all('span')
 
         if gains:
             for gain in gains:
                 if gain is not None:
-                    gain_name = str(gain['class'])
-                    gain = self._convert_gain_to_int(gain.text)
-                    if 'rank' in gain_name:
-                        self._bot.total_ranks += gain
-                    elif 'exp' in gain_name:
-                        self._bot.total_exp += gain
+                    gain_name = str(gain['class']).lower()
+                    gain_num = self._convert_gain_to_int(gain.text)
+                    if any(elem_name in gain_name for elem_name in rank):
+                        self._bot.total_ranks += gain_num
+                    elif any(elem_name in gain_name for elem_name in exp):
+                        self._bot.total_exp += gain_num
+                    elif any(elem_name in gain_name for elem_name in pendants):
+                        self._bot.total_pendants += gain_num
 
     def _convert_html_element_to_text(self, html_element):
         return str(html_element).strip(' \t\n')
