@@ -34,7 +34,6 @@ class Raids:
         # monitors and handles attacks, attacks the boss if it's below 50% hp and then just
         # waits until it's dead
 
-        # TODO
         self.bot.handle.wait_before_fight(fight_start=True)
         self.bot.handle.backup_request()
         self.bot.handle.wait_before_fight(fight_start=False)
@@ -143,7 +142,6 @@ class Raids:
     def handle_return_page(self):
         self.bot.wait.for_loading_screen()
         current_page = str(self.driver.current_url)
-        print(current_page)
 
         if '#mypage' in current_page:
             self.handle_to_raids()
@@ -154,29 +152,24 @@ class Raids:
             return
         elif '#quest' in current_page:
             return
+        elif 'empty' in current_page:
+            return
         else:
             sys.exit(f"Returned to unknown destination: {current_page}")
 
     def handle_raid_mechanics(self):
         self.bot.wait.for_loading_screen()
-        current_url = str(self.driver.current_url)
+
         # Happens ever so often that after joining the raid
         # raid boss is immediately killed.
-        if 'empty' in current_url:
+        page = self.handle_return_page()
+        if page is None:
             print("Wasn't fast enough to join the read - Raid Boss is dead.")
             return False
 
         success = self.monitor_raid_boss_hp()
         if success is not False:
             self.bot.press.results_button()
-        # except selenium_err.exceptions.NoSuchElementException:
-        #     print('After refresh I landed in results page.')
-        # except selenium_err.exceptions.ElementNotVisibleException:
-        #     try:
-        #         self.bot.press.attack_button()
-        #         self.bot.press.results_button()
-        #     except selenium_err.exceptions.NoSuchElementException:
-        #         self.bot.press.results_button()
 
     def convert_seconds_to_hms_format(self):
         seconds = round(self.bot.run_time(), 2)
@@ -187,7 +180,7 @@ class Raids:
 
     def handle_after_fight(self):
         self.bot.wait.for_loading_screen()
-        # if 'empty' not in str(self.driver.current_url):
+
         self.bot.handle.after_fight_popups(kill=True)
 
         hours, minutes, seconds = self.convert_seconds_to_hms_format()
@@ -198,7 +191,11 @@ class Raids:
               f"Running for {hours}h:{minutes}min:{seconds}s, "
               f"Average time per quest: {avg_time_per_quest}s")
         print('-----------------------------------------------------------------------')
-        self.bot.wait.for_loot_screen()
+
+        page = self.handle_return_page()
+        if page is not None:
+            self.bot.wait.for_loot_screen()
+
         return
 
     def handle_to_raids(self):
