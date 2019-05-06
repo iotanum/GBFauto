@@ -117,6 +117,7 @@ class Raids:
     def type_and_join_raid(self):
         self.get_raid_id()
         self.bot.action.input_raid_id(self.raid_id)
+        time.sleep(0.5)
         self.driver.find_element_by_class_name("btn-post-key").click()
 
     def handle_entering_raid(self):
@@ -147,8 +148,8 @@ class Raids:
         if '#mypage' in current_page:
             self.handle_to_raids()
             return ['enter_raid_func']
-        # elif 'supporter_raid' in current_page:
-        #     return ['select_first_summon_func']
+        elif '#raid_multi' in current_page:
+            return True
         elif '#result_multi' in current_page:
             return
         elif '#quest' in current_page:
