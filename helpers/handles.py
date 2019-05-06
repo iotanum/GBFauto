@@ -142,6 +142,9 @@ class Handle:
                     print(f"Maxed out '{class_name}', gained '{gained_bonus}'!")
                     self._bot.press.usual_ok()
 
+                elif 'pop-error' in popup_name:
+                    self._bot.press.usual_ok()
+
                 else:
                     print("Unhandled popup!\nPage source and error picture in 'errors' folder.")
                     print(f"Popup element: {popup}")
@@ -205,6 +208,7 @@ class Handle:
 
                 if 'Battle' in popup_header:
                     self._bot.press.usual_ok()
+                    return True
 
                 elif 'Access Verification' in popup_header:
                     self.human_verification()
@@ -213,9 +217,7 @@ class Handle:
             if popup_search_time - popup_search_start > 1:
                 # If there was a pre-fight popup, need to return a bool
                 # and handle it appropriately (ex.: repeat last instruction)
-                if popup_present is True:
-                    return True
-                return False
+                break
 
     def pre_fight_support_summons(self):
         self._bot.wait.for_loading_screen()
