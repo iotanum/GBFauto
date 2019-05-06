@@ -5,12 +5,14 @@ import os
 from selenium import common as selenium_err
 
 from bs4 import BeautifulSoup as bs
+from bs4 import SoupStrainer as ss
 from dotenv import load_dotenv
 
 load_dotenv('config.env')
 
 EXTREME_BATTLES = int(os.getenv('EXTREME_BATTLES'))
 REQUEST_BACKUP = int(os.getenv('REQUEST_BACKUP'))
+SUPPORT_ELEMENT = int(os.getenv('SUPPORT_ELEMENT'))
 
 
 class Handle:
