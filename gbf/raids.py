@@ -169,7 +169,11 @@ class Raids:
 
         success = self.monitor_raid_boss_hp()
         if success is not False:
-            self.bot.press.results_button()
+            try:
+                self.bot.press.results_button()
+            except selenium_err.exceptions.ElementNotVisibleException:
+                self.driver.refresh()
+                self.bot.wait.for_loading_screen()
 
     def convert_seconds_to_hms_format(self):
         seconds = round(self.bot.run_time(), 2)
