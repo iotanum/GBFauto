@@ -164,7 +164,7 @@ class Handle:
             # If no popups for 3.5 seconds - exit while loop
             # or if there was no popups
             popup_search_time = time.time()
-            if popup_search_time - popup_search_start > 3.5 or '#quest/supporter' in page_url:
+            if popup_search_time - popup_search_start > 3.5 or 'result' not in page_url:
                 # 'After fight popup' means that the bot finished a quest
                 if kill is True:
                     self._bot.total_fights += 1
@@ -254,6 +254,7 @@ class Handle:
 
     def wait_before_fight(self, fight_start=True):
         element_found = False
+        start = time.time()
 
         while True:
             strainer = ss('div', attrs={'id': 'cnt-raid-information'})
@@ -271,6 +272,9 @@ class Handle:
                     attack_button_on = parser.find('div', class_='btn-attack-start display-on')
                     if attack_button_on:
                         break
+
+            if time.time() - start > 15:
+                break
 
     def backup_request(self):
         backup_request = self._bot.popup.backup_request()
