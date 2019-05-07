@@ -154,8 +154,8 @@ class Raids:
             return
         elif 'empty' in current_page:
             return
-        else:
-            sys.exit(f"Returned to unknown destination: {current_page}")
+        elif 'supporter_raid' in current_page:
+            return
 
     def handle_raid_mechanics(self):
         self.bot.wait.for_loading_screen()
@@ -164,6 +164,7 @@ class Raids:
         # raid boss is immediately killed.
         page = self.handle_return_page()
         if page is None:
+            print(self.driver.current_url)
             print("Wasn't fast enough to join the read - Raid Boss is dead.")
             return False
 
@@ -207,6 +208,7 @@ class Raids:
         # JS my way to 'raids' page
         self.driver.execute_script("window.location.href = '#quest/assist'")
         # And then press the 'Enter ID' tab
+        time.sleep(0.5)
         self.bot.press.enter_raid_id()
 
     def handle_not_enough_ep(self):
