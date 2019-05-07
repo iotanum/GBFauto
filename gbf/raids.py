@@ -86,7 +86,7 @@ class Raids:
             if times_refreshed == 2:
                 try:
                     self.bot.press.attack_button()
-                except selenium_err.exceptions.NoSuchElementException:
+                except:
                     pass
                 times_refreshed = 0
 
@@ -151,6 +151,7 @@ class Raids:
         elif '#result_multi' in current_page:
             return
         elif '#quest' in current_page:
+            self.driver.refresh()
             return
         elif 'empty' in current_page:
             return
