@@ -45,7 +45,7 @@ class Raids:
         waiting_for_kill = False
         old_raid_boss_hp = []
         hp_timer = time.time()
-        stale_hp_timer = time.time()
+        stale_hp_timer = 0
         times_refreshed = 0
 
         while raid_boss_is_alive is True:
@@ -65,23 +65,29 @@ class Raids:
             # monitor for how long raid boss hp/hps hasn't changed
             if old_raid_boss_hp != raid_boss_hps:
                 old_raid_boss_hp = raid_boss_hps
-                # If HP changed - reset the timer
+                # If HP has changed - reset the timer
+                # hp_timer = time, when HP has changed
                 hp_timer = time.time()
             else:
-                stale_hp_timer = time.time()
+                # If HP hasn't changed - subtract hp_timer with current time
+                # = seconds for how long HP hasn't changed
+                stale_hp_timer = time.time() - hp_timer
 
-            if stale_hp_timer - hp_timer >= 60:
+            # If stale_hp_timer is more or equal 60 seconds - refresh the page.
+            if stale_hp_timer >= 60:
                 print("Raid boss HP didn't change for 60 seconds, refreshing.")
+                stale_hp_timer = 0
+                hp_timer = time.time()
+                times_refreshed += 1
                 self.driver.refresh()
-                self.bot.wait.for_loading_screen()
+                self.bot.handle.wait_before_fight(fight_start=False)
+                # Reset everything after refresh
                 self.bot.handle.backup_request()
                 # If this handle returns 'none' it means that the raid boss is dead
                 # or bot is outside raid boss battle
                 page = self.handle_return_page()
                 if page is None:
                     return False
-                stale_hp_timer = 0
-                times_refreshed += 1
 
             if times_refreshed == 2:
                 try:
