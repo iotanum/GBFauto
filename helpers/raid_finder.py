@@ -4,6 +4,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.by import By
 from selenium import common as selenium_err
+from selenium.webdriver.common.keys import Keys
 
 import sys
 import time
@@ -69,8 +70,9 @@ class RaidFinder:
         print(f"Searching for '{self.raid_name}'...")
         while found is False:
             # It likes to hang for some reason ?
-            if time.time() - start_time > 30 and len(self.raid) < 2:
-                self.driver.refresh()
+            if time.time() - start_time >= 30:
+                # Ghetto refresh smh
+                self.driver.find_element_by_tag_name('body').send_keys(Keys.CONTROL + Keys.F5)
                 self.wait_for_element(By.XPATH, '//*[@id="gbfrf-dialog__follow"]/ul/li[1]/span/span[2]')
                 start_time = time.time()
 
