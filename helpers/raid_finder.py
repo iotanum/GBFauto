@@ -19,7 +19,6 @@ class RaidFinder:
         self.driver = webdriver.Chrome(executable_path='utils/chromedriver.exe', options=self.chrome_options)
         self.raid_finder_url = "https://gbf-raidfinder.aikats.us/"
         self.raid = []
-        self.old_raid_id = 'baton'
         self.window_already_closed = False
         self.launched = True
         self.set_up()
@@ -64,11 +63,10 @@ class RaidFinder:
 
     def parse_for_ids(self):
         self.wait_fo_ids()
-        found = False
         start_time = time.time()
 
         print(f"Searching for '{self.raid_name}'...")
-        while found is False:
+        while True:
             # It likes to hang for some reason ?
             if time.time() - start_time >= 30:
                 # Ghetto refresh smh
@@ -82,11 +80,11 @@ class RaidFinder:
             raid = soup.find('li', {'data-raidid': True})
             raid_id = raid['data-raidid']
 
-            if self.old_raid_id != raid_id:
+            if self.raid[0] != raid_id:
                 self.raid.insert(1, raid_id)
-                self.old_raid_id = raid_id
-            elif len(self.raid) == 2:
-                found = True
+
+            if len(self.raid) == 2:
+                break
 
     def wait_fo_ids(self):
         wait = WebDriverWait(self.driver, 3)
@@ -104,8 +102,14 @@ class RaidFinder:
         return rid
 
     def clean_raid_var(self):
-        self.raid = []
-        self.raid.insert(0, self.old_raid_id)
+        # Try/Except for the initial RaidFinder launch
+        # placeholder variable
+        try:
+            # Change 1st element index to 0 and remove it
+            self.raid.insert(0, self.raid[1])
+            del self.raid[1:]
+        except IndexError:
+            self.raid.insert(0, '12345678')
 
     def handle_clicks(self, element):
         if element.is_displayed():
