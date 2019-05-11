@@ -42,6 +42,15 @@ class Handle:
 
             page_url = str(self._driver.current_url)
 
+            # If no popups for 3.5 seconds - exit while loop
+            # or if there was no popups
+            popup_search_time = time.time()
+            if popup_search_time - popup_search_start > 3.5 or 'result' not in page_url:
+                # 'After fight popup' means that the bot finished a quest
+                if kill is True:
+                    self._bot.total_fights += 1
+                break
+
             # Extracts the button/buttons inside the popup
             if popup:
                 popup_name = str(popup['class'])
@@ -126,9 +135,10 @@ class Handle:
                     self._bot.press.usual_ok()
 
                 elif 'newitem' in popup_name:
-                    item_img_url = popup.find('img', {'class': 'img-newitem'}).text
+                    item_img_url = popup.find('img', {'class': 'img-newitem'})
                     item_name = popup.find('div', {'class': 'txt-newitem-name'}).text
                     print(f"New item! '{item_name}'.\n{item_img_url}")
+                    self._bot.press.usual_ok()
 
                 elif 'job-ability' in popup_name:
                     skill_name = popup.find('div', {'class': 'txt-jobability-name'}).text
@@ -160,15 +170,6 @@ class Handle:
                 elem = self._driver.find_element_by_class_name('onm-anim-parts')
                 elem.click()
                 time.sleep(1)
-
-            # If no popups for 3.5 seconds - exit while loop
-            # or if there was no popups
-            popup_search_time = time.time()
-            if popup_search_time - popup_search_start > 3.5 or 'result' not in page_url:
-                # 'After fight popup' means that the bot finished a quest
-                if kill is True:
-                    self._bot.total_fights += 1
-                break
 
     def pre_fight_screens(self):
         popup_search_start = time.time()
