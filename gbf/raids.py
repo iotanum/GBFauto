@@ -135,12 +135,15 @@ class Raids:
             self.type_and_join_raid()
         # If everything is OK - continue picking support
         else:
-            # Try picking support summon
-            success = self.bot.handle.pre_fight_support_summons()
-            if success is False:
-                # If there was a popup - move bot to 'raids' page
-                self.handle_to_raids()
-                # And repeat whole function
+            if '#quest/supporter' in str(self.driver.current_url):
+                # Try picking support summon
+                success = self.bot.handle.pre_fight_support_summons()
+                if success is False:
+                    # If there was a popup - move bot to 'raids' page
+                    self.handle_to_raids()
+                    # And repeat whole function
+                    self.handle_entering_raid()
+            else:
                 self.handle_entering_raid()
 
         print(f"Joined raid '{self.raid_id}'.")
@@ -220,12 +223,13 @@ class Raids:
 
     def handle_not_enough_ep(self):
         self.bot.wait.for_loading_screen()
-        not_enough_ep = self.bot.popup.not_enough_x()
-        if not_enough_ep is True:
-            pill_amount = random.randint(1, 10)
-            self.bot.action.use_potions_or_pills(pill_amount)
-            self.bot.wait.for_loading_screen()
-            self.bot.press.usual_ok()
+        if '#quest/supporter' not in str(self.driver.current_url):
+            not_enough_ep = self.bot.popup.not_enough_x()
+            if not_enough_ep is True:
+                pill_amount = random.randint(1, 10)
+                self.bot.action.use_potions_or_pills(pill_amount)
+                self.bot.wait.for_loading_screen()
+                self.bot.press.usual_ok()
 
     def set_raid_name(self, raid_boss_name):
         self.raid_name = raid_boss_name
