@@ -14,6 +14,7 @@ class QuestOnRepeat:
         self.driver = game_handler.driver
         self.repeat = False
         self.wait_result = True
+        self.raid_battle = False
 
     def wait_for_repeatable_quest(self):
         print('\nWaiting for you to enter a repeatable quest...')
@@ -33,6 +34,8 @@ class QuestOnRepeat:
 
     def finish_fight(self):
         mobs_alive = True
+        refreshed = False
+
         # remove the battle scene/advice element from the fight, less clutter
         self.remove_battle_scene_element()
 
@@ -47,6 +50,23 @@ class QuestOnRepeat:
                 try:
                     self.bot.press.attack_button()
                     self.bot.wait.for_fight_main_mask()
+                    if self.raid_battle is True and refreshed is False:
+                        refreshed = True
+                        self.bot.handle.wait_after_queue_refresh()
+                        self.driver.refresh()
+                        start = time.time()
+                        current_url = str(self.driver.current_url)
+
+                        while True:
+                            # Check if url was changed after refreshing
+                            after_refresh_url = str(self.driver.current_url)
+                            if current_url != after_refresh_url:
+                                return True
+
+                            if time.time() - start >= 3:
+                                self.bot.handle.backup_request()
+                                break
+
                 except (selenium_err.exceptions.NoSuchElementException, selenium_err.exceptions.WebDriverException):
                     pass
             else:
@@ -69,8 +89,8 @@ class QuestOnRepeat:
 
         # If 'Quest' has a backup request screen
         # then it means that it's a raid.
-        raid = self.bot.handle.backup_request()
-        if raid is False:
+        self.raid_battle = self.bot.handle.backup_request()
+        if self.raid_battle is False:
             num_of_fights = self.count_quest_fight_parts()
         else:
             num_of_fights = 1
@@ -82,16 +102,18 @@ class QuestOnRepeat:
 
         for fight_num, queue in enumerate(queues, 1):
             # Don't need to wait on first iteration
-            if fight_num != 1 or raid is True:
+            if fight_num != 1 or self.raid_battle is True:
                 self.bot.handle.wait_before_fight(fight_start=False)
 
             print(f"Fight #{fight_num}.")
             self.bot.queue.do_queue(queue)
-            self.finish_fight()
-            self.bot.wait.for_fight_main_mask()
-            time.sleep(1)
-            self.bot.press.results_button()
+            fight_ended = self.finish_fight()
+            if fight_ended is not True:
+                self.bot.wait.for_fight_main_mask()
+                time.sleep(1)
+                self.bot.press.results_button()
             if fight_num == num_of_fights:
+                self.raid_battle = False
                 break
 
     def convert_seconds_to_hms_format(self):
