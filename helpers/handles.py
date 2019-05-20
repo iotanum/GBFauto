@@ -155,6 +155,17 @@ class Handle:
                 elif 'pop-error' in popup_name:
                     self._bot.press.usual_ok()
 
+                elif 'get-abilityitem' in popup_name:
+                    popup_header = popup.find('div', {'class': 'prt-popup-header'}).text
+                    print(f"{popup_header}")
+                    self._bot.press.usual_ok()
+
+                elif 'update-beginner-mission-teamraid' in popup_name:
+                    mission_description = popup.find('div', {'class': 'txt-mission-description'}).text
+                    mission_progress = popup.find('div', {'class': 'prt-mission-progress'}).text
+                    print(mission_description, f"({mission_progress})")
+                    self._bot.press.usual_close()
+
                 else:
                     print("Unhandled popup!\nPage source and error picture in 'errors' folder.")
                     print(f"Popup element: {popup}")
@@ -277,6 +288,28 @@ class Handle:
             if time.time() - start > 15:
                 break
 
+            # Eat less CPU
+            time.sleep(0.2)
+
+    def wait_after_queue_refresh(self):
+        start = time.time()
+
+        while True:
+            # Wait for the skill overlay to 'hide' (that means it's finished) and exit
+            # the loop
+            strainer = ss('div', attrs={'id': 'cnt-raid-information'})
+            parser = bs(self._driver.page_source, 'lxml', parse_only=strainer)
+
+            finished_queue = parser.find('div', class_='prt-ability-rail-overlayer hide')
+            if finished_queue:
+                break
+
+            if time.time() - start > 50:
+                break
+
+            # Eat less CPU
+            time.sleep(0.2)
+
     def backup_request(self):
         backup_request = self._bot.popup.backup_request()
 
@@ -294,7 +327,10 @@ class Handle:
                     try:
                         self._bot.press.usual_cancel()
                     except selenium_err.exceptions.ElementNotVisibleException:
-                        self._bot.press.usual_ok()
+                        try:
+                            self._bot.press.usual_ok()
+                        except:
+                            pass
 
                 # Backup screen takes time to fully disappear from the DOM
                 time.sleep(0.8)
