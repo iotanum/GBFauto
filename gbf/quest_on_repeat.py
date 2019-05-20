@@ -114,7 +114,6 @@ class QuestOnRepeat:
                 self.bot.handle.wait_results_button()
                 self.bot.press.results_button()
             if fight_num == num_of_fights:
-                self.raid_battle = False
                 break
 
     def convert_seconds_to_hms_format(self):
@@ -135,13 +134,17 @@ class QuestOnRepeat:
               f"Running for {hours}h:{minutes}min:{seconds}s, "
               f"Average time per quest: {avg_time_per_quest}s")
 
-        self.bot.wait.for_loot_screen()
         self.bot.press.play_again_quest()
 
-        nightmare_battle = self.bot.handle.after_fight_popups()
-        if nightmare_battle is True:
-            self.repeat = False
-            return
+        self.bot.handle.after_fight_popups()
+
+        if self.raid_battle is False:
+            nightmare_battle = self.bot.handle.after_fight_popups()
+            if nightmare_battle is True:
+                self.repeat = False
+                return
+
+            self.raid_battle = False
 
         if '#quest/supporter' not in str(self.driver.current_url):
             self.handle_not_enough_ap()
