@@ -64,6 +64,8 @@ class QuestOnRepeat:
                                 return True
 
                             if time.time() - start >= 3:
+                                self.bot.handle.wait_before_fight(fight_start=True)
+
                                 self.bot.handle.backup_request()
                                 break
 
