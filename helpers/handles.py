@@ -31,6 +31,7 @@ class Handle:
         while True:
             parser = bs(self._driver.page_source, 'lxml')
             popup = parser.find('div', {'class': ['pop-show']})
+            loot = parser.find('div', {'class': 'cnt-get-treasure', 'style': 'display: block;'})
 
             # Ignore 'Not enough AP/EP' popup for now.
             if popup is not None and 'pop-stamina' in popup['class']:
@@ -49,6 +50,15 @@ class Handle:
                 # 'After fight popup' means that the bot finished a quest
                 if kill is True:
                     self._bot.total_fights += 1
+                break
+
+            # Exit loop if 'loot' screen has appeared.
+            # This means that the first bunch of popups after the fight
+            # are done. For ex.: exp, event stuff, etc.
+            # Also duplicate if statement for exiting the loop
+            # because of easier readability
+            if loot and kill is True:
+                self._bot.total_fights += 1
                 break
 
             # Extracts the button/buttons inside the popup
