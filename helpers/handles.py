@@ -304,11 +304,11 @@ class Handle:
             if finished_queue:
                 break
 
-            if time.time() - start > 50:
+            if time.time() - start > 120:
                 break
 
             # Eat less CPU
-            time.sleep(0.2)
+            time.sleep(0.5)
 
     def backup_request(self):
         backup_request = self._bot.popup.backup_request()
