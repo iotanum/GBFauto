@@ -111,8 +111,7 @@ class QuestOnRepeat:
             self.bot.queue.do_queue(queue)
             fight_ended = self.finish_fight()
             if fight_ended is not True:
-                self.bot.wait.for_fight_main_mask()
-                time.sleep(1)
+                self.bot.handle.wait_results_button()
                 self.bot.press.results_button()
             if fight_num == num_of_fights:
                 self.raid_battle = False
