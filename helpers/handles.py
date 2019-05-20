@@ -1,6 +1,7 @@
 import time
 import re
 import os
+import random
 
 from selenium import common as selenium_err
 
@@ -24,7 +25,10 @@ class Handle:
         # After the page loads, there's no way to 'tell' if there will be
         # x popup or y popup, its load time depends on what popup it is
         # so plain old 'sleep' will do the trick
-        time.sleep(3)
+        # Don't need to sleep if this is being called
+        # for the second bunch of popups
+        if kill is True:
+            time.sleep(3)
 
         popup_search_start = time.time()
 
@@ -34,8 +38,9 @@ class Handle:
             loot = parser.find('div', {'class': 'cnt-get-treasure', 'style': 'display: block;'})
 
             # Ignore 'Not enough AP/EP' popup for now.
+            # Also this popup appears last, so we need to exit
             if popup is not None and 'pop-stamina' in popup['class']:
-                popup = None
+                break
 
             # Extended mastery 'popup' isn't actually a popup, but a canvas put on
             # entirety of results screen, need to be handled separately
@@ -56,7 +61,7 @@ class Handle:
             # This means that the first bunch of popups after the fight
             # are done. For ex.: exp, event stuff, etc.
             # Also duplicate if statement for exiting the loop
-            # because of easier readability
+            # for easier readability
             if loot and kill is True:
                 self._bot.total_fights += 1
                 break
@@ -326,6 +331,29 @@ class Handle:
                 break
 
             if time.time() - start > 15:
+                break
+
+            # Eat less CPU
+            time.sleep(0.5)
+
+    def not_enough_of_x(self):
+        start = time.time()
+
+        while True:
+            parser = bs(self._driver.page_source, 'lxml')
+
+            current_url = str(self._driver.current_url)
+
+            ap_ep_popup = parser.find('div', {'class': ['pop-usual', 'pop-stamina', 'pop-show']})
+            if ap_ep_popup:
+                ap_ep_amount = random.randint(1, 5)
+                self._bot.action.use_potions_or_pills(ap_ep_amount)
+                self._bot.wait.for_loading_screen()
+                self._bot.press.usual_ok()
+                break
+
+            # Exit loop if in 'Pick support summon' page
+            if time.time() - start > 3 or '#quest/supporter' in current_url:
                 break
 
             # Eat less CPU

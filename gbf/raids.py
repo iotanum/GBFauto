@@ -127,7 +127,7 @@ class Raids:
 
     def handle_entering_raid(self):
         self.type_and_join_raid()
-        self.handle_not_enough_ep()
+        self.bot.handle.not_enough_of_x()
         # Check if everything is ok after typing and entering the raid
         popup = self.bot.handle.pre_fight_popup()
         # If there was a popup, try another raid/repeat last instruction
@@ -220,16 +220,6 @@ class Raids:
         # And then press the 'Enter ID' tab
         time.sleep(0.5)
         self.bot.press.enter_raid_id()
-
-    def handle_not_enough_ep(self):
-        self.bot.wait.for_loading_screen()
-        if '#quest/supporter' not in str(self.driver.current_url):
-            not_enough_ep = self.bot.popup.not_enough_x()
-            if not_enough_ep is True:
-                pill_amount = random.randint(1, 10)
-                self.bot.action.use_potions_or_pills(pill_amount)
-                self.bot.wait.for_loading_screen()
-                self.bot.press.usual_ok()
 
     def set_raid_name(self, raid_boss_name):
         self.raid_name = raid_boss_name

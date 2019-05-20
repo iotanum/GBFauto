@@ -147,17 +147,7 @@ class QuestOnRepeat:
             self.raid_battle = False
 
         if '#quest/supporter' not in str(self.driver.current_url):
-            self.handle_not_enough_ap()
-
-    def handle_not_enough_ap(self):
-        self.bot.wait.for_loading_screen()
-        not_enough_ap = self.bot.popup.not_enough_x()
-        print(not_enough_ap, 'ap handle')
-        if not_enough_ap is True:
-            potion_amount = random.randint(1, 5)
-            self.bot.action.use_potions_or_pills(potion_amount)
-            self.bot.wait.for_loading_screen()
-            self.bot.press.usual_ok()
+            self.bot.handle.not_enough_of_x()
 
     def repeatable_quest(self):
         while True:
