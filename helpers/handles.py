@@ -112,9 +112,10 @@ class Handle:
                     else:
                         self._bot.press.usual_close()
 
-                elif 'mission-check-treasureraid' in popup_name:
+                elif any(name in popup_name for name in ['mission-check-treasureraid', 'update-beginner-mission-teamraid']):
                     mission_description = popup.find('div', {'class': 'txt-mission-description'}).text
                     mission_progress = popup.find('div', {'class': 'prt-mission-progress'}).text
+                    mission_progress = mission_progress.strip()
                     print(mission_description, f"({mission_progress})")
                     self._bot.press.usual_close()
 
@@ -159,12 +160,6 @@ class Handle:
                     popup_header = popup.find('div', {'class': 'prt-popup-header'}).text
                     print(f"{popup_header}")
                     self._bot.press.usual_ok()
-
-                elif 'update-beginner-mission-teamraid' in popup_name:
-                    mission_description = popup.find('div', {'class': 'txt-mission-description'}).text
-                    mission_progress = popup.find('div', {'class': 'prt-mission-progress'}).text
-                    print(mission_description, f"({mission_progress})")
-                    self._bot.press.usual_close()
 
                 else:
                     print("Unhandled popup!\nPage source and error picture in 'errors' folder.")
@@ -304,7 +299,23 @@ class Handle:
             if finished_queue:
                 break
 
-            if time.time() - start > 120:
+            if time.time() - start > 60:
+                break
+
+            # Eat less CPU
+            time.sleep(0.5)
+
+    def wait_results_button(self):
+        start = time.time()
+
+        while True:
+            parser = bs(self._driver.page_source, 'lxml')
+
+            results_button = parser.find('div', {'class': 'prt-command-end', 'style': 'display: block;'})
+            if results_button:
+                break
+
+            if time.time() - start > 15:
                 break
 
             # Eat less CPU
