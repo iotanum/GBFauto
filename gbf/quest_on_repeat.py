@@ -3,7 +3,6 @@ from bs4 import SoupStrainer as ss
 
 import os
 import time
-import random
 
 from selenium import common as selenium_err
 
