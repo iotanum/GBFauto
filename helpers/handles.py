@@ -222,18 +222,48 @@ class Handle:
             if popup_search_time - popup_search_start > 2:
                 break
 
-    def pre_fight_popup(self):
+    def pre_fight_popup(self, instruction_to_run):
         popup_search_start = time.time()
-        popup_present = False
 
         while True:
             popup_search_time = time.time()
 
+            if popup_search_time - popup_search_start > 1:
+                # If there was a pre-fight popup, need to return a bool
+                # and handle it appropriately (ex.: repeat last instruction)
+                break
+
+            if self._bot.raid_battle is False:
+                break
+
             parser = bs(self._driver.page_source, 'lxml')
             popup = parser.find('div', {'class': ['common-pop-error']})
 
+            current_url = self._driver.current_url
+
+            # Conditions to exit popup detection loop
+            # Picking support summon element doesn't need popup detection
+            if instruction_to_run == 'support_element':
+                break
+
+            # Exit loop if after picking support summon the support confirmation 'popup' appeared
+            elif instruction_to_run == 'first_summon':
+                supp_ele = parser.find(class_='pop-deck supporter',
+                                       style_='display: block; top: 0px; margin-bottom: 0px;')
+                if supp_ele:
+                    break
+
+            # Exit loop if after confirming support summon the URL has changed
+            elif instruction_to_run == 'confirm_support':
+                if 'quest/supporter' not in current_url:
+                    break
+
+            # Exit loop if after entering ID the URL has changed
+            elif instruction_to_run == 'pre_summon_pick':
+                if 'quest/supporter' in current_url:
+                    break
+
             if popup:
-                popup_present = True
                 popup_search_start = time.time()
 
                 # Needed to distinguish between verification/typical error popups
@@ -246,11 +276,6 @@ class Handle:
                 elif 'Access Verification' in popup_header:
                     self.human_verification()
                     return 'verification'
-
-            if popup_search_time - popup_search_start > 1:
-                # If there was a pre-fight popup, need to return a bool
-                # and handle it appropriately (ex.: repeat last instruction)
-                break
 
     def pre_fight_support_summons(self):
         self._bot.wait.for_loading_screen()
@@ -270,7 +295,7 @@ class Handle:
                 time.sleep(0.5)
 
             # Then check for popups/verification and handle accordingly
-            popup = self.pre_fight_popup()
+            popup = self.pre_fight_popup(instruction_to_run)
             # Repeat last instruction if verification
             if popup == 'verification':
                 instruction_to_run = instruction_to_run
