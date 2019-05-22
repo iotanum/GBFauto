@@ -284,6 +284,9 @@ class Handle:
         start = time.time()
 
         while True:
+            if time.time() - start > 15:
+                break
+
             strainer = ss('div', attrs={'id': 'cnt-raid-information'})
             parser = bs(self._driver.page_source, 'lxml', parse_only=strainer)
 
@@ -300,9 +303,6 @@ class Handle:
                     if attack_button_on:
                         break
 
-            if time.time() - start > 15:
-                break
-
             # Eat less CPU
             time.sleep(0.2)
 
@@ -310,6 +310,9 @@ class Handle:
         start = time.time()
 
         while True:
+            if time.time() - start > 60:
+                break
+
             # Wait for the skill overlay to 'hide' (that means it's finished) and exit
             # the loop
             strainer = ss('div', attrs={'id': 'cnt-raid-information'})
@@ -319,9 +322,6 @@ class Handle:
             if finished_queue:
                 break
 
-            if time.time() - start > 60:
-                break
-
             # Eat less CPU
             time.sleep(0.5)
 
@@ -329,13 +329,13 @@ class Handle:
         start = time.time()
 
         while True:
+            if time.time() - start > 15:
+                break
+
             parser = bs(self._driver.page_source, 'lxml')
 
             results_button = parser.find('div', {'class': 'prt-command-end', 'style': 'display: block;'})
             if results_button:
-                break
-
-            if time.time() - start > 15:
                 break
 
             # Eat less CPU
@@ -345,11 +345,17 @@ class Handle:
         start = time.time()
 
         while True:
+            current_url = self._driver.current_url
+
+            # Exit loop if in 'Pick support summon' page
+            if time.time() - start > 3 or '#quest/supporter' in current_url:
+                break
+
             parser = bs(self._driver.page_source, 'lxml')
 
-            current_url = str(self._driver.current_url)
+            ap_ep_popup = parser.find('div', class_='pop-usual pop-stamina pop-show')
+            various_popup = parser.find('div', {'class': ['common-pop-error']})
 
-            ap_ep_popup = parser.find('div', {'class': ['pop-usual', 'pop-stamina', 'pop-show']})
             if ap_ep_popup:
                 ap_ep_amount = random.randint(1, 5)
                 self._bot.action.use_potions_or_pills(ap_ep_amount)
@@ -357,8 +363,7 @@ class Handle:
                 self._bot.press.usual_ok()
                 break
 
-            # Exit loop if in 'Pick support summon' page
-            if time.time() - start > 3 or '#quest/supporter' in current_url:
+            elif various_popup:
                 break
 
             # Eat less CPU
