@@ -28,7 +28,12 @@ class Handle:
         # Don't need to sleep if this is being called
         # for the second bunch of popups
         if kill is True:
-            time.sleep(3)
+            while True:
+                current_url = self._driver.current_url
+                if 'result' in current_url:
+                    time.sleep(3)
+                    break
+                time.sleep(0.5)
 
         popup_search_start = time.time()
 

@@ -4,8 +4,6 @@ from bs4 import BeautifulSoup as bs
 from bs4 import SoupStrainer as ss
 
 import time
-import sys
-import random
 import os
 
 
