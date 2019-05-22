@@ -42,21 +42,26 @@ class Handle:
             popup = parser.find('div', {'class': ['pop-show']})
             loot = parser.find('div', {'class': 'cnt-get-treasure', 'style': 'display: block;'})
 
+            current_url = self._driver.current_url
+
             # Ignore 'Not enough AP/EP' popup for now.
             # Also this popup appears last, so we need to exit
             if popup is not None and 'pop-stamina' in popup['class']:
                 break
 
+            # Ignore 'Backup Request' popup, this handle can accidentally
+            # get triggered on this after refreshing in a raid battle.
+            if popup is not None and 'pop-start-assist' in popup['class']:
+                popup = None
+
             # Extended mastery 'popup' isn't actually a popup, but a canvas put on
             # entirety of results screen, need to be handled separately
             extended_mastery = parser.find('div', {'class': 'onm-anim-parts'})
 
-            page_url = str(self._driver.current_url)
-
             # If no popups for 3.5 seconds - exit while loop
             # or if there was no popups
             popup_search_time = time.time()
-            if popup_search_time - popup_search_start > 3.5 or 'result' not in page_url:
+            if popup_search_time - popup_search_start > 3.5 or 'result' not in current_url:
                 # 'After fight popup' means that the bot finished a quest
                 if kill is True:
                     self._bot.total_fights += 1
@@ -69,6 +74,7 @@ class Handle:
             # for easier readability
             if loot and kill is True:
                 self._bot.total_fights += 1
+                time.sleep(0.5)
                 break
 
             # Extracts the button/buttons inside the popup
@@ -256,6 +262,7 @@ class Handle:
         instruction_to_run = 'support_element'
 
         while True:
+            # Execute the instruction
             if instruction_to_run != 'confirm_summon':
                 instructions_to_run[instruction_to_run](SUPPORT_ELEMENT)
             else:
@@ -449,14 +456,14 @@ class Handle:
 
         # Wait until bot exits the current results screen
         while True:
-            url = str(self._driver.current_url)
-            if '#result' not in url:
+            current_url = self._driver.current_url
+            if '#result' not in current_url:
                 break
 
         # Then wait until the boss has been killed and the bot is at results screen
         while True:
-            url = str(self._driver.current_url)
-            if '#result' in url:
+            current_url = self._driver.current_url
+            if '#result' in current_url:
                 self._bot.wait.for_loading_screen()
                 print('You killed the boss!')
                 self.after_fight_popups()
