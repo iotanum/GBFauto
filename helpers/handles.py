@@ -206,25 +206,60 @@ class Handle:
     def pre_fight_screens(self):
         popup_search_start = time.time()
 
+        # Wait until URL changes into the battle one
+        while True:
+            current_url = self._driver.current_url
+            if 'quest/stage' in self._driver.current_url:
+                break
+
+            if 'raid' in current_url:
+                break
+
         while True:
             popup_search_time = time.time()
+
+            # For slower internet speeds if bot is taking longer than usual to
+            # load - reset the start timer while in quest/stage page
+            if 'quest/stage' in self._driver.current_url:
+                popup_search_start = time.time()
+
+            # A fail-safe to exit the loop if there is not side-scroll mini event
+            if 'raid' in current_url:
+                break
+
+            if popup_search_time - popup_search_start > 5:
+                break
 
             parser = bs(self._driver.page_source, 'lxml')
 
             side_scroll_quest = parser.find('div', class_='pop-usual pop-skip-result pop-show')
-            if side_scroll_quest:
-                try:
-                    self._bot.press.usual_skip()
-                    self._bot.popup.skip_side_scroll()
-                    self._driver.find_element_by_xpath('//*[@id="pop"]/div/div[3]/div[2]').click()
-                    self._bot.popup.side_scroll_results()
-                    self._driver.find_element_by_xpath('//*[@id="pop"]/div/div[3]/div').click()
-                except:
-                    custom_ok_btn = '//*[@id="pop"]/div/div[3]/div'
-                    self._driver.find_element_by_xpath(custom_ok_btn).click()
 
-            if popup_search_time - popup_search_start > 2:
+            # Also search for 'quest progression' animation elements
+            # That means that there is no side-scrolling mini event
+            # in the quest
+            try:
+                progress_bar = parser.find('div', {'class': 'prt-position'})
+                quest_parts = progress_bar.find_all('div', {'class': ['lis-spot']})
+            except AttributeError:
+                quest_parts = None
+
+            if quest_parts:
                 break
+
+            if side_scroll_quest:
+                # The second element is what we need
+                ok_buttons = self._driver.find_elements_by_class_name('btn-usual-ok')
+
+                ok_button = ok_buttons[1]
+                ok_button.click()
+                break
+
+                # Will need this later
+                # self._bot.press.usual_skip()
+                # self._bot.popup.skip_side_scroll()
+                # self._driver.find_element_by_xpath('//*[@id="pop"]/div/div[3]/div[2]').click()
+                # self._bot.popup.side_scroll_results()
+                # self._driver.find_element_by_xpath('//*[@id="pop"]/div/div[3]/div').click()
 
     def pre_fight_popup(self, instruction_to_run):
         popup_search_start = time.time()
