@@ -211,13 +211,17 @@ class Handle:
 
             parser = bs(self._driver.page_source, 'lxml')
 
-            side_scroll_quest = parser.find('div', {'class': 'anim-title anim'})
+            side_scroll_quest = parser.find('div', class_='pop-usual pop-skip-result pop-show')
             if side_scroll_quest:
-                self._bot.press.usual_skip()
-                self._bot.popup.skip_side_scroll()
-                self._driver.find_element_by_xpath('//*[@id="pop"]/div/div[3]/div[2]').click()
-                self._bot.popup.side_scroll_results()
-                self._driver.find_element_by_xpath('//*[@id="pop"]/div/div[3]/div').click()
+                try:
+                    self._bot.press.usual_skip()
+                    self._bot.popup.skip_side_scroll()
+                    self._driver.find_element_by_xpath('//*[@id="pop"]/div/div[3]/div[2]').click()
+                    self._bot.popup.side_scroll_results()
+                    self._driver.find_element_by_xpath('//*[@id="pop"]/div/div[3]/div').click()
+                except:
+                    custom_ok_btn = '//*[@id="pop"]/div/div[3]/div'
+                    self._driver.find_element_by_xpath(custom_ok_btn).click()
 
             if popup_search_time - popup_search_start > 2:
                 break
