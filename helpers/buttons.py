@@ -140,8 +140,9 @@ class Press:
         timeout = 10
         search_by = By.CLASS_NAME
 
-        self._wait_for_button(search_by, self._results_button_class, timeout=timeout)
-        self._driver.find_element_by_class_name(self._results_button_class).click()
+        if '#raid_multi' in str(self._driver.current_url):
+            self._wait_for_button(search_by, self._results_button_class, timeout=timeout)
+            self._driver.find_element_by_class_name(self._results_button_class).click()
 
     def approve_backup_request(self):
         search_by = By.CSS_SELECTOR
