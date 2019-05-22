@@ -140,7 +140,7 @@ class Press:
         timeout = 10
         search_by = By.CLASS_NAME
 
-        if '#raid_multi' in str(self._driver.current_url):
+        if 'result' not in self._driver.current_url:
             self._wait_for_button(search_by, self._results_button_class, timeout=timeout)
             self._driver.find_element_by_class_name(self._results_button_class).click()
 
