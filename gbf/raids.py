@@ -14,6 +14,7 @@ class Raids:
         self.bot = game_handler
         self.driver = game_handler.driver
         self.raid_finder = finder_handler
+        self.bot.raid_battle = True
         #########################
         self.raid_id = None
         self.raid_name = ""

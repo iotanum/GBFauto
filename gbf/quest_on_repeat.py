@@ -90,10 +90,11 @@ class QuestOnRepeat:
 
         # If 'Quest' has a backup request screen
         # then it means that it's a raid.
-        self.raid_battle = self.bot.handle.backup_request()
-        if self.raid_battle is False:
+        self.bot.raid_battle = '#raid_multi' in self.driver.current_url
+        if self.bot.raid_battle is False:
             num_of_fights = self.count_quest_fight_parts()
         else:
+            self.bot.handle.backup_request()
             num_of_fights = 1
 
         first_queue_from_config = os.getenv("QUEUE_FIRST_FIGHT")

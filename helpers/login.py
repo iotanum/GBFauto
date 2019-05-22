@@ -47,6 +47,7 @@ class GBFGame:
         self.total_honors = 0
         self.total_pendants = 0
         self.total_fights = 0
+        self.raid_battle = False
 
     def run_time(self):
         return time.time() - self._start_time
