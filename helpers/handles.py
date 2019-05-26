@@ -36,11 +36,23 @@ class Handle:
                 time.sleep(0.5)
 
         popup_search_start = time.time()
+        # Just a declaration for a placeholders
+        mc_gauge = None
+        team_gauges = None
 
         while True:
             parser = bs(self._driver.page_source, 'lxml')
+
             popup = parser.find('div', {'class': ['pop-show']})
+            party = parser.find('div', {'class': 'prt-party'})
+
+            # Loot 'window' is a styled element that is displayed after first popups
+            # after the fight
             loot = parser.find('div', {'class': 'cnt-get-treasure', 'style': 'display: block;'})
+
+            # Same as 'loot' variable, but a literal mask on top of the page
+            # needed for lvl-up checks
+            main_mask = parser.find('div', {'class': 'mask', 'style': 'display: none;'})
 
             current_url = self._driver.current_url
 
@@ -76,6 +88,41 @@ class Handle:
                 self._bot.total_fights += 1
                 time.sleep(0.5)
                 break
+
+            # If your main character/team character gains a level/multiple levels
+            # the game holds it's popups until the 'level gauge' finishes it's
+            # animations until it's at it's gained level
+            # so it needs to be handled.
+            # If changes in any of the gauges are found - reset the popup timer.
+            # Also don't need to check for changes if kill is False
+            # Because every lvl-up is displayed BEFORE loot element
+            # meaning the 'first' burst of popups
+            if main_mask and kill is True:
+                # Main 'level' elements
+                mc_lvl_elem = party.find('div', {'class': 'prt-player-exp'})
+                team_lvl_elem = party.find('div', {'class': 'prt-party-npc'})
+
+                # It's exact percentages
+                mc_lvl_xp_percentage = mc_lvl_elem.find('div', {'class': 'prt-exp-gauge-inner-new'})['style']
+                team_lvl_xp_percentages = team_lvl_elem.find_all('div', {'class': 'prt-exp-gauge-inner-new'})
+
+                # Also, since team gauges are a list (find_all func)
+                # it needs a list comp to get it's elements style
+                team_lvl_xp_percentages = [elem['style'] for elem in team_lvl_xp_percentages]
+
+                # Now extract the percentage/s number from a string
+                mc_lvl_xp_percentage = self._convert_gain_to_int(mc_lvl_xp_percentage)
+                team_lvl_xp_percentages = [self._convert_gain_to_int(percentage) for percentage in team_lvl_xp_percentages]
+
+                # And now the actual check if it changed or not
+                if mc_lvl_xp_percentage != mc_gauge:
+                    # If this goes through - reset the timer (wait until the animations are done)
+                    mc_gauge = mc_lvl_xp_percentage
+                    popup_search_start = time.time()
+
+                if team_lvl_xp_percentages != team_gauges:
+                    team_gauges = team_lvl_xp_percentages
+                    popup_search_start = time.time()
 
             # Extracts the button/buttons inside the popup
             if popup:
