@@ -472,7 +472,7 @@ class Handle:
             current_url = self._driver.current_url
 
             # Exit loop if in 'Pick support summon' page
-            if time.time() - start > timeout or '#quest/supporter' in current_url:
+            if time.time() - start > timeout or '#quest/supporter' in current_url or '#raid' in current_url:
                 break
 
             parser = bs(self._driver.page_source, 'lxml')
