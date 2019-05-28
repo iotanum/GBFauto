@@ -465,14 +465,14 @@ class Handle:
             # Eat less CPU
             time.sleep(0.5)
 
-    def not_enough_of_x(self):
+    def not_enough_of_x(self, timeout=3):
         start = time.time()
 
         while True:
             current_url = self._driver.current_url
 
             # Exit loop if in 'Pick support summon' page
-            if time.time() - start > 3 or '#quest/supporter' in current_url:
+            if time.time() - start > timeout or '#quest/supporter' in current_url:
                 break
 
             parser = bs(self._driver.page_source, 'lxml')
