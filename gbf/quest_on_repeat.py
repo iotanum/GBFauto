@@ -180,6 +180,9 @@ class QuestOnRepeat:
             # And now press 'Ready' to enter the fight.
             chapter_id = self.get_start_button_chapter_id()
             self.bot.press.by_chapter_id(chapter_id)
+            # Give it a bigger timer because CO-OP fights
+            # take a lot longer to start than your usual fights
+            self.bot.handle.not_enough_of_x(timeout=10)
 
     def wait_for_coop_prep(self):
         found_room = False
