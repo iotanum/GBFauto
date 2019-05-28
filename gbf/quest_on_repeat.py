@@ -210,6 +210,20 @@ class QuestOnRepeat:
                     if already_in_coop_party is False:
                         print('Waiting until you pick your team for CO-OP.')
                         already_in_coop_party = True
+                        found_room = False
+
+                        previous_url = self.driver.current_url
+                        picked = False
+
+                        # please don't judge
+                        while True:
+                            current_url = self.driver.current_url
+
+                            if current_url != previous_url:
+                                picked = True
+
+                            if '#coopraid/room' in current_url and picked is True:
+                                break
 
             time.sleep(0.2)
 
