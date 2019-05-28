@@ -14,6 +14,7 @@ class QuestOnRepeat:
         self.repeat = False
         self.wait_result = True
         self.raid_battle = False
+        self.coop = False
 
     def wait_for_repeatable_quest(self):
         print('\nWaiting for you to enter a repeatable quest...')
@@ -22,7 +23,12 @@ class QuestOnRepeat:
             if '#quest/supporter' in url:
                 print("Locked in on this quest.")
                 break
-        # self.handle_not_enough_ap()
+            if '#coopraid/room/' in url:
+                print("Locked in on this CO-OP quest.")
+                self.coop = True
+                break
+
+            time.sleep(0.2)
 
     def remove_battle_scene_element(self):
         try:
@@ -85,6 +91,14 @@ class QuestOnRepeat:
 
         return len(quest_parts)
 
+    def get_start_button_chapter_id(self):
+        parser = bs(self.driver.page_source, 'lxml')
+
+        ready_btn = parser.find('div', class_='btn-quest-start multi se-quest-start')
+        chapter_id = ready_btn['data-chapter-id']
+
+        return chapter_id
+
     def handle_fight(self):
         self.bot.handle.wait_before_fight(fight_start=True)
 
@@ -134,7 +148,10 @@ class QuestOnRepeat:
               f"Running for {hours}h:{minutes}min:{seconds}s, "
               f"Average time per quest: {avg_time_per_quest}s")
 
-        self.bot.press.play_again_quest()
+        if self.coop is not True:
+            self.bot.press.play_again_quest()
+        else:
+            self.bot.press.coop_room()
 
         self.bot.handle.after_fight_popups()
 
@@ -154,8 +171,44 @@ class QuestOnRepeat:
             self.do_repeatable_quest()
 
     def handle_pre_fight(self):
-        self.bot.handle.pre_fight_support_summons()
-        self.bot.handle.pre_fight_screens()
+        if self.coop is False:
+            self.bot.handle.pre_fight_support_summons()
+        else:
+            # Wait until player chooses it's COOP team.
+            self.wait_for_coop_prep()
+
+            # And now press 'Ready' to enter the fight.
+            chapter_id = self.get_start_button_chapter_id()
+            self.bot.press.by_chapter_id(chapter_id)
+
+    def wait_for_coop_prep(self):
+        found_room = False
+        already_in_coop_party = False
+
+        while True:
+            parser = bs(self.driver.page_source, 'lxml')
+
+            # First need to wait until the COOP room page has finished loading.
+            if found_room is False:
+                try:
+                    coop_room_loaded = parser.find('div', {'class': 'txt-count-down'}).text
+                    found_room = True
+                except AttributeError:
+                    coop_room_loaded = ''
+
+            if found_room is True or 'Closes' in coop_room_loaded:
+                # Check if party is already picked.
+                party_ready = parser.find('div', {'class': 'txt-guide'}).text
+
+                if 'Start' in party_ready:
+                    print('Starting CO-OP quest.')
+                    break
+                else:
+                    if already_in_coop_party is False:
+                        print('Waiting until you pick your team for CO-OP.')
+                        already_in_coop_party = True
+
+            time.sleep(0.2)
 
     def do_repeatable_quest(self):
         # HANDLE PATH TO REPEATABLE QUEST

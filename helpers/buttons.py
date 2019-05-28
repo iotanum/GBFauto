@@ -221,13 +221,20 @@ class Press:
         self._wait_for_button(search_by, specific_treasure_quest_xpath)
         self._driver.find_element_by_xpath(specific_treasure_quest_xpath).click()
 
-    def treasure_quest_diff(self, quest_id):
+    def by_chapter_id(self, chapter_id):
         # quest_id parsed from page source code in accordance to what a bot user chose
         search_by = By.XPATH
 
-        treasure_quest_diff_xpath = f"//div[@data-chapter-id='{quest_id}']"
-        self._wait_for_button(search_by, treasure_quest_diff_xpath)
-        self._driver.find_element_by_xpath(treasure_quest_diff_xpath).click()
+        chapter_id_btn_xpath = f"//div[@data-chapter-id='{chapter_id}']"
+        self._wait_for_button(search_by, chapter_id_btn_xpath)
+        self._driver.find_element_by_xpath(chapter_id_btn_xpath).click()
+
+    def coop_room(self):
+        search_by = By.XPATH
+
+        coop_room_xpath = '//*[@id="cnt-result"]/div[1]/div[2]/div[3]'
+        self._wait_for_button(search_by, coop_room_xpath)
+        self._driver.find_element_by_xpath(coop_room_xpath).click()
 
     def fight_advice(self):
         search_by = By.CLASS_NAME
