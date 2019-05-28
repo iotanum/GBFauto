@@ -61,6 +61,12 @@ class Handle:
             if popup is not None and 'pop-stamina' in popup['class']:
                 break
 
+            # For raids
+            # If bot didn't manage to get any hits on the boss
+            # It returns to an empty quest screen after the fight
+            if 'empty' in current_url:
+                break
+
             # Ignore 'Backup Request' popup, this handle can accidentally
             # get triggered on this after refreshing in a raid battle.
             if popup is not None and 'pop-start-assist' in popup['class']:
