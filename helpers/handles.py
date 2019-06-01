@@ -37,6 +37,7 @@ class Handle:
 
         popup_search_start = time.time()
         # Just a declaration for a placeholders
+        exp_popup = False
         mc_gauge = None
         team_gauges = None
 
@@ -103,7 +104,7 @@ class Handle:
             # Also don't need to check for changes if kill is False
             # Because every lvl-up is displayed BEFORE loot element
             # meaning the 'first' burst of popups
-            if main_mask and kill is True:
+            if main_mask and kill is True and exp_popup is True:
                 # Main 'level' elements
                 mc_lvl_elem = party.find('div', {'class': 'prt-player-exp'})
                 team_lvl_elem = party.find('div', {'class': 'prt-party-npc'})
@@ -147,6 +148,7 @@ class Handle:
 
                 elif 'pop-exp' in popup_name:
                     self._count_after_fight_xp(popup)
+                    exp_popup = True
                     self._bot.press.usual_ok()
 
                 elif 'player-up' in popup_name:
