@@ -13,7 +13,7 @@ class QuestOnRepeat:
         self.driver = game_handler.driver
         self.repeat = False
         self.wait_result = True
-        self.raid_battle = False
+        self.bot.raid_battle = False
         self.coop = False
 
     def wait_for_repeatable_quest(self):
@@ -55,7 +55,7 @@ class QuestOnRepeat:
                 try:
                     self.bot.press.attack_button()
                     self.bot.wait.for_fight_main_mask()
-                    if self.raid_battle is True and refreshed is False:
+                    if self.bot.raid_battle is True and refreshed is False:
                         refreshed = True
                         self.bot.handle.wait_after_queue_refresh()
                         self.driver.refresh()
@@ -118,7 +118,7 @@ class QuestOnRepeat:
 
         for fight_num, queue in enumerate(queues, 1):
             # Don't need to wait on first iteration
-            if fight_num != 1 or self.raid_battle is True:
+            if fight_num != 1 or self.bot.raid_battle is True:
                 self.bot.handle.wait_before_fight(fight_start=False)
 
             print(f"Fight #{fight_num}.")
@@ -155,13 +155,13 @@ class QuestOnRepeat:
 
         self.bot.handle.after_fight_popups()
 
-        if self.raid_battle is False:
+        if self.bot.raid_battle is False:
             nightmare_battle = self.bot.handle.after_fight_popups()
             if nightmare_battle is True:
                 self.repeat = False
                 return
 
-            self.raid_battle = False
+            self.bot.raid_battle = False
 
         if '#quest/supporter' not in str(self.driver.current_url):
             self.bot.handle.not_enough_of_x()
