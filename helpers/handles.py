@@ -193,7 +193,7 @@ class Handle:
                     else:
                         self._bot.press.usual_close()
 
-                elif any(name in popup_name for name in ['mission-check-treasureraid', 'update-beginner-mission-teamraid']):
+                elif any(name in popup_name for name in ['mission-check', 'update-beginner-mission-teamraid']):
                     mission_description = popup.find('div', {'class': 'txt-mission-description'}).text
                     mission_progress = popup.find('div', {'class': 'prt-mission-progress'}).text
                     mission_progress = mission_progress.strip()
@@ -237,7 +237,7 @@ class Handle:
                 elif 'pop-error' in popup_name:
                     self._bot.press.usual_ok()
 
-                elif 'get-abilityitem' in popup_name:
+                elif 'get-ability' in popup_name:
                     popup_header = popup.find('div', {'class': 'prt-popup-header'}).text
                     print(f"{popup_header}")
                     self._bot.press.usual_ok()
