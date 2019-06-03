@@ -188,6 +188,13 @@ class Press:
         self._wait_for_button(search_by, ability_xpath)
         self._driver.find_element_by_xpath(ability_xpath).click()
 
+    def select_part_member(self, char_num):
+        party_member_xpath = f'//*[@id="wrapper"]/div[3]/div[10]/div[2]/div[2]/div[2]/div[{char_num}]'
+        search_by = By.XPATH
+
+        self._wait_for_button(search_by, party_member_xpath)
+        self._driver.find_element_by_xpath(party_member_xpath).click()
+
     def back(self):
         search_by = By.CSS_SELECTOR
 
