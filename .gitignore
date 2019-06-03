@@ -12,3 +12,4 @@ verification/*
 *.log
 .idea
 test.py
+test.html
