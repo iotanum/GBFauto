@@ -242,6 +242,11 @@ class Handle:
                     print(f"{popup_header}")
                     self._bot.press.usual_ok()
 
+                elif 'get-support-ability' in popup_name:
+                    ability_text = popup.find('div', {'class': 'txt-ability'}).text
+                    print(f"New support ability!\n'{ability_text}''")
+                    self._bot.press.usual_ok()
+
                 else:
                     print("Unhandled popup!\nPage source and error picture in 'errors' folder.")
                     print(f"Popup element: {popup}")
