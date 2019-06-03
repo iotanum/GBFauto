@@ -1,6 +1,5 @@
 from selenium import common as selenium_err
 
-import sys
 import time
 
 
@@ -12,33 +11,49 @@ class Skills:
         self._queue_from_config = None
 
     def parse_queue(self, queue):
-        char_to_num = {'a': 1, 'b': 2, 'c': 3, 'd': 4, 'e': 5, 'f': 6}
-        queue_final = {}
+        ability_to_num = {'a': 1, 'b': 2, 'c': 3, 'd': 4, 'e': 5, 'f': 6}
+
         queue = queue.split(">")
         queue = [step.strip(' ') for step in queue]
-        queue = [{'Character': int(step[:-1]), 'Ability': step[1:]} for step in queue]
+
+        queue_final = {}
 
         for idx, step in enumerate(queue, 1):
-            queue_final[idx] = step
-            ability_char = queue_final[idx]['Ability']
-            queue_final[idx]['Ability'] = char_to_num[ability_char.lower()]
+            for character, ability, *rest in step.split():
+                queue_final[idx] = {'Character': None,
+                                    'Ability': None,
+                                    'Select': None}
+
+                queue_final[idx]['Character'] = int(character)
+                queue_final[idx]['Ability'] = ability_to_num[ability]
+
+                if len(rest) == 1:
+                    queue_final[idx]['Select'] = int(rest[0])
+                else:
+                    queue_final[idx]['Select'] = None
+
         self.check_queue(queue_final)
+
         return queue_final
 
     def check_queue(self, queue):
         max_actions_per_turn = 17
 
         if len(queue) > max_actions_per_turn:
-            sys.exit('Too many steps, max is 17 in 1 turn.')
+            raise AttributeError('Too many steps, max is 17 in 1 turn.')
         for step, action in queue.items():
             char_num = queue[step]['Character']
             ability_num = queue[step]['Ability']
+            select_num = queue[step]['Select']
+
             if char_num != 5 and ability_num > 4:
-                sys.exit('Character cannot have more than 4 abilities!')
+                raise AttributeError('Character cannot have more than 4 abilities!')
+            elif select_num is not None and select_num > 6:
+                raise AttributeError("There cannot be more than 6 teammates in the 'Select Character' screen!")
             elif char_num == 5 and ability_num > 6:
-                sys.exit('There cannot be more than 6 support summons!')
+                raise AttributeError('There cannot be more than 6 support summons!')
             elif char_num > 5:
-                sys.exit('Please check your queue, number of playables cannot be more than 5')
+                raise AttributeError('Please check your queue, number of playables cannot be more than 5')
 
     def handle_skill_press(self, char_num, ability_num):
         self._bot.press.char_skill(char_num, ability_num)
@@ -99,6 +114,7 @@ class Skills:
             try:
                 char_num = self._queue[step]['Character']
                 ability_num = self._queue[step]['Ability']
+                select_party_member = self._queue[step]['Select']
                 # Instantly break if queue in config is empty
                 if char_num == 7:
                     break
@@ -128,6 +144,10 @@ class Skills:
                     current_char_num = char_num
                     self.handle_skill_press(char_num, ability_num)
                     time.sleep(0.15)
+                    # This is for 'Select party member' type of ability
+                    if select_party_member:
+                        self._bot.press.select_part_member(select_party_member)
+                        time.sleep(0.15)
                 # if char_num is 5, then it means it's a support summon
                 else:
                     # Skip pressing 'back' button if support summon is your starter 'char'
