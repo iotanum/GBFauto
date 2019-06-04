@@ -494,6 +494,16 @@ class Handle:
                         final_summon_to_pick = support_summon
                         found = True
 
+                # Sorry for duplicate code OwO
+                # Checks if there is a friend support summon that is identical
+                # to the found one above, if yes -> get that instead (aka prioritize friend summons)
+                for support_summon in supp_summon_dict.values():
+                    support_summon['Name'] = support_summon['Name'].lower()
+                    if summon_to_pick in support_summon['Name'] and final_summon_to_pick['Lvl'] == support_summon['Lvl']:
+                        if support_summon['Friend'] is True:
+                            final_summon_to_pick = support_summon
+                            break
+
             if found is True:
                 break
 
