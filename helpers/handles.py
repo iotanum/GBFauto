@@ -328,7 +328,7 @@ class Handle:
         while True:
             popup_search_time = time.time()
 
-            if popup_search_time - popup_search_start > 1:
+            if popup_search_time - popup_search_start > 2:
                 # If there was a pre-fight popup, need to return a bool
                 # and handle it appropriately (ex.: repeat last instruction)
                 break
