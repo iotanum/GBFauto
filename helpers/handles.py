@@ -14,6 +14,7 @@ load_dotenv('config.env')
 EXTREME_BATTLES = int(os.getenv('EXTREME_BATTLES'))
 REQUEST_BACKUP = int(os.getenv('REQUEST_BACKUP'))
 SUPPORT_ELEMENT = int(os.getenv('SUPPORT_ELEMENT'))
+SUPPORT_SUMMONS = os.getenv('SUPPORT_SUMMONS_TO_PICK')
 
 
 class Handle:
@@ -346,7 +347,7 @@ class Handle:
                 break
 
             # Exit loop if after picking support summon the support confirmation 'popup' appeared
-            elif instruction_to_run == 'first_summon':
+            elif instruction_to_run == 'pick_summon':
                 supp_ele = parser.find(class_='pop-deck supporter',
                                        style_='display: block; top: 0px; margin-bottom: 0px;')
                 if supp_ele:
@@ -380,18 +381,34 @@ class Handle:
         self._bot.wait.for_loading_screen()
 
         instructions_to_run = {'support_element': self._bot.press.support_element,
-                               'first_summon': self._bot.press.first_support_summon,
+                               'pick_summon': self._bot.press.support_summon,
                                'confirm_summon': self._bot.press.confirm_support_summon}
 
         instruction_to_run = 'support_element'
 
         while True:
             # Execute the instruction
-            if instruction_to_run != 'confirm_summon':
+            if instruction_to_run == 'support_element':
                 instructions_to_run[instruction_to_run](SUPPORT_ELEMENT)
-            else:
+
+            if instruction_to_run == 'pick_summon':
+                support_summon_id = self.get_best_support_summon()
+
+                if support_summon_id:
+                    support_summon_id = support_summon_id['ID']
+                    instructions_to_run[instruction_to_run](supporter_id=support_summon_id,
+                                                            support_element_num=SUPPORT_ELEMENT)
+                else:
+                    instructions_to_run[instruction_to_run](support_element_num=SUPPORT_ELEMENT, first_summon=True)
+
+            if instruction_to_run == 'confirm_summon':
                 instructions_to_run[instruction_to_run]()
-                time.sleep(0.5)
+
+            # if instruction_to_run != 'confirm_summon':
+            #     instructions_to_run[instruction_to_run](SUPPORT_ELEMENT)
+            # else:
+            #     instructions_to_run[instruction_to_run]()
+            #     time.sleep(0.5)
 
             # Then check for popups/verification and handle accordingly
             popup = self.pre_fight_popup(instruction_to_run)
@@ -409,6 +426,73 @@ class Handle:
                     instruction_to_run = next_instruction
                 except IndexError:
                     break
+            time.sleep(0.15)
+
+    def parse_support_summon_list(self):
+        parser = bs(self._driver.page_source, features='lxml')
+
+        for element in parser.find_all('div', {'class': 'prt-supporter-attribute'}):
+            if len(element['class']) == 1:
+                support_summon_list = element
+                break
+            elif len(element['class']) == 2 and 'type' in str(element['class'][1]):
+                support_summon_list = element
+                break
+
+        support_summons = support_summon_list.find_all('div', class_='btn-supporter lis-supporter')
+
+        support_summon_dict = {}
+
+        for idx, support_summon in enumerate(support_summons):
+            supporter_id = support_summon['data-supporter-user-id']
+            support_name = support_summon.find('div', {'class': 'prt-supporter-summon'}).text.strip()
+            friend_summon = support_summon.find('div', {'class': 'ico-friend'})
+
+            # Extract summon level, name, and if it is a friend summon
+            placeholder_lvl, support_summon_lvl, *support_summon_name = support_name.split()
+
+            # *support_summon_name is a wildcard so slap everything together to get the full support summon name
+            support_summon_name = ' '.join(support_summon_name)
+
+            support_summon_dict[idx] = {}
+            support_summon_dict[idx]['Name'] = support_summon_name
+            support_summon_dict[idx]['Lvl'] = int(support_summon_lvl)
+            support_summon_dict[idx]['ID'] = int(supporter_id)
+            support_summon_dict[idx]['Friend'] = True if friend_summon else False
+
+        return support_summon_dict
+
+    def parse_from_config_summons(self):
+        support_summons_from_config = SUPPORT_SUMMONS.split(', ')
+
+        return support_summons_from_config
+
+    def get_best_support_summon(self):
+        supp_summon_dict = self.parse_support_summon_list()
+
+        summons_from_config = self.parse_from_config_summons()
+        if summons_from_config[0] == '':
+            return None
+
+        final_summon_to_pick = {'Lvl': 0}
+        found = False
+
+        for summon_to_pick in summons_from_config:
+            summon_to_pick = summon_to_pick.lower()
+            # Firstly check if from config summon exists in the list
+            if any(summon_to_pick in supp_summon['Name'].lower() for supp_summon in supp_summon_dict.values()):
+                # If it exists -> find the best possible choice from the list
+                for support_summon in supp_summon_dict.values():
+                    support_summon['Name'] = support_summon['Name'].lower()
+                    # Support summon level being the main argument
+                    if summon_to_pick in support_summon['Name'] and final_summon_to_pick['Lvl'] <= support_summon['Lvl']:
+                        final_summon_to_pick = support_summon
+                        found = True
+
+            if found is True:
+                break
+
+        return final_summon_to_pick if final_summon_to_pick['Lvl'] is not 0 else None
 
     def wait_before_fight(self, fight_start=True):
         element_found = False
