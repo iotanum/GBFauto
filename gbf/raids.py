@@ -198,6 +198,10 @@ class Raids:
         self.bot.handle.after_fight_popups(kill=True)
 
         hours, minutes, seconds = self.convert_seconds_to_hms_format()
+
+        if self.bot.total_fights == 0:
+            self.bot.total_fights += 1
+
         avg_time_per_quest = round(self.bot.run_time() / self.bot.total_fights, 2)
         print('-----------------------------------------------------------------------')
         print(f"Total fights: {self.bot.total_fights}, EXP: {self.bot.total_exp}, Rank points: {self.bot.total_ranks}\n"
