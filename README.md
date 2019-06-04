@@ -42,8 +42,8 @@ pip install -r requirements.txt
 
 **Things to do before using the bot:**
 1. Turn off in-game sounds.
-2. Set game screen size to the smallest.
-3. 'Skip skill description' must be turned off.
+2. Set game screen size to smallest.
+3. 'Skip skill description' must be on.
 
 **Please read and update the configuration file according to your needs.**
 
