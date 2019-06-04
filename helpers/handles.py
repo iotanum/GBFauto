@@ -490,7 +490,7 @@ class Handle:
                 for support_summon in supp_summon_dict.values():
                     support_summon['Name'] = support_summon['Name'].lower()
                     # Support summon level being the main argument
-                    if summon_to_pick in support_summon['Name'] and final_summon_to_pick['Lvl'] <= support_summon['Lvl']:
+                    if summon_to_pick in support_summon['Name'] and support_summon['Lvl'] >= 100:
                         final_summon_to_pick = support_summon
                         found = True
 
