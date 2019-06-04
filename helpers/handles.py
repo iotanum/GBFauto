@@ -404,12 +404,6 @@ class Handle:
             if instruction_to_run == 'confirm_summon':
                 instructions_to_run[instruction_to_run]()
 
-            # if instruction_to_run != 'confirm_summon':
-            #     instructions_to_run[instruction_to_run](SUPPORT_ELEMENT)
-            # else:
-            #     instructions_to_run[instruction_to_run]()
-            #     time.sleep(0.5)
-
             # Then check for popups/verification and handle accordingly
             popup = self.pre_fight_popup(instruction_to_run)
             # Repeat last instruction if verification
@@ -432,13 +426,20 @@ class Handle:
         parser = bs(self._driver.page_source, features='lxml')
 
         for element in parser.find_all('div', {'class': 'prt-supporter-attribute'}):
+            # In page source currently picked support element list
+            # contains only 1 attribute (usually)
             if len(element['class']) == 1:
                 support_summon_list = element
                 break
+            # Also check if there's an attribute called "typeX" X being the
+            # number of an element in game
+            # If there's a 'type' attr in given element - it usually means
+            # current support summon page is within an event
             elif len(element['class']) == 2 and 'type' in str(element['class'][1]):
                 support_summon_list = element
                 break
 
+        # Extract actual support summons from the above found element
         support_summons = support_summon_list.find_all('div', class_='btn-supporter lis-supporter')
 
         support_summon_dict = {}
@@ -471,9 +472,13 @@ class Handle:
         supp_summon_dict = self.parse_support_summon_list()
 
         summons_from_config = self.parse_from_config_summons()
+
+        # First element of parsed summons from config shouldn't contain an empty string
+        # if it does - it means that the user didn't specify what summon to prioritize
         if summons_from_config[0] == '':
             return None
 
+        # Placeholder level 0 for logic checks later on
         final_summon_to_pick = {'Lvl': 0}
         found = False
 
