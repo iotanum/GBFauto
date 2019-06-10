@@ -183,7 +183,9 @@ class Handle:
                     self._bot.press.usual_ok()
 
                 elif 'hell-appearance' in popup_name:
-                    print('Nightmare battle!')
+                    night_boss_name = popup.find('div', {'class': "btn-usual-next"})
+                    night_boss_name = night_boss_name['data-chapter-name']
+                    print(f"'{night_boss_name}' nightmare battle!")
                     if EXTREME_BATTLES == 1:
                         try:
                             self._bot.press.usual_next()
