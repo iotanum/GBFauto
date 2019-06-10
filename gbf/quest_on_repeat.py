@@ -153,15 +153,12 @@ class QuestOnRepeat:
         else:
             self.bot.press.coop_room()
 
-        self.bot.handle.after_fight_popups()
+        nightmare_battle = self.bot.handle.after_fight_popups()
+        if nightmare_battle is True:
+            self.repeat = False
+            return
 
-        if self.bot.raid_battle is False:
-            nightmare_battle = self.bot.handle.after_fight_popups()
-            if nightmare_battle is True:
-                self.repeat = False
-                return
-
-            self.bot.raid_battle = False
+        self.bot.raid_battle = False
 
         if '#quest/supporter' not in str(self.driver.current_url):
             self.bot.handle.not_enough_of_x()
