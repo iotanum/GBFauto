@@ -41,6 +41,7 @@ class Handle:
         exp_popup = False
         mc_gauge = None
         team_gauges = None
+        timer_assigned = False
 
         while True:
             parser = bs(self._driver.page_source, 'lxml')
@@ -51,6 +52,9 @@ class Handle:
             # Loot 'window' is a styled element that is displayed after first popups
             # after the fight
             loot = parser.find('div', {'class': 'cnt-get-treasure', 'style': 'display: block;'})
+            if loot and timer_assigned is False:
+                loot_appear_time = time.time()
+                timer_assigned = True
 
             # Same as 'loot' variable, but a literal mask on top of the page
             # needed for lvl-up checks
@@ -92,7 +96,7 @@ class Handle:
             # are done. For ex.: exp, event stuff, etc.
             # Also duplicate if statement for exiting the loop
             # for easier readability
-            if loot and kill is True and popup is None:
+            if loot and kill is True and time.time() - loot_appear_time >= 1:
                 self._bot.total_fights += 1
                 time.sleep(0.5)
                 break
