@@ -32,7 +32,7 @@ class Handle:
             while True:
                 current_url = self._driver.current_url
                 if 'result' in current_url:
-                    time.sleep(3)
+                    time.sleep(1.5)
                     break
                 time.sleep(0.5)
 
@@ -92,7 +92,7 @@ class Handle:
             # are done. For ex.: exp, event stuff, etc.
             # Also duplicate if statement for exiting the loop
             # for easier readability
-            if loot and kill is True:
+            if loot and kill is True and popup is None:
                 self._bot.total_fights += 1
                 time.sleep(0.5)
                 break
