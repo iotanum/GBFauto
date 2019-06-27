@@ -38,13 +38,12 @@ class QuestOnRepeat:
             pass
 
     def finish_fight(self):
-        mobs_alive = True
         refreshed = False
 
         # remove the battle scene/advice element from the fight, less clutter
         self.remove_battle_scene_element()
 
-        while mobs_alive is True:
+        while True:
             strainer = ss('div', attrs={'class': 'prt-targeting-area'})
             parser = bs(self.driver.page_source, 'lxml', parse_only=strainer)
 
@@ -77,7 +76,10 @@ class QuestOnRepeat:
                 except (selenium_err.exceptions.NoSuchElementException, selenium_err.exceptions.WebDriverException):
                     pass
             else:
-                mobs_alive = False
+                # Refresh the page to skip end fight animations
+                self.driver.refresh()
+
+                return True
 
     def count_quest_fight_parts(self):
         parser = bs(self.driver.page_source, 'lxml')
