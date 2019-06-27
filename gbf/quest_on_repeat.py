@@ -37,7 +37,7 @@ class QuestOnRepeat:
         except selenium_err.exceptions.NoSuchElementException:
             pass
 
-    def finish_fight(self, num_of_fights, fight_num):
+    def finish_fight(self):
         refreshed = False
 
         # remove the battle scene/advice element from the fight, less clutter
@@ -122,7 +122,7 @@ class QuestOnRepeat:
 
             print(f"Fight #{fight_num}.")
             self.bot.queue.do_queue(queue)
-            fight_ended = self.finish_fight(num_of_fights, fight_num)
+            fight_ended = self.finish_fight()
             if fight_ended is not True:
                 self.bot.handle.wait_results_button()
                 self.bot.press.results_button()
