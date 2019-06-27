@@ -37,7 +37,7 @@ class QuestOnRepeat:
         except selenium_err.exceptions.NoSuchElementException:
             pass
 
-    def finish_fight(self):
+    def finish_fight(self, num_of_fights, fight_num):
         refreshed = False
 
         # remove the battle scene/advice element from the fight, less clutter
@@ -76,10 +76,7 @@ class QuestOnRepeat:
                 except (selenium_err.exceptions.NoSuchElementException, selenium_err.exceptions.WebDriverException):
                     pass
             else:
-                # Refresh the page to skip end fight animations
-                self.driver.refresh()
-
-                return True
+                break
 
     def count_quest_fight_parts(self):
         parser = bs(self.driver.page_source, 'lxml')
@@ -125,11 +122,13 @@ class QuestOnRepeat:
 
             print(f"Fight #{fight_num}.")
             self.bot.queue.do_queue(queue)
-            fight_ended = self.finish_fight()
+            fight_ended = self.finish_fight(num_of_fights, fight_num)
             if fight_ended is not True:
                 self.bot.handle.wait_results_button()
                 self.bot.press.results_button()
+            # Skip animations after defeating the mob
             if fight_num == num_of_fights:
+                self.driver.refresh()
                 break
 
     def convert_seconds_to_hms_format(self):
