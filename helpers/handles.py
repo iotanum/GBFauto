@@ -224,7 +224,7 @@ class Handle:
                     self._bot.press.usual_ok()
 
                 elif 'newitem' in popup_name:
-                    item_img_url = popup.find('img', {'class': 'img-newitem'})
+                    item_img_url = popup.find('img', {'class': 'img-newitem'})['src']
                     item_name = popup.find('div', {'class': 'txt-newitem-name'}).text
                     print(f"New item! '{item_name}'.\n{item_img_url}")
                     self._bot.press.usual_ok()
