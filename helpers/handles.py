@@ -254,6 +254,11 @@ class Handle:
                     print(f"New support ability!\n'{ability_text}''")
                     self._bot.press.usual_ok()
 
+                elif 'skin-open' in popup_name:
+                    skin_text = popup.find('div', {'class': 'txt-popup-body'}).text
+                    print(skin_text)
+                    self._bot.press.usual_ok()
+
                 else:
                     print("Unhandled popup!\nPage source and error picture in 'errors' folder.")
                     print(f"Popup element: {popup}")
