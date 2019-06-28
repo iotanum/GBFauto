@@ -12,9 +12,10 @@ class QuestOnRepeat:
         self.bot = game_handler
         self.driver = game_handler.driver
         self.repeat = False
-        self.wait_result = True
         self.bot.raid_battle = False
         self.coop = False
+        # In a context of current quest
+        self.num_of_fights = 0
 
     def wait_for_repeatable_quest(self):
         print('\nWaiting for you to enter a repeatable quest...')
@@ -54,10 +55,14 @@ class QuestOnRepeat:
                 try:
                     self.bot.press.attack_button()
                     self.bot.wait.for_fight_main_mask()
-                    if self.bot.raid_battle is True and refreshed is False:
+
+                    # Refresh the page (after queue) if quest contains 1 fight (F5 works)
+                    # if the quest contains more than 1 fight - use BACK key (to be implemented)
+                    if self.num_of_fights == 1 and refreshed is False:
                         refreshed = True
                         self.bot.handle.wait_after_queue_refresh()
                         self.driver.refresh()
+
                         start = time.time()
                         current_url = str(self.driver.current_url)
 
@@ -70,6 +75,8 @@ class QuestOnRepeat:
                             if time.time() - start >= 3:
                                 self.bot.handle.wait_before_fight(fight_start=True)
 
+                                # Remove the element again since we refreshed the page
+                                self.remove_battle_scene_element()
                                 self.bot.handle.backup_request()
                                 break
 
@@ -104,31 +111,38 @@ class QuestOnRepeat:
         # If 'Quest' has a backup request screen
         # then it means that it's a raid.
         self.bot.raid_battle = '#raid_multi' in self.driver.current_url
-        if self.bot.raid_battle is False:
-            num_of_fights = self.count_quest_fight_parts()
-        else:
+        if self.bot.raid_battle is True:
             self.bot.handle.backup_request()
-            num_of_fights = 1
+            self.num_of_fights = 1
+        else:
+            self.num_of_fights = self.count_quest_fight_parts()
 
         first_queue_from_config = os.getenv("QUEUE_FIRST_FIGHT")
         second_queue_from_config = os.getenv("QUEUE_SECOND_FIGHT")
         third_queue_from_config = os.getenv('QUEUE_THIRD_FIGHT')
         queues = [first_queue_from_config, second_queue_from_config, third_queue_from_config]
 
-        for fight_num, queue in enumerate(queues, 1):
+        for current_fight_num, queue in enumerate(queues, 1):
             # Don't need to wait on first iteration
-            if fight_num != 1 or self.bot.raid_battle is True:
+            if current_fight_num != 1 or self.bot.raid_battle is True:
                 self.bot.handle.wait_before_fight(fight_start=False)
 
-            print(f"Fight #{fight_num}.")
+            print(f"Fight #{current_fight_num}.")
             self.bot.queue.do_queue(queue)
             fight_ended = self.finish_fight()
-            if fight_ended is not True:
+            print(fight_ended)
+
+            # Press result/next button if quest contains more than 1 fight
+            if current_fight_num != self.num_of_fights and self.num_of_fights > 1:
                 self.bot.handle.wait_results_button()
                 self.bot.press.results_button()
-            # Skip animations after defeating the mob
-            if fight_num == num_of_fights:
-                self.driver.refresh()
+
+            # Skip animations after completing the quest
+            if current_fight_num == self.num_of_fights:
+                # Also check if after refreshing the page we're still in a fight
+                # or quest contains more than 1 fight
+                if fight_ended is not True or self.num_of_fights > 1:
+                    self.driver.refresh()
                 break
 
     def convert_seconds_to_hms_format(self):
