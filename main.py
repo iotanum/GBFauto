@@ -54,7 +54,7 @@ def pick_option():
 
         return option
 
-    except ValueError:
+    except (ValueError, KeyError):
         return None
 
 
