@@ -130,7 +130,6 @@ class QuestOnRepeat:
             print(f"Fight #{current_fight_num}.")
             self.bot.queue.do_queue(queue)
             fight_ended = self.finish_fight()
-            print(fight_ended)
 
             # Press result/next button if quest contains more than 1 fight
             if current_fight_num != self.num_of_fights and self.num_of_fights > 1:
@@ -141,8 +140,9 @@ class QuestOnRepeat:
             if current_fight_num == self.num_of_fights:
                 # Also check if after refreshing the page we're still in a fight
                 # or quest contains more than 1 fight
-                if fight_ended is not True or self.num_of_fights > 1:
-                    self.driver.refresh()
+                if 'result' not in self.driver.current_url:
+                    if fight_ended is not True or self.num_of_fights > 1:
+                        self.driver.refresh()
                 break
 
     def convert_seconds_to_hms_format(self):
