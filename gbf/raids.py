@@ -99,7 +99,7 @@ class Raids:
             if battle_finished is True:
                 self.bot.press.usual_ok()
 
-            if any(0 < hp <= 50 for hp in raid_boss_hps) and made_a_leech_hit is False:
+            if any(0 < hp <= 90 for hp in raid_boss_hps) and made_a_leech_hit is False:
                 try:
                     self.bot.press.attack_button()
                     print('Made the leech hit.')

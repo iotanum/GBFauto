@@ -598,7 +598,7 @@ class Handle:
             various_popup = parser.find('div', {'class': ['common-pop-error']})
 
             if ap_ep_popup:
-                ap_ep_amount = random.randint(1, 5)
+                ap_ep_amount = random.randint(3, 5)
                 self._bot.action.use_potions_or_pills(ap_ep_amount)
                 self._bot.wait.for_loading_screen()
                 self._bot.press.usual_ok()
