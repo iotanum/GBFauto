@@ -109,7 +109,7 @@ class Press:
             self._driver.find_element_by_xpath(first_support_summon_xpath).click()
         else:
             support_summon_xpath = f'//*[@data-supporter-user-id="{supporter_id}"]' \
-                                   f'[@data-attribute="{support_element_num}"]'
+                                   f'[@data-attribute="{support_element_num if support_element_num != 7 else 10}"]'
             search_by = By.XPATH
 
             self._wait_for_button(search_by, support_summon_xpath)
