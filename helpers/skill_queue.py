@@ -151,7 +151,7 @@ class Skills:
                 # if char_num is 5, then it means it's a support summon
                 else:
                     # Skip pressing 'back' button if support summon is your starter 'char'
-                    if summon_was_used is True:
+                    if summon_was_used is True or step != 1:
                         self._bot.press.back()
                     actions_for_summon = [self._bot.press.summon_card,
                                           self._bot.press.summon_num,
