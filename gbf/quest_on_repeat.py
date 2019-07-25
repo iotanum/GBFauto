@@ -106,6 +106,7 @@ class QuestOnRepeat:
         return chapter_id
 
     def handle_fight(self):
+        self.bot.handle.pre_fight_screens()
         self.bot.handle.wait_before_fight(fight_start=True)
 
         # If 'Quest' has a backup request screen
