@@ -458,6 +458,11 @@ class Handle:
         for idx, support_summon in enumerate(support_summons):
             supporter_id = support_summon['data-supporter-user-id']
             support_name = support_summon.find('div', {'class': 'prt-supporter-summon'}).text.strip()
+            skill_level = support_summon.find('div', {'class': ['prt-summon-skill']})
+            # Sk level class consists of 3 styles, thus the magic number.
+            # 3rd style is what I need, it consists of style used to display the skill level of
+            # the summon
+            skill_level = str(skill_level['class'][2] if len(skill_level['class']) == 3 else 0)
             friend_summon = support_summon.find('div', {'class': 'ico-friend'})
 
             # Extract summon level, name, and if it is a friend summon
@@ -468,7 +473,7 @@ class Handle:
 
             support_summon_dict[idx] = {}
             support_summon_dict[idx]['Name'] = support_summon_name
-            support_summon_dict[idx]['Lvl'] = int(support_summon_lvl)
+            support_summon_dict[idx]['SkLvl'] = int(re.findall('\d+', skill_level)[0])
             support_summon_dict[idx]['ID'] = int(supporter_id)
             support_summon_dict[idx]['Friend'] = True if friend_summon else False
 
@@ -489,36 +494,49 @@ class Handle:
         if summons_from_config[0] == '':
             return None
 
-        # Placeholder level 0 for logic checks later on
-        final_summon_to_pick = {'Lvl': 0}
+        needed_summons = {}
+        priority, non_priority = summons_from_config
+        search_for = priority.lower()
         found = False
+        final_summ_pick = {'SkLvl': 1}
+        MIN_SKLEVEL_THRESHOLD = 1
 
-        for summon_to_pick in summons_from_config:
-            summon_to_pick = summon_to_pick.lower()
-            # Firstly check if from config summon exists in the list
-            if any(summon_to_pick in supp_summon['Name'].lower() for supp_summon in supp_summon_dict.values()):
-                # If it exists -> find the best possible choice from the list
-                for support_summon in supp_summon_dict.values():
-                    support_summon['Name'] = support_summon['Name'].lower()
-                    # Support summon level being the main argument
-                    if summon_to_pick in support_summon['Name'] and support_summon['Lvl'] >= 100:
-                        final_summon_to_pick = support_summon
-                        found = True
+        while found is False:
+            if len(needed_summons) < 1:
+                for idx, summon in enumerate(supp_summon_dict.values(), 1):
+                    if search_for in summon['Name'].lower() and summon['SkLvl'] >= MIN_SKLEVEL_THRESHOLD:
+                        print(summon, '<- This goes into the "found" list.')
+                        needed_summons[idx] = summon
 
-                # Sorry for duplicate code OwO
-                # Checks if there is a friend support summon that is identical
-                # to the found one above, if yes -> get that instead (aka prioritize friend summons)
-                for support_summon in supp_summon_dict.values():
-                    support_summon['Name'] = support_summon['Name'].lower()
-                    if summon_to_pick in support_summon['Name'] and final_summon_to_pick['Lvl'] == support_summon['Lvl']:
-                        if support_summon['Friend'] is True:
-                            final_summon_to_pick = support_summon
+                    if idx == len(supp_summon_dict):
+                        # If there's at least 1 summon found - return
+                        if len(needed_summons) >= 1:
                             break
+                        # If already went through both priority and non and still
+                        # found nothing - return
+                        elif search_for == non_priority:
+                            print(f"'{non_priority}' was also not found. Picking first given summon on the list.")
+                            return None
+                        # If went through priority and didn't go through non-priority
+                        # - try that
+                        else:
+                            print(f"'{priority}' summon was not found.")
+                            search_for = non_priority.lower()
 
-            if found is True:
-                break
+                for idx, summon in enumerate(needed_summons.values(), 1):
+                    if True in [summon['Friend'] is True for summon in needed_summons.values()]:
+                        if summon['SkLvl'] >= final_summ_pick['SkLvl'] and summon['Friend'] is True:
+                            final_summ_pick = summon
+                    else:
+                        if summon['SkLvl'] >= final_summ_pick['SkLvl']:
+                            final_summ_pick = summon
 
-        return final_summon_to_pick if final_summon_to_pick['Lvl'] is not 0 else None
+                    if idx == len(needed_summons):
+                        print(final_summ_pick, '<- Picking this.')
+                        found = True
+                        break
+
+        return final_summ_pick
 
     def wait_before_fight(self, fight_start=True):
         element_found = False
