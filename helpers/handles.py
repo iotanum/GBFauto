@@ -494,6 +494,7 @@ class Handle:
         if summons_from_config[0] == '':
             return None
 
+        print(supp_summon_dict, "<- Whole summon list.")
         needed_summons = {}
         priority, non_priority = summons_from_config
         search_for = priority.lower()
