@@ -515,7 +515,7 @@ class Handle:
                             break
                         # If already went through both priority and non and still
                         # found nothing - return
-                        elif search_for == non_priority:
+                        elif search_for == non_priority.lower():
                             print(f"'{non_priority}' was also not found. Picking first given summon on the list.")
                             return None
                         # If went through priority and didn't go through non-priority
@@ -523,6 +523,7 @@ class Handle:
                         else:
                             print(f"'{priority}' summon was not found.")
                             search_for = non_priority.lower()
+                            break
 
                 for idx, summon in enumerate(needed_summons.values(), 1):
                     if True in [summon['Friend'] is True for summon in needed_summons.values()]:
