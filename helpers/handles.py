@@ -657,7 +657,7 @@ class Handle:
                 else:
                     try:
                         self._bot.press.usual_cancel()
-                    except selenium_err.exceptions.ElementNotVisibleException:
+                    except selenium_err.exceptions.ElementNotInteractableException:
                         try:
                             self._bot.press.usual_ok()
                         except:
