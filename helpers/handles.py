@@ -516,12 +516,23 @@ class Handle:
                         # If already went through both priority and non and still
                         # found nothing - return
                         elif search_for == non_priority.lower():
-                            print(f"'{non_priority}' was also not found. Picking first given summon on the list.")
-                            return None
+                            print(f"'{non_priority}'{' with SK0 ' if MIN_SKLEVEL_THRESHOLD == 0 else ''}"
+                                  f"was also not found.")
+
+                            if MIN_SKLEVEL_THRESHOLD == 1:
+                                MIN_SKLEVEL_THRESHOLD = 0
+                                final_summ_pick['SkLvl'] = 0
+                                search_for = priority.lower()
+                                print('Trying summons with SK0...')
+                            else:
+                                print('No suitable support summons were found. Picking first on the list.')
+                                return None
                         # If went through priority and didn't go through non-priority
                         # - try that
                         else:
-                            print(f"'{priority}' summon was not found.")
+                            print(f"'{priority}'{' with SK0 ' if MIN_SKLEVEL_THRESHOLD == 0 else ''}"
+                                  f"summon was not found.")
+
                             search_for = non_priority.lower()
                             break
 
