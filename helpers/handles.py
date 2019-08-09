@@ -21,6 +21,7 @@ class Handle:
     def __init__(self, game_handler):
         self._bot = game_handler
         self._driver = game_handler.driver
+        self.support_id = None
 
     def after_fight_popups(self, kill=False):
         # After the page loads, there's no way to 'tell' if there will be
@@ -538,8 +539,14 @@ class Handle:
 
                 for idx, summon in enumerate(needed_summons.values(), 1):
                     if True in [summon['Friend'] is True for summon in needed_summons.values()]:
-                        if summon['SkLvl'] >= final_summ_pick['SkLvl'] and summon['Friend'] is True:
+                        # Pick last picked friend summon by ID
+                        if self.support_id == summon['ID']:
                             final_summ_pick = summon
+                            # Can't be bothered
+                            idx = len(needed_summons)
+                        elif summon['SkLvl'] >= final_summ_pick['SkLvl'] and summon['Friend'] is True:
+                            final_summ_pick = summon
+                            self.support_id = summon['ID']
                     else:
                         if summon['SkLvl'] >= final_summ_pick['SkLvl']:
                             final_summ_pick = summon
