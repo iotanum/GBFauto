@@ -112,6 +112,7 @@ class Raids:
             elif all(hp == 0 for hp in raid_boss_hps):
                 print("Raid boss is defeated.")
                 raid_boss_is_alive = False
+                self.driver.refresh()
             time.sleep(0.15)
 
     def get_raid_id(self):
@@ -177,13 +178,13 @@ class Raids:
             print("Wasn't fast enough to join the read - Raid Boss is dead.")
             return False
 
-        success = self.monitor_raid_boss_hp()
-        if success is not False:
-            try:
-                self.bot.press.results_button()
-            except selenium_err.exceptions.ElementNotVisibleException:
-                self.driver.refresh()
-                self.bot.wait.for_loading_screen()
+        self.monitor_raid_boss_hp()
+        # if success is not False:
+        #     try:
+        #         self.bot.press.results_button()
+        #     except selenium_err.exceptions.ElementNotVisibleException:
+        #         self.driver.refresh()
+        #         self.bot.wait.for_loading_screen()
 
     def convert_seconds_to_hms_format(self):
         seconds = round(self.bot.run_time(), 2)
