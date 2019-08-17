@@ -135,6 +135,7 @@ class Raids:
             self.type_and_join_raid()
         # If everything is OK - continue picking support
         else:
+            time.sleep(0.3)
             if '#quest/supporter' in str(self.driver.current_url):
                 # Try picking support summon
                 success = self.bot.handle.pre_fight_support_summons()
