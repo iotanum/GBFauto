@@ -46,6 +46,7 @@ class Raids:
         hp_timer = time.time()
         stale_hp_timer = 0
         times_refreshed = 0
+        point_threshold_reached = False
 
         while raid_boss_is_alive is True:
             raid_boss_hps = self.get_raid_boss_hps()
@@ -99,11 +100,24 @@ class Raids:
             if battle_finished is True:
                 self.bot.press.usual_ok()
 
+            # Check if raid points are up to threshold
+            if self.bot.point_threshold:
+                if made_a_leech_hit is True:
+
+                    points = self.bot.handle.raid_points()
+                    if points >= int(self.bot.point_threshold) and point_threshold_reached is False:
+                        self.bot.press.auto_attack()
+                        point_threshold_reached = True
+                        print('Point limit reached. Turning off auto attacks.')
             if any(0 < hp <= 90 for hp in raid_boss_hps) and made_a_leech_hit is False:
                 try:
                     self.bot.press.attack_button()
                     print('Made the leech hit.')
                     made_a_leech_hit = True
+
+                    if self.bot.point_threshold:
+                        self.bot.press.auto_attack()
+                        print(f'Auto attacks are on until I reach {self.bot.point_threshold} points.')
                 except selenium_err.exceptions.WebDriverException:
                     continue
             elif made_a_leech_hit is True and waiting_for_kill is False:
