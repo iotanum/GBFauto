@@ -759,3 +759,13 @@ class Handle:
             self._driver.find_element_by_class_name('btn-talk-message').click()
             time.sleep(1)
             return True
+
+    def raid_points(self):
+        parser = bs(self._driver.page_source, 'lxml')
+
+        battle_menu = parser.find_all('div', {'class': 'prt-mvp'})
+        main_char_battle_menu = battle_menu[0]
+        points = main_char_battle_menu.find('div', {'class': 'txt-point'}).text
+        parsed_points = re.findall('\d+', points)
+
+        return int(parsed_points[0])
