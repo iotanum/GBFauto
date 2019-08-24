@@ -162,6 +162,10 @@ class Skills:
                         # second step is choosing which summon
                         if idx == 2:
                             summ_action(ability_num)
+                        elif idx == 4:
+                            if step > 1:
+                                break
+                            summ_action()
                         else:
                             summ_action()
                         time.sleep(0.35)
