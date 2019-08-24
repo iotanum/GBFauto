@@ -150,6 +150,10 @@ class Skills:
                         time.sleep(0.15)
                 # if char_num is 5, then it means it's a support summon
                 else:
+                    # Pressing support summon in a middle of a queue requires
+                    # pressing 'back' button in the left top corner
+                    if step > 1:
+                        self._bot.press.back()
                     actions_for_summon = [self._bot.press.summon_card,
                                           self._bot.press.summon_num,
                                           self._bot.press.confirm_summon_fight,
@@ -160,7 +164,7 @@ class Skills:
                             summ_action(ability_num)
                         else:
                             summ_action()
-                        time.sleep(0.25)
+                        time.sleep(0.35)
                     summon_was_used = True
             except (selenium_err.exceptions.ElementNotVisibleException, selenium_err.exceptions.WebDriverException) as e:
                 print(f"Broke on {step} step.")
