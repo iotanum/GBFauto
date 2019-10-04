@@ -111,11 +111,12 @@ class Handle:
             # Because every lvl-up is displayed BEFORE loot element
             # meaning the 'first' burst of popups
 
-            # Main 'level' elements
-            mc_lvl_elem = party.find('div', {'class': 'prt-player-exp'})
-            team_lvl_elem = party.find('div', {'class': 'prt-party-npc'})
+            if party:
+                # Main 'level' elements
+                mc_lvl_elem = party.find('div', {'class': 'prt-player-exp'})
+                team_lvl_elem = party.find('div', {'class': 'prt-party-npc'})
 
-            if main_mask and kill is True and exp_popup is True and team_lvl_elem and mc_lvl_elem:
+            if main_mask and kill is True and exp_popup is True and mc_lvl_elem:
                 # It's exact percentages
                 mc_lvl_xp_percentage = mc_lvl_elem.find('div', {'class': 'prt-exp-gauge-inner-new'})['style']
                 team_lvl_xp_percentages = team_lvl_elem.find_all('div', {'class': 'prt-exp-gauge-inner-new'})
