@@ -110,11 +110,12 @@ class Handle:
             # Also don't need to check for changes if kill is False
             # Because every lvl-up is displayed BEFORE loot element
             # meaning the 'first' burst of popups
-            if main_mask and kill is True and exp_popup is True:
-                # Main 'level' elements
-                mc_lvl_elem = party.find('div', {'class': 'prt-player-exp'})
-                team_lvl_elem = party.find('div', {'class': 'prt-party-npc'})
 
+            # Main 'level' elements
+            mc_lvl_elem = party.find('div', {'class': 'prt-player-exp'})
+            team_lvl_elem = party.find('div', {'class': 'prt-party-npc'})
+
+            if main_mask and kill is True and exp_popup is True and team_lvl_elem and mc_lvl_elem:
                 # It's exact percentages
                 mc_lvl_xp_percentage = mc_lvl_elem.find('div', {'class': 'prt-exp-gauge-inner-new'})['style']
                 team_lvl_xp_percentages = team_lvl_elem.find_all('div', {'class': 'prt-exp-gauge-inner-new'})
@@ -507,7 +508,6 @@ class Handle:
             if len(needed_summons) < 1:
                 for idx, summon in enumerate(supp_summon_dict.values(), 1):
                     if search_for in summon['Name'].lower() and summon['SkLvl'] >= MIN_SKLEVEL_THRESHOLD:
-                        print(summon, '<- This goes into the "found" list.')
                         needed_summons[idx] = summon
 
                     if idx == len(supp_summon_dict):
@@ -552,7 +552,6 @@ class Handle:
                             final_summ_pick = summon
 
                     if idx == len(needed_summons):
-                        print(final_summ_pick, '<- Picking this.')
                         found = True
                         break
 
