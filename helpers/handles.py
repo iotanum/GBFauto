@@ -764,8 +764,10 @@ class Handle:
         parser = bs(self._driver.page_source, 'lxml')
 
         battle_menu = parser.find_all('div', {'class': 'prt-mvp'})
-        main_char_battle_menu = battle_menu[0]
-        points = main_char_battle_menu.find('div', {'class': 'txt-point'}).text
-        parsed_points = re.findall('\d+', points)
-
+        if battle_menu:
+            main_char_battle_menu = battle_menu[0]
+            points = main_char_battle_menu.find('div', {'class': 'txt-point'}).text
+            parsed_points = re.findall('\d+', points)
+        else:
+            parsed_points = [0]
         return int(parsed_points[0])
