@@ -22,6 +22,7 @@ class Handle:
         self._bot = game_handler
         self._driver = game_handler.driver
         self.support_id = None
+        self.consumables_url = 'http://game.granbluefantasy.jp/#item'
 
     def after_fight_popups(self, kill=False):
         # After the page loads, there's no way to 'tell' if there will be
@@ -385,6 +386,47 @@ class Handle:
                 break
             time.sleep(0.15)
 
+    def _wait_for_summon_confirmation(self):
+        while True:
+            parser = bs(self._driver.page_source, 'lxml')
+
+            verification = parser.find('div', class_='pop-usual common-pop-error pop-show')
+            confirmation_popup = parser.find_all('div', {'class': 'pop-deck supporter',
+                                                         'style': re.compile('display: block;')})
+
+            if confirmation_popup:
+                break
+
+            if verification:
+                header = str(verification.find('div', {'class': 'prt-popup-header'}).text)
+
+                if 'Access Verification' in header:
+                    self.human_verification()
+                    return True
+
+            time.sleep(0.2)
+
+    def track_ap_usage(self):
+        parser = bs(self._driver.page_source, 'lxml')
+
+        ap_elem = parser.find('div', {'class': 'txt-stamina'}).text
+
+        before, after = self._convert_gain_to_int(ap_elem, combined=False)
+
+        self._bot.current_ap = before
+        if not self._bot.quest_cost:
+            self._bot.quest_cost = before - after
+
+        # Calculate if AP will be needed AFTER the fight
+        after_fight_ap = self._bot.current_ap - self._bot.quest_cost
+        if after_fight_ap < self._bot.quest_cost:
+            print('AP USAGE IS NEEDED AFTER Z FIGHT')
+            self._bot.need_ap = True
+        else:
+            self._bot.need_ap = False
+
+        print(f"{self._bot.current_ap} current", f"{self._bot.quest_cost} quest cost")
+
     def parse_support_summon_list(self):
         parser = bs(self._driver.page_source, features='lxml')
 
@@ -626,11 +668,11 @@ class Handle:
             return True
         return False
 
-    def _convert_gain_to_int(self, gain):
+    def _convert_gain_to_int(self, gain, combined=True):
         regex_num_pattern = r'\d+'
         gains = re.findall(regex_num_pattern, gain)
         gain = [int(s) for s in gains]
-        return sum(gain)
+        return sum(gain) if combined else gain
 
     def _count_after_fight_xp(self, xp_popup_element):
         # Declare 'span' element names for appropriate after fight gains

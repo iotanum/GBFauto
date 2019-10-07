@@ -48,6 +48,11 @@ class GBFGame:
         self.total_pendants = 0
         self.total_fights = 0
         self.raid_battle = False
+        #############################################
+        self.option_repeatable = False
+        self.current_ap = None
+        self.quest_cost = None
+        self.need_ap = False
         self.point_threshold = os.getenv('POINT_THRESHOLD')
 
     def run_time(self):
