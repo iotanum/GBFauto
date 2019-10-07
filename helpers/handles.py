@@ -329,69 +329,7 @@ class Handle:
                 ok_button.click()
                 break
 
-                # Will need this later
-                # self._bot.press.usual_skip()
-                # self._bot.popup.skip_side_scroll()
-                # self._driver.find_element_by_xpath('//*[@id="pop"]/div/div[3]/div[2]').click()
-                # self._bot.popup.side_scroll_results()
-                # self._driver.find_element_by_xpath('//*[@id="pop"]/div/div[3]/div').click()
-
-    def pre_fight_popup(self, instruction_to_run):
-        popup_search_start = time.time()
-
-        while True:
-            popup_search_time = time.time()
-
-            if popup_search_time - popup_search_start > 2:
-                # If there was a pre-fight popup, need to return a bool
-                # and handle it appropriately (ex.: repeat last instruction)
-                break
-
-            if self._bot.raid_battle is False:
-                break
-
-            parser = bs(self._driver.page_source, 'lxml')
-            popup = parser.find('div', {'class': ['common-pop-error']})
-
-            current_url = self._driver.current_url
-
-            # Conditions to exit popup detection loop
-            # Picking support summon element doesn't need popup detection
-            if instruction_to_run == 'support_element':
-                break
-
-            # Exit loop if after picking support summon the support confirmation 'popup' appeared
-            elif instruction_to_run == 'pick_summon':
-                supp_ele = parser.find(class_='pop-deck supporter',
-                                       style_='display: block; top: 0px; margin-bottom: 0px;')
-                if supp_ele:
-                    break
-
-            # Exit loop if after confirming support summon the URL has changed
-            elif instruction_to_run == 'confirm_support':
-                if 'quest/supporter' not in current_url:
-                    break
-
-            # Exit loop if after entering ID the URL has changed
-            elif instruction_to_run == 'pre_summon_pick':
-                if 'quest/supporter' in current_url:
-                    break
-
-            if popup:
-                popup_search_start = time.time()
-
-                # Needed to distinguish between verification/typical error popups
-                popup_header = str(popup.find('div', {'class': 'prt-popup-header'}).text)
-
-                if 'Battle' in popup_header:
-                    self._bot.press.usual_ok()
-                    return True
-
-                elif 'Access Verification' in popup_header:
-                    self.human_verification()
-                    return 'verification'
-
-    def pre_fight_support_summons(self):
+    def pre_fight_support_summons(self, raid=False):
         self._bot.wait.for_loading_screen()
 
         instructions_to_run = {'support_element': self._bot.press.support_element,
@@ -401,6 +339,18 @@ class Handle:
         instruction_to_run = 'support_element'
 
         while True:
+            parser = bs(self._driver.page_source, 'lxml')
+            popup = parser.find('div', {'class': ['common-pop-error']})
+
+            # Handle 'battle' type popups here
+            if popup:
+                popup_header = str(popup.find('div', {'class': 'prt-popup-header'}).text)
+
+                if 'Battle' in popup_header:
+                    self._bot.press.usual_ok()
+                    if raid is True:
+                        return True
+
             # Execute the instruction
             if instruction_to_run == 'support_element':
                 instructions_to_run[instruction_to_run](SUPPORT_ELEMENT)
@@ -416,24 +366,23 @@ class Handle:
                     instructions_to_run[instruction_to_run](support_element_num=SUPPORT_ELEMENT, first_summon=True)
 
             if instruction_to_run == 'confirm_summon':
+                verification = self._wait_for_summon_confirmation()
+                if verification:
+                    instruction_to_run = instruction_to_run
+
+                if self._bot.option_repeatable is True and not verification:
+                    self.track_ap_usage()
+
                 instructions_to_run[instruction_to_run]()
 
-            # Then check for popups/verification and handle accordingly
-            popup = self.pre_fight_popup(instruction_to_run)
-            # Repeat last instruction if verification
-            if popup == 'verification':
-                instruction_to_run = instruction_to_run
-            # Return if popup was present (needs to be handled elsewhere)
-            elif popup is True:
-                return False
-            # If no popup - continue with the 'next' instruction to be ran
-            else:
-                next_instruction_num = list(instructions_to_run.keys()).index(instruction_to_run) + 1
-                try:
-                    next_instruction = list(instructions_to_run)[next_instruction_num]
-                    instruction_to_run = next_instruction
-                except IndexError:
-                    break
+            # Calculate next instruction to run
+            next_instruction_num = list(instructions_to_run.keys()).index(instruction_to_run) + 1
+            try:
+                next_instruction = list(instructions_to_run)[next_instruction_num]
+                instruction_to_run = next_instruction
+
+            except IndexError:
+                break
             time.sleep(0.15)
 
     def parse_support_summon_list(self):
