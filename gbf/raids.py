@@ -143,7 +143,7 @@ class Raids:
         self.type_and_join_raid()
         self.bot.handle.not_enough_of_x()
         # Check if everything is ok after typing and entering the raid
-        popup = self.bot.handle.pre_fight_support_summons(raid=True)
+        popup = self.bot.handle.pre_fight_support_summons()
         # If there was a popup, try another raid/repeat last instruction
         if popup:
             self.type_and_join_raid()

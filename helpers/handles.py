@@ -330,7 +330,7 @@ class Handle:
                 ok_button.click()
                 break
 
-    def pre_fight_support_summons(self, raid=False):
+    def pre_fight_support_summons(self):
         self._bot.wait.for_loading_screen()
 
         instructions_to_run = {'support_element': self._bot.press.support_element,
@@ -349,8 +349,9 @@ class Handle:
 
                 if 'Battle' in popup_header:
                     self._bot.press.usual_ok()
-                    if raid is True:
-                        return True
+
+                # Just return if there was any type of a popup during this stage
+                return True
 
             # Execute the instruction
             if instruction_to_run == 'support_element':
@@ -426,6 +427,9 @@ class Handle:
             self._bot.need_ap = False
 
         print(f"{self._bot.current_ap} current", f"{self._bot.quest_cost} quest cost")
+
+    def navigate_to_consumables(self):
+        self._driver.execute_script(f"window.location.href = '{self.consumables_url}'")
 
     def parse_support_summon_list(self):
         parser = bs(self._driver.page_source, features='lxml')
