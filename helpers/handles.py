@@ -398,7 +398,7 @@ class Handle:
             parser = bs(self._driver.page_source, 'lxml')
 
             verification = parser.find('div', class_='pop-usual common-pop-error pop-show')
-            confirmation_popup = parser.find_all('div', {'class': 'pop-deck supporter_raid',
+            confirmation_popup = parser.find_all('div', {'class': re.compile('pop-deck supporter'),
                                                          'style': re.compile('display: block;')})
 
             if confirmation_popup:
