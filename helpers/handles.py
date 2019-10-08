@@ -359,13 +359,13 @@ class Handle:
 
             if instruction_to_run == 'pick_summon':
                 support_summon_id = self.get_best_support_summon()
-
                 if support_summon_id:
                     support_summon_id = support_summon_id['ID']
                     instructions_to_run[instruction_to_run](supporter_id=support_summon_id,
                                                             support_element_num=SUPPORT_ELEMENT)
                 else:
-                    instructions_to_run[instruction_to_run](support_element_num=SUPPORT_ELEMENT, first_summon=True)
+                    instructions_to_run[instruction_to_run](support_element_num=SUPPORT_ELEMENT,
+                                                            first_summon=True)
 
             if instruction_to_run == 'confirm_summon':
                 verification = self._wait_for_summon_confirmation()
@@ -388,11 +388,17 @@ class Handle:
             time.sleep(0.15)
 
     def _wait_for_summon_confirmation(self):
+        start = time.time()
+
         while True:
+            if time.time() - start > 5:
+                print('Something probably changed in confirmation popup source code?')
+                break
+
             parser = bs(self._driver.page_source, 'lxml')
 
             verification = parser.find('div', class_='pop-usual common-pop-error pop-show')
-            confirmation_popup = parser.find_all('div', {'class': 'pop-deck supporter',
+            confirmation_popup = parser.find_all('div', {'class': 'pop-deck supporter_raid',
                                                          'style': re.compile('display: block;')})
 
             if confirmation_popup:
@@ -560,19 +566,23 @@ class Handle:
             if time.time() - start > 15:
                 break
 
+            if 'result' in self._driver.current_url:
+                break
+
             strainer = ss('div', attrs={'id': 'cnt-raid-information'})
             parser = bs(self._driver.page_source, 'lxml', parse_only=strainer)
 
             if fight_start is True:
                 attack_button_on = parser.find('div', class_='btn-attack-start display-on')
+
                 if attack_button_on:
                     break
             else:
-                # attack_button_off = parser.find('div', {'class': ['btn-attack-start', 'display-off']})
                 attack_button = parser.find('div', class_='btn-attack-start')
                 if attack_button or element_found is True:
                     element_found = True
                     attack_button_on = parser.find('div', class_='btn-attack-start display-on')
+
                     if attack_button_on:
                         break
 
