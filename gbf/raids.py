@@ -142,24 +142,14 @@ class Raids:
     def handle_entering_raid(self):
         self.type_and_join_raid()
         self.bot.handle.not_enough_of_x()
-        # Check if everything is ok after typing and entering the raid
-        popup = self.bot.handle.pre_fight_support_summons()
-        # If there was a popup, try another raid/repeat last instruction
-        if popup:
-            self.type_and_join_raid()
-        # If everything is OK - continue picking support
-        else:
-            time.sleep(0.3)
-            if '#quest/supporter' in str(self.driver.current_url):
-                # Try picking support summon
-                success = self.bot.handle.pre_fight_support_summons()
-                if success is False:
-                    # If there was a popup - move bot to 'raids' page
-                    self.handle_to_raids()
-                    # And repeat whole function
-                    self.handle_entering_raid()
-            else:
-                self.handle_entering_raid()
+
+        # This handles everything related to summon picking before fight
+        success = self.bot.handle.pre_fight_support_summons()
+        if success is False and '#quest/supporter' in self.driver.current_url:
+            # If there was a popup - move bot to 'raids' page
+            self.handle_to_raids()
+            # And repeat whole function
+            self.handle_entering_raid()
 
         print(f"Joined raid '{self.raid_id}'.")
 
@@ -194,12 +184,6 @@ class Raids:
             return False
 
         self.monitor_raid_boss_hp()
-        # if success is not False:
-        #     try:
-        #         self.bot.press.results_button()
-        #     except selenium_err.exceptions.ElementNotVisibleException:
-        #         self.driver.refresh()
-        #         self.bot.wait.for_loading_screen()
 
     def convert_seconds_to_hms_format(self):
         seconds = round(self.bot.run_time(), 2)
