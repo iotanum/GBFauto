@@ -13,6 +13,8 @@ class Action:
         self._Timeout = Timeout(self._driver)
         self._x_option_list_button_xpath = '//*[@id="pop"]/div/div[2]/div/div[2]/div[2]/div[4]/select'
         self._x_use_button_xpath = '//*[@id="pop"]/div/div[2]/div/div[2]/div[2]/div[5]/div'
+        self._half_elixir_consumable_list_xpath = '//*[@id="pop"]/div/div[2]/div/div/div[4]/div[2]/select'
+        self._half_elixir_consumable_use_xpath = '//*[@id="pop"]/div/div[3]/div[2]'
         self._input_raid_id_class = "frm-battle-key"
 
     def input_raid_id(self, raid_id):
@@ -21,19 +23,27 @@ class Action:
         time.sleep(1)
         elem.send_keys(raid_id)
 
-    def use_potions_or_pills(self, amount):
+    def use_potions_or_pills(self, amount, consumable=False):
         timeout = 2
         expected_behaviour = EC.visibility_of_element_located
         search_by = By.XPATH
-        ep_amount_option_xpath = f'//*[@id="pop"]/div/div[2]/div/div[2]/div[2]/div[4]/select/option[{amount}]'
+
+        option_list = self._x_option_list_button_xpath
+        amount_in_list = f'//*[@id="pop"]/div/div[2]/div/div[2]/div[2]/div[4]/select/option[{amount}]'
+        use_button = self._x_use_button_xpath
+
+        if consumable is True:
+            option_list = self._half_elixir_consumable_list_xpath
+            use_button = self._half_elixir_consumable_use_xpath
+            amount_in_list = f'//*[@id="pop"]/div/div[2]/div/div/div[4]/div[2]/select/option[{amount}]'
 
         # Click on the options button
-        self._Timeout.wait_for_element(timeout, expected_behaviour, search_by, self._x_option_list_button_xpath)
-        self._driver.find_element_by_xpath(self._x_option_list_button_xpath).click()
+        self._Timeout.wait_for_element(timeout, expected_behaviour, search_by, option_list)
+        self._driver.find_element_by_xpath(option_list).click()
         # Pick x amount of pills/potions
-        self._Timeout.wait_for_element(timeout, expected_behaviour, search_by, ep_amount_option_xpath)
-        self._driver.find_element_by_xpath(ep_amount_option_xpath).click()
+        self._Timeout.wait_for_element(timeout, expected_behaviour, search_by, amount_in_list)
+        self._driver.find_element_by_xpath(amount_in_list).click()
         # Click 'Use'
         self._bot.wait.for_loading_screen()
-        self._Timeout.wait_for_element(timeout, expected_behaviour, search_by, self._x_use_button_xpath)
-        self._driver.find_element_by_xpath(self._x_use_button_xpath).click()
+        self._Timeout.wait_for_element(timeout, expected_behaviour, search_by, use_button)
+        self._driver.find_element_by_xpath(use_button).click()
