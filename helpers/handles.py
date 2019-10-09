@@ -637,13 +637,15 @@ class Handle:
             parser = bs(self._driver.page_source, 'lxml')
 
             ap_ep_popup = parser.find('div', class_='pop-usual pop-stamina pop-show')
+            ap_consumable_popup = parser.find('div', class_='pop-usual pop-normal pop-show')
             various_popup = parser.find('div', {'class': ['common-pop-error']})
 
-            if ap_ep_popup:
+            if ap_ep_popup or ap_consumable_popup:
                 ap_ep_amount = random.randint(3, 5)
-                self._bot.action.use_potions_or_pills(ap_ep_amount)
+                self._bot.action.use_potions_or_pills(ap_ep_amount, consumable=True if ap_consumable_popup else False)
                 self._bot.wait.for_loading_screen()
-                self._bot.press.usual_ok()
+                self._bot.press.usual_ok() if not ap_consumable_popup else None
+                self._bot.need_ap = False
                 break
 
             elif various_popup:
@@ -745,7 +747,6 @@ class Handle:
                 self.after_fight_popups()
                 self._bot.press.usual_event_home()
                 self.after_fight_popups()
-                print('Now re-select the quest.')
                 break
             time.sleep(0.8)
 
