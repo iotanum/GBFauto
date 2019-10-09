@@ -272,8 +272,9 @@ class Press:
     def play_again_quest(self):
         search_by = By.CSS_SELECTOR
 
-        self._wait_for_button(search_by, self._play_again_quest_css)
-        self._driver.find_element_by_css_selector(self._play_again_quest_css).click()
+        elem = self._wait_for_button(search_by, self._play_again_quest_css)
+        self._driver.find_element_by_css_selector(self._play_again_quest_css).click() if elem else None
+        return elem
 
     def confirm_summon_fight(self):
         search_by = By.XPATH
