@@ -14,6 +14,10 @@ class QuestOnRepeat:
         self.repeat = False
         self.bot.raid_battle = False
         self.coop = False
+        self.quest_url = None
+        # Some solo/raids that can be hosted are not always
+        # repeatable, aka doesn't have "play again" button
+        self.is_repeatable = False
         # In a context of current quest
         self.num_of_fights = 0
 
@@ -22,6 +26,8 @@ class QuestOnRepeat:
         while True:
             url = str(self.driver.current_url)
             if '#quest/supporter' in url:
+                if not self.quest_url:
+                    self.quest_url = url
                 print("Locked in on this quest.")
                 break
             if '#coopraid/room/' in url:
@@ -153,6 +159,31 @@ class QuestOnRepeat:
 
         return int(round(hours, 2)), int(round(minutes, 2)), int(round(seconds, 2))
 
+    def determine_type_of_quest(self):
+        if self.coop is not True:
+            # Check if a quest is not repeatable only if it wasn't done
+            # before and if total fights is 1 and lower
+            if not self.is_repeatable and self.bot.total_fights <= 1:
+                self.is_repeatable = self.bot.press.play_again_quest()
+            # If quest is repeatable - continue on
+            elif self.is_repeatable:
+                self.bot.press.play_again_quest()
+            # If not repeatable (ex.: hosting gw bosses)
+            # press event home (triggers, IF, nightmare battle popup)
+            else:
+                self.bot.press.usual_event_home()
+        else:
+            self.bot.press.coop_room()
+
+    def use_ap_for_non_repeatables(self):
+        self.bot.handle.navigate_to_consumables()
+        self.bot.wait.for_loading_screen()
+        self.bot.press.consumables()
+        self.bot.wait.for_loading_screen()
+        self.bot.press.consumables_ap()
+        self.bot.handle.not_enough_of_x()
+        self.bot.need_ap = False
+
     def handle_after_fight(self):
         self.bot.wait.for_loading_screen()
 
@@ -164,20 +195,38 @@ class QuestOnRepeat:
               f"Running for {hours}h:{minutes}min:{seconds}s, "
               f"Average time per quest: {avg_time_per_quest}s")
 
-        if self.coop is not True:
-            self.bot.press.play_again_quest()
-        else:
-            self.bot.press.coop_room()
+        self.determine_type_of_quest()
 
         nightmare_battle = self.bot.handle.after_fight_popups()
         if nightmare_battle is True:
             self.repeat = False
-            return
+            # After nightmare battle quest is *obviously*
+            # not repeatable, so set a temp state of it to false
+            self.is_repeatable = False
+            self.bot.need_ap = False
+            # return
+
+        # Use AP (if needed) and navigate to quest if only
+        # the quest is not repeatable
+        if not self.is_repeatable:
+            # If there was a temp false state for repeatable quest
+            # after nightmare battle - set it back to true
+            if nightmare_battle:
+                self.is_repeatable = True
+
+            if self.bot.need_ap:
+                self.use_ap_for_non_repeatables()
+
+            # Navigate back to original quest
+            self.go_to_quest()
 
         self.bot.raid_battle = False
 
         if '#quest/supporter' not in str(self.driver.current_url):
             self.bot.handle.not_enough_of_x()
+
+    def go_to_quest(self):
+        self.driver.execute_script(f"window.location.href = '{self.quest_url}'")
 
     def repeatable_quest(self):
         while True:
@@ -242,6 +291,8 @@ class QuestOnRepeat:
 
     def do_repeatable_quest(self):
         # HANDLE PATH TO REPEATABLE QUEST
+        self.bot.option_repeatable = True
+
         if self.repeat is False:
             self.wait_for_repeatable_quest()
             self.repeat = True
