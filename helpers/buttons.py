@@ -37,6 +37,8 @@ class Press:
         self._skip_button_class = 'btn-command-skip'
         self._next_button_class = 'btn-usual-next'
         self._auto_attack_xpath = '//*[@id="wrapper"]/div[3]/div[17]'
+        self._consumables_xpath = '//*[@id="wrapper"]/div[3]/div[2]/div[2]/div[1]/div[1]/div[2]'
+        self._consumables_ap_xpath = '//*[@id="prt-target-list"]/div[2]/img'
         # TODO
         self._guild_wars_xpath = '//*[@id="wrapper"]/div[3]/div[2]/div[4]/div[2]/div/img'
 
@@ -336,3 +338,13 @@ class Press:
         search_by = By.CLASS_NAME
         self._wait_for_button(search_by, self._auto_attack_xpath)
         self._driver.find_element_by_xpath(self._auto_attack_xpath).click()
+
+    def consumables(self):
+        search_by = By.XPATH
+        self._wait_for_button(search_by, self._consumables_xpath)
+        self._driver.find_element_by_xpath(self._consumables_xpath).click()
+
+    def consumables_ap(self):
+        search_by = By.XPATH
+        self._wait_for_button(search_by, self._consumables_ap_xpath)
+        self._driver.find_element_by_xpath(self._consumables_ap_xpath).click()
