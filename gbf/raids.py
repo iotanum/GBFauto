@@ -150,6 +150,8 @@ class Raids:
             self.handle_to_raids()
             # And repeat whole function
             self.handle_entering_raid()
+        elif success is False and '#quest/assist' in self.driver.current_url:
+            self.handle_entering_raid()
 
         print(f"Joined raid '{self.raid_id}'.")
 
