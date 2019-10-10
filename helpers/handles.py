@@ -354,37 +354,41 @@ class Handle:
                 return True
 
             # Execute the instruction
-            if instruction_to_run == 'support_element':
-                instructions_to_run[instruction_to_run](SUPPORT_ELEMENT)
+            if self._bot.wait.for_support_summon():
+                if instruction_to_run == 'support_element':
+                    instructions_to_run[instruction_to_run](SUPPORT_ELEMENT)
 
-            if instruction_to_run == 'pick_summon':
-                support_summon_id = self.get_best_support_summon()
-                if support_summon_id:
-                    support_summon_id = support_summon_id['ID']
-                    instructions_to_run[instruction_to_run](supporter_id=support_summon_id,
-                                                            support_element_num=SUPPORT_ELEMENT)
-                else:
-                    instructions_to_run[instruction_to_run](support_element_num=SUPPORT_ELEMENT,
-                                                            first_summon=True)
+                if instruction_to_run == 'pick_summon':
+                    support_summon_id = self.get_best_support_summon()
+                    if support_summon_id:
+                        support_summon_id = support_summon_id['ID']
+                        instructions_to_run[instruction_to_run](supporter_id=support_summon_id,
+                                                                support_element_num=SUPPORT_ELEMENT)
+                    else:
+                        instructions_to_run[instruction_to_run](support_element_num=SUPPORT_ELEMENT,
+                                                                first_summon=True)
 
-            if instruction_to_run == 'confirm_summon':
-                verification = self._wait_for_summon_confirmation()
-                if verification:
-                    instruction_to_run = instruction_to_run
+                if instruction_to_run == 'confirm_summon':
+                    verification = self._wait_for_summon_confirmation()
+                    if verification:
+                        instruction_to_run = instruction_to_run
+                        continue
 
-                if self._bot.option_repeatable is True and not verification:
-                    self.track_ap_usage()
+                    if self._bot.option_repeatable is True and not verification:
+                        self.track_ap_usage()
 
-                instructions_to_run[instruction_to_run]()
+                    instructions_to_run[instruction_to_run]()
 
-            # Calculate next instruction to run
-            next_instruction_num = list(instructions_to_run.keys()).index(instruction_to_run) + 1
-            try:
-                next_instruction = list(instructions_to_run)[next_instruction_num]
-                instruction_to_run = next_instruction
+                # Calculate next instruction to run
+                next_instruction_num = list(instructions_to_run.keys()).index(instruction_to_run) + 1
+                try:
+                    next_instruction = list(instructions_to_run)[next_instruction_num]
+                    instruction_to_run = next_instruction
 
-            except IndexError:
-                break
+                except IndexError:
+                    break
+            else:
+                return True
             time.sleep(0.15)
 
     def _wait_for_summon_confirmation(self):
