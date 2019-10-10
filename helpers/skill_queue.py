@@ -1,6 +1,9 @@
+from bs4 import BeautifulSoup as bs
+
 from selenium import common as selenium_err
 
 import time
+import re
 
 
 class Skills:
@@ -95,6 +98,25 @@ class Skills:
         except selenium_err.exceptions.NoSuchElementException:
             pass
 
+    def check_for_back_button(self):
+        start = time.time()
+
+        while True:
+            if time.time() - start > 5:
+                break
+
+            parser = bs(self._driver.page_source, features='lxml')
+
+            main_characters_screen = parser.find_all('div', {'class': 'prt-command-top',
+                                                             'style': re.compile('display: none;')})
+            back_button = parser.find('div', class_='btn-command-back display-off display-on')
+
+            if not main_characters_screen:
+                break
+
+            if back_button:
+                return True
+
     def do_queue(self, queue_from_config):
         self.remove_ability_log_element()
         self.remove_backup_request_element()
@@ -152,7 +174,8 @@ class Skills:
                 else:
                     # Pressing support summon in a middle of a queue requires
                     # pressing 'back' button in the left top corner
-                    if step > 1:
+                    back_button = self.check_for_back_button()
+                    if back_button:
                         self._bot.press.back()
                     actions_for_summon = [self._bot.press.summon_card,
                                           self._bot.press.summon_num,
@@ -163,9 +186,8 @@ class Skills:
                         if idx == 2:
                             summ_action(ability_num)
                         elif idx == 4:
-                            if step > 1:
-                                break
-                            summ_action()
+                            if self.check_for_back_button():
+                                summ_action()
                         else:
                             summ_action()
                         time.sleep(0.35)
