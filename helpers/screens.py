@@ -3,6 +3,8 @@ from selenium.webdriver.common.by import By
 
 from .timeout import Timeout
 
+import time
+
 
 class Wait:
 
@@ -117,3 +119,14 @@ class Wait:
 
         return self._Timeout.wait_for_element(timeout, expected_behaviour, search_by,
                                               self._side_scroll_screen_entry_xpath)
+
+    def for_support_summon(self):
+        start = time.time()
+
+        while True:
+            if time.time() - start > 3:
+                print('Where is quest support window?')
+                break
+
+            if '#quest/supporter' in self._driver.current_url:
+                return True
