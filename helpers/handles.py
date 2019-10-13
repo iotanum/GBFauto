@@ -263,6 +263,11 @@ class Handle:
                     print(skin_text)
                     self._bot.press.usual_ok()
 
+                elif 'pop-confirm-uncap' in popup_name:
+                    uncap_text = popup.find('div', {'class': 'prt-description'}).text
+                    print(uncap_text)
+                    self._bot.press.usual_close()
+
                 else:
                     print("Unhandled popup!\nPage source and error picture in 'errors' folder.")
                     print(f"Popup element: {popup}")
