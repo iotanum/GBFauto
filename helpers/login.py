@@ -117,17 +117,17 @@ class GBFGame:
 
     def wait_for_password(self):
         wait = WebDriverWait(self.driver, 3)
-        wait.until(EC.element_to_be_clickable((By.NAME, 'password')))
+        wait.until(EC.element_to_be_clickable((By.XPATH, '//*[@id="password"]/div[1]/div/div[1]/input')))
 
     def enter_login_email(self, login, password):
         self.wait_for_email()
         form_email = self.driver.find_element_by_name('identifier')
         form_email.send_keys(login)
-        form_email.send_keys(Keys.RETURN)
+        self.driver.find_element_by_xpath('//*[@id="identifierNext"]').click()
         self.wait_for_password()
-        form_password = self.driver.find_element_by_name('password')
+        form_password = self.driver.find_element_by_xpath('//*[@id="password"]/div[1]/div/div[1]/input')
         form_password.send_keys(password)
-        form_password.send_keys(Keys.RETURN)
+        self.driver.find_element_by_xpath('//*[@id="passwordNext"]').click()
 
     def switch_window_to_gbf(self):
         gbf_window = self.driver.window_handles[0]
