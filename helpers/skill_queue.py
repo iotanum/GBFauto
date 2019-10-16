@@ -172,10 +172,8 @@ class Skills:
                         time.sleep(0.15)
                 # if char_num is 5, then it means it's a support summon
                 else:
-                    # Pressing support summon in a middle of a queue requires
-                    # pressing 'back' button in the left top corner
-                    back_button = self.check_for_back_button()
-                    if back_button:
+                    # Exit character skill selection 'window'
+                    if step > 1:
                         self._bot.press.back()
                     actions_for_summon = [self._bot.press.summon_card,
                                           self._bot.press.summon_num,
