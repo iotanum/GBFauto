@@ -22,16 +22,17 @@ class QuestOnRepeat:
         self.num_of_fights = 0
 
     def wait_for_repeatable_quest(self):
-        print('\nWaiting for you to enter a repeatable quest...')
+        if not self.quest_url:
+            print('\nWaiting for you to enter a repeatable quest...')
         while True:
             url = str(self.driver.current_url)
             if '#quest/supporter' in url:
                 if not self.quest_url:
                     self.quest_url = url
-                print("Locked in on this quest.")
+                    print("Locked in on this quest.")
                 break
             if '#coopraid/room/' in url:
-                print("Locked in on this CO-OP quest.")
+                print("Locked on this CO-OP quest.")
                 self.coop = True
                 break
 
@@ -203,8 +204,7 @@ class QuestOnRepeat:
             # After nightmare battle quest is *obviously*
             # not repeatable, so set a temp state of it to false
             self.is_repeatable = False
-            self.bot.need_ap = False
-            # return
+            # self.bot.need_ap = False
 
         # Use AP (if needed) and navigate to quest if only
         # the quest is not repeatable
