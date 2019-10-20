@@ -23,6 +23,7 @@ class Handle:
         self._driver = game_handler.driver
         self.support_id = None
         self.consumables_url = 'http://game.granbluefantasy.jp/#item'
+        self.skippable_nightmare_battle = None
 
     def after_fight_popups(self, kill=False):
         # After the page loads, there's no way to 'tell' if there will be
@@ -194,6 +195,19 @@ class Handle:
                     night_boss_name = popup.find('div', {'class': "btn-usual-next"})
                     night_boss_name = night_boss_name['data-chapter-name']
                     print(f"'{night_boss_name}' nightmare battle!")
+
+                    # If nightmare battle is skippable it will have a special radio button
+                    # in the middle of the popup
+                    skippable = popup.find('label', {'class': 'btn-hell-skip-check'})
+                    if skippable:
+                        self.skippable_nightmare_battle = True
+
+                        # Depending on what state skippable radio button is on (on, off)
+                        # 'usual-next' button will have different text inside the div
+                        skippable_button = popup.find('div', {'class': 'btn-usual-next'}).text
+                        if 'Play' in skippable_button:
+                            self._bot.press.skip_nightmare_battle()
+
                     if EXTREME_BATTLES == 1:
                         try:
                             self._bot.press.usual_next()
@@ -266,6 +280,14 @@ class Handle:
                 elif 'pop-confirm-uncap' in popup_name:
                     uncap_text = popup.find('div', {'class': 'prt-description'}).text
                     print(uncap_text)
+                    self._bot.press.usual_close()
+
+                elif 'pop-hell-skip-progress' in popup_name:
+                    skip_progress = popup.find('div', {'class': 'txt-skip-progress'}).text
+                    print(f"Your skip progress: '{skip_progress}'")
+                    if '3' in skip_progress:
+                        print('You can now skip nightmare battles!')
+
                     self._bot.press.usual_close()
 
                 else:
@@ -739,20 +761,29 @@ class Handle:
 
     def _extreme_fight(self):
         self._bot.wait.for_loading_screen()
-        print('Waiting until you kill the boss...')
+        if not self.skippable_nightmare_battle:
+            print('Waiting until you kill the boss...')
 
+        url_to_wait_for = '#result'
         # Wait until bot exits the current results screen
         while True:
             current_url = self._driver.current_url
-            if '#result' not in current_url:
+            if url_to_wait_for not in current_url:
+                break
+            elif self.skippable_nightmare_battle:
+                url_to_wait_for = '#result_hell_skip'
                 break
 
         # Then wait until the boss has been killed and the bot is at results screen
         while True:
             current_url = self._driver.current_url
-            if '#result' in current_url:
+            if url_to_wait_for in current_url:
                 self._bot.wait.for_loading_screen()
-                print('You killed the boss!')
+                if not self.skippable_nightmare_battle:
+                    print('You killed the boss!')
+                    self.skippable_nightmare_battle = False
+                else:
+                    print('Skipped nightmare battle.')
                 self.after_fight_popups()
                 self._bot.press.usual_event_home()
                 self.after_fight_popups()
