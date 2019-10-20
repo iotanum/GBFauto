@@ -206,6 +206,7 @@ class Handle:
                         # 'usual-next' button will have different text inside the div
                         skippable_button = popup.find('div', {'class': 'btn-usual-next'}).text
                         if 'Play' in skippable_button:
+                            self._bot.wait.for_loading_screen()
                             self._bot.press.skip_nightmare_battle()
 
                     if EXTREME_BATTLES == 1:
