@@ -60,7 +60,6 @@ class Skills:
 
     def handle_skill_press(self, char_num, ability_num):
         self._bot.press.char_skill(char_num, ability_num)
-        # self.handle_ability_log_popup()
 
     def handle_char_switching(self, direction=None):
         if direction is 'next':
@@ -68,7 +67,6 @@ class Skills:
         else:
             self._bot.press.previous_char()
         time.sleep(0.5)
-        # self.handle_ability_log_popup()
 
     def handle_ability_log_popup(self):
         popup = self._bot.popup.log_ability()
