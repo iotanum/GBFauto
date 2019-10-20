@@ -39,6 +39,7 @@ class Press:
         self._auto_attack_xpath = '//*[@id="wrapper"]/div[3]/div[17]'
         self._consumables_xpath = '//*[@id="wrapper"]/div[3]/div[2]/div[2]/div[1]/div[1]/div[2]'
         self._consumables_ap_xpath = '//*[@id="prt-target-list"]/div[2]/img'
+        self._skippable_battle_xpath = '//*[@id="pop"]/div/div[2]/div/div[4]/label'
         # TODO
         self._guild_wars_xpath = '//*[@id="wrapper"]/div[3]/div[2]/div[4]/div[2]/div/img'
 
@@ -349,3 +350,8 @@ class Press:
         search_by = By.XPATH
         self._wait_for_button(search_by, self._consumables_ap_xpath)
         self._driver.find_element_by_xpath(self._consumables_ap_xpath).click()
+
+    def skip_nightmare_battle(self):
+        search_by = By.XPATH
+        self._wait_for_button(search_by, self._skippable_battle_xpath)
+        self._driver.find_element_by_xpath(self._skippable_battle_xpath).click()
