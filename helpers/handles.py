@@ -286,7 +286,7 @@ class Handle:
                 elif 'pop-hell-skip-progress' in popup_name:
                     skip_progress = popup.find('div', {'class': 'txt-skip-progress'}).text
                     print(f"Your skip progress: '{skip_progress}'")
-                    if '3' in skip_progress:
+                    if '3/3' in skip_progress:
                         print('You can now skip nightmare battles!')
 
                     self._bot.press.usual_close()
