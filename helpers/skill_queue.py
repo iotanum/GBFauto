@@ -107,7 +107,7 @@ class Skills:
 
             main_characters_screen = parser.find_all('div', {'class': 'prt-command-top',
                                                              'style': re.compile('display: none;')})
-            back_button = parser.find('div', class_='btn-command-back display-off display-on')
+            back_button = parser.find('div', class_='btn-command-back display-on')
 
             if not main_characters_screen:
                 break
