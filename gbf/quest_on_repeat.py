@@ -168,11 +168,11 @@ class QuestOnRepeat:
                 self.is_repeatable = self.bot.press.play_again_quest()
 
             # If quest is repeatable - continue on
-            if self.is_repeatable:
+            if self.is_repeatable and self.bot.total_fights >= 2:
                 self.bot.press.play_again_quest()
             # If not repeatable (ex.: hosting gw bosses)
             # press event home (triggers, IF, nightmare battle popup)
-            else:
+            elif not self.is_repeatable:
                 self.bot.press.usual_event_home()
         else:
             self.bot.press.coop_room()
