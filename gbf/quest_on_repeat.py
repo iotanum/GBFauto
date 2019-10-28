@@ -166,8 +166,9 @@ class QuestOnRepeat:
             # before and if total fights is 1 and lower
             if not self.is_repeatable and self.bot.total_fights <= 1:
                 self.is_repeatable = self.bot.press.play_again_quest()
+
             # If quest is repeatable - continue on
-            elif self.is_repeatable:
+            if self.is_repeatable:
                 self.bot.press.play_again_quest()
             # If not repeatable (ex.: hosting gw bosses)
             # press event home (triggers, IF, nightmare battle popup)
@@ -197,13 +198,16 @@ class QuestOnRepeat:
               f"Average time per quest: {avg_time_per_quest}s")
 
         self.determine_type_of_quest()
+        temp_nightmare_state = False
 
         nightmare_battle = self.bot.handle.after_fight_popups()
         if nightmare_battle is True:
             self.repeat = False
             # After nightmare battle quest is *obviously*
             # not repeatable, so set a temp state of it to false
-            self.is_repeatable = False
+            if self.is_repeatable:
+                temp_nightmare_state = True
+                self.is_repeatable = False
             # self.bot.need_ap = False
 
         # Use AP (if needed) and navigate to quest if only
@@ -211,7 +215,7 @@ class QuestOnRepeat:
         if not self.is_repeatable:
             # If there was a temp false state for repeatable quest
             # after nightmare battle - set it back to true
-            if nightmare_battle:
+            if nightmare_battle and temp_nightmare_state:
                 self.is_repeatable = True
 
             if self.bot.need_ap:
