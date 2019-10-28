@@ -123,10 +123,12 @@ class GBFGame:
         self.wait_for_email()
         form_email = self.driver.find_element_by_name('identifier')
         form_email.send_keys(login)
+        time.sleep(0.5)
         self.driver.find_element_by_xpath('//*[@id="identifierNext"]').click()
         self.wait_for_password()
         form_password = self.driver.find_element_by_xpath('//*[@id="password"]/div[1]/div/div[1]/input')
         form_password.send_keys(password)
+        time.sleep(0.5)
         self.driver.find_element_by_xpath('//*[@id="passwordNext"]').click()
 
     def switch_window_to_gbf(self):
