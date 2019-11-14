@@ -399,7 +399,7 @@ class Handle:
                 if instruction_to_run == 'confirm_summon':
                     verification = self._wait_for_summon_confirmation()
                     if verification:
-                        instruction_to_run = instruction_to_run
+                        instruction_to_run = 'pick_summon'
                         continue
 
                     if self._bot.option_repeatable is True and not verification:
