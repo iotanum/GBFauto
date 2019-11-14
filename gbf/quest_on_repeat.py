@@ -48,6 +48,7 @@ class QuestOnRepeat:
     def finish_fight(self):
         refreshed = False
 
+
         # remove the battle scene/advice element from the fight, less clutter
         self.remove_battle_scene_element()
 
@@ -60,7 +61,10 @@ class QuestOnRepeat:
 
             if not all(hp == 0 for hp in mob_hps):
                 try:
-                    self.bot.press.attack_button()
+                    if not self.bot.handle.auto_button_enabled() or refreshed is False:
+                        self.bot.press.attack_button()
+                        self.bot.press.auto_attack()
+
                     self.bot.wait.for_fight_main_mask()
 
                     # Refresh the page (after queue) if quest contains 1 fight (F5 works)
@@ -86,6 +90,7 @@ class QuestOnRepeat:
                                 self.remove_battle_scene_element()
                                 self.bot.handle.backup_request()
                                 break
+                            time.sleep(0.2)
 
                 except (selenium_err.exceptions.NoSuchElementException, selenium_err.exceptions.WebDriverException):
                     pass
