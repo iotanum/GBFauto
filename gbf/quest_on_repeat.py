@@ -46,9 +46,6 @@ class QuestOnRepeat:
             pass
 
     def finish_fight(self):
-        refreshed = False
-
-
         # remove the battle scene/advice element from the fight, less clutter
         self.remove_battle_scene_element()
 
@@ -61,7 +58,7 @@ class QuestOnRepeat:
 
             if not all(hp == 0 for hp in mob_hps):
                 try:
-                    if not self.bot.handle.auto_button_enabled() or refreshed is False:
+                    if not self.bot.handle.auto_button_enabled() or self.bot.refreshed is False:
                         self.bot.press.attack_button()
                         self.bot.press.auto_attack()
 
@@ -69,8 +66,8 @@ class QuestOnRepeat:
 
                     # Refresh the page (after queue) if quest contains 1 fight (F5 works)
                     # if the quest contains more than 1 fight - use BACK key (to be implemented)
-                    if self.num_of_fights == 1 and refreshed is False:
-                        refreshed = True
+                    if self.num_of_fights == 1 and self.bot.refreshed is False:
+                        self.bot.refreshed = True
                         self.bot.handle.wait_after_queue_refresh()
                         self.driver.refresh()
 
@@ -143,6 +140,9 @@ class QuestOnRepeat:
             print(f"Fight #{current_fight_num}.")
             self.bot.queue.do_queue(queue)
             fight_ended = self.finish_fight()
+
+            # Reset refresh state
+            self.bot.refreshed = False
 
             # Press result/next button if quest contains more than 1 fight
             if current_fight_num != self.num_of_fights and self.num_of_fights > 1:

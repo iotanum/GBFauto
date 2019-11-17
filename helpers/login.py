@@ -53,6 +53,7 @@ class GBFGame:
         self.current_ap = None
         self.quest_cost = None
         self.need_ap = False
+        self.refreshed = False
         self.point_threshold = os.getenv('POINT_THRESHOLD')
 
     def run_time(self):

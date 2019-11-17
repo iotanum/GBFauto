@@ -693,11 +693,14 @@ class Handle:
             try:
                 # If user wants to request backups - go for it
                 if REQUEST_BACKUP == 1:
-                    try:
-                        self._bot.press.approve_backup_request()
-                        self._bot.press.usual_ok()
-                    except selenium_err.exceptions.NoSuchElementException:
-                        self._bot.press.usual_ok()
+                    if not self._bot.refreshed:
+                        try:
+                            self._bot.press.approve_backup_request()
+                            self._bot.press.usual_ok()
+                        except selenium_err.exceptions.NoSuchElementException:
+                            self._bot.press.usual_ok()
+                    else:
+                        self._bot.press.usual_cancel()
                 # otherwise - no.
                 else:
                     try:
