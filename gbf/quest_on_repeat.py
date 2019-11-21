@@ -58,6 +58,7 @@ class QuestOnRepeat:
 
             if not all(hp == 0 for hp in mob_hps):
                 try:
+                    # Press 'attack' and enable auto if it's not enabled already
                     if not self.bot.handle.auto_button_enabled() or self.bot.refreshed is False:
                         self.bot.press.attack_button()
                         self.bot.press.auto_attack()
@@ -146,8 +147,11 @@ class QuestOnRepeat:
 
             # Press result/next button if quest contains more than 1 fight
             if current_fight_num != self.num_of_fights and self.num_of_fights > 1:
-                self.bot.handle.wait_results_button()
-                self.bot.press.results_button()
+                # Press results/next button if auto button is not enabled
+                # needed, because auto button presses that automagically
+                if not self.bot.handle.auto_button_enabled():
+                    self.bot.handle.wait_results_button()
+                    self.bot.press.results_button()
 
             # Skip animations after completing the quest
             if current_fight_num == self.num_of_fights:
