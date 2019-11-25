@@ -211,6 +211,7 @@ class Handle:
 
                     if EXTREME_BATTLES == 1:
                         try:
+                            self._bot.wait.for_loading_screen()
                             self._bot.press.usual_next()
                             self._extreme_fight()
                             return True
@@ -601,6 +602,11 @@ class Handle:
             if 'result' in self._driver.current_url:
                 break
 
+            # Check if quest position has changed (progress between multi-fight quests)
+            if self.quest_position_change():
+                self.wait_for_main_fight_window()
+                break
+
             strainer = ss('div', attrs={'id': 'cnt-raid-information'})
             parser = bs(self._driver.page_source, 'lxml', parse_only=strainer)
 
@@ -620,6 +626,32 @@ class Handle:
 
             # Eat less CPU
             time.sleep(0.2)
+
+    def quest_position_change(self):
+        parser = bs(self._driver.page_source, 'lxml')
+
+        progress = parser.find('div', {'class': 'prt-progress', 'style': re.compile('display: block;')})
+        if progress:
+            quest_position = progress.find('span', {'class': re.compile('now num-battle')})
+            if quest_position:
+                quest_position_class = quest_position['class'][-1]
+                return self._convert_gain_to_int(quest_position_class)
+
+    def wait_for_main_fight_window(self):
+        start = time.time()
+
+        while True:
+            if time.time() - start > 5:
+                break
+
+            parser = bs(self._driver.page_source, 'lxml')
+
+            enemies_visible = parser.find('div', {'class': re.compile('btn-targeting enemy invisible'),
+                                                  'style': re.compile('display: inline-block;')})
+            if enemies_visible:
+                break
+
+            time.sleep(0.5)
 
     def wait_after_queue_refresh(self):
         start = time.time()
