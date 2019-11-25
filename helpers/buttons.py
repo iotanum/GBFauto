@@ -36,7 +36,7 @@ class Press:
         self._retreat_class = 'btn-withdraw'
         self._skip_button_class = 'btn-command-skip'
         self._next_button_class = 'btn-usual-next'
-        self._auto_attack_xpath = '//*[@id="wrapper"]/div[3]/div[17]'
+        self._auto_attack_xpath = '//*[@id="wrapper"]/div[3]/div[2]/div[7]'
         self._consumables_xpath = '//*[@id="wrapper"]/div[3]/div[2]/div[2]/div[1]/div[1]/div[2]'
         self._consumables_ap_xpath = '//*[@id="prt-target-list"]/div[2]/img'
         self._skippable_battle_xpath = '//*[@id="pop"]/div/div[2]/div/div[4]/label'
@@ -144,7 +144,7 @@ class Press:
         self._driver.find_element_by_xpath(self._support_summon_confirm_xpath).click()
 
     def attack_button(self):
-        timeout = 5
+        timeout = 2
         search_by = By.CSS_SELECTOR
 
         self._wait_for_button(search_by, self._attack_button_css, timeout=timeout)
