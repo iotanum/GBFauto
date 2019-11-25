@@ -63,8 +63,6 @@ class QuestOnRepeat:
                         self.bot.press.attack_button()
                         self.bot.press.auto_attack()
 
-                    self.bot.wait.for_fight_main_mask()
-
                     # Refresh the page (after queue) if quest contains 1 fight (F5 works)
                     # if the quest contains more than 1 fight - use BACK key (to be implemented)
                     if self.num_of_fights == 1 and self.bot.refreshed is False:
@@ -139,6 +137,12 @@ class QuestOnRepeat:
                 self.bot.handle.wait_before_fight(fight_start=False)
 
             print(f"Fight #{current_fight_num}.")
+
+            # Disable auto mode before skill queue
+            if queue and self.bot.handle.auto_button_enabled():
+                self.bot.press.auto_attack()
+                self.bot.wait.for_fight_main_mask()
+
             self.bot.queue.do_queue(queue)
             fight_ended = self.finish_fight()
 
