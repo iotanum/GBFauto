@@ -25,7 +25,7 @@ class Press:
         self._quest_button_after_fight_no_loot_css = '.btn-control.location-href'
         self._back_button_css = '.btn-command-back.display-on'
         self._summons_button_css = '.prt-list-top.btn-command-summon.summon-on'
-        self._summon_card_xpath = '//*[@id="wrapper"]/div[3]/div[2]/div[9]/div[2]/div/div[1]'
+        self._summon_card_xpath = '//*[@id="wrapper"]/div[3]/div[2]/div[10]/div[2]/div/div[1]'
         self._next_char_class = "ico-next"
         self._previous_char_class = "ico-pre"
         self._special_quests_class = 'btn-extra-quest'
@@ -196,7 +196,7 @@ class Press:
         self._driver.find_element_by_class_name(self._previous_char_class).click()
 
     def char_skill(self, char_num, skill_num):
-        ability_xpath = f'//*[@id="wrapper"]/div[3]/div[2]/div[9]/div[{char_num + 2}]/div[3]/div[{skill_num}]'
+        ability_xpath = f'//*[@id="wrapper"]/div[3]/div[2]/div[10]/div[{char_num + 2}]/div[3]/div[{skill_num}]'
         search_by = By.XPATH
 
         self._wait_for_button(search_by, ability_xpath)
@@ -216,7 +216,7 @@ class Press:
         self._driver.find_element_by_css_selector(self._back_button_css).click()
 
     def summon_num(self, summon_num):
-        summon_xpath = f'//*[@id="wrapper"]/div[3]/div[2]/div[9]/div[2]/div/div[{summon_num + 1}]'
+        summon_xpath = f'//*[@id="wrapper"]/div[3]/div[2]/div[10]/div[2]/div/div[{summon_num + 1}]'
         search_by = By.XPATH
 
         self._wait_for_button(search_by, summon_xpath)
