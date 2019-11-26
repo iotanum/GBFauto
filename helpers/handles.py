@@ -641,15 +641,20 @@ class Handle:
         start = time.time()
 
         while True:
-            if time.time() - start > 5:
+            if time.time() - start > 15:
                 break
 
             parser = bs(self._driver.page_source, 'lxml')
 
-            enemies_visible = parser.find('div', {'class': re.compile('btn-targeting enemy invisible'),
-                                                  'style': re.compile('display: inline-block;')})
-            if enemies_visible:
-                break
+            enemies_visible = parser.find_all('div', {'class': re.compile('btn-enemy-gauge prt-enemy-percent')})
+
+            # Check if EVERY enemy is alive (aka main_fight start) before exiting this method
+            try:
+                if all('display: block;' in enemy['style'] for enemy in enemies_visible):
+                    break
+            # fuck
+            except KeyError:
+                continue
 
             time.sleep(0.5)
 
