@@ -603,7 +603,7 @@ class Handle:
                 break
 
             # Check if quest position has changed (progress between multi-fight quests)
-            if self.quest_position_change():
+            if self.quest_position_change() and not fight_start:
                 self.wait_for_main_fight_window()
                 break
 
