@@ -149,14 +149,6 @@ class QuestOnRepeat:
             # Reset refresh state
             self.bot.refreshed = False
 
-            # Press result/next button if quest contains more than 1 fight
-            if current_fight_num != self.num_of_fights and self.num_of_fights > 1:
-                # Press results/next button if auto button is not enabled
-                # needed, because auto button presses that automagically
-                if not self.bot.handle.auto_button_enabled():
-                    self.bot.handle.wait_results_button()
-                    self.bot.press.results_button()
-
             # Skip animations after completing the quest
             if current_fight_num == self.num_of_fights:
                 # Also check if after refreshing the page we're still in a fight
