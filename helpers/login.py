@@ -15,6 +15,7 @@ from helpers.handles import Handle
 
 import time
 import os
+import ctypes
 
 from dotenv import load_dotenv
 
@@ -29,9 +30,8 @@ class GBFGame:
 
     def __init__(self):
         self.chrome_options = Options()
-        self.headless_chrome_options()
-        self.driver = webdriver.Chrome(executable_path='utils/chromedriver.exe', options=self.chrome_options
-                                       if HEADLESS_MODE == 1 else None)
+        self.custom_chrome_options()
+        self.driver = webdriver.Chrome(executable_path='utils/chromedriver.exe', options=self.chrome_options)
         self.login_page = "http://game.granbluefantasy.jp/#authentication"
         self._start_time = time.time()
         self.press = Press(self)
@@ -59,13 +59,18 @@ class GBFGame:
     def run_time(self):
         return time.time() - self._start_time
 
-    def headless_chrome_options(self):
-        self.chrome_options.add_argument("--headless")
-        self.chrome_options.add_argument("--disable-gpu")
+    def custom_chrome_options(self):
+        # Resize chrome window on smaller screens (otherwise chrome driver crashes?)
+        if self.get_screen_resolution() == [1280, 720]:
+            self.chrome_options.add_argument("--window-size=600,720")
+
         self.chrome_options.add_argument("--mute-audio")
-        self.chrome_options.add_argument("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
-                                         "AppleWebKit/537.36 (KHTML, like Gecko) "
-                                         "Chrome/73.0.3683.86 Safari/537.36")
+
+    def get_screen_resolution(self):
+        user32 = ctypes.windll.user32
+        screen_resolution = [int(user32.GetSystemMetrics(0)), int(user32.GetSystemMetrics(1))]
+
+        return screen_resolution
 
     def handle_click(self, element):
         if element.is_displayed():
