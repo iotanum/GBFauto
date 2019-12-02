@@ -61,8 +61,8 @@ class GBFGame:
 
     def custom_chrome_options(self):
         # Resize chrome window on smaller screens (otherwise chrome driver crashes?)
-        if self.get_screen_resolution() == [1280, 720]:
-            self.chrome_options.add_argument("--window-size=250,720")
+        if self.get_screen_resolution() == [1366, 768]:
+            self.chrome_options.add_argument("--window-size=500,720")
 
         self.chrome_options.add_argument("--mute-audio")
 
