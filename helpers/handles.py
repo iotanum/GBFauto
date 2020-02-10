@@ -292,6 +292,11 @@ class Handle:
 
                     self._bot.press.usual_close()
 
+                elif 'pop-commu-message' in popup_name:
+                    suggestion_message = popup.find('div', {'class': 'prt-commu-balloon'}).text
+                    print(f"'{suggestion_message}'")
+                    self._bot.press.usual_ok()
+
                 else:
                     print("Unhandled popup!\nPage source and error picture in 'errors' folder.")
                     print(f"Popup element: {popup}")
