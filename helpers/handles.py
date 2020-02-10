@@ -297,6 +297,11 @@ class Handle:
                     print(f"'{suggestion_message}'")
                     self._bot.press.usual_ok()
 
+                elif 'pop-reward-item' in popup_name:
+                    reward_text = popup.find('div', {'class': 'txt-reward'}).text
+                    print(f"'{reward_text}")
+                    self._bot.press.usual_ok()
+
                 else:
                     print("Unhandled popup!\nPage source and error picture in 'errors' folder.")
                     print(f"Popup element: {popup}")
