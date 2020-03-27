@@ -45,16 +45,21 @@ class QuestOnRepeat:
         except selenium_err.exceptions.NoSuchElementException:
             pass
 
+    def enemy_hps(self):
+        strainer = ss('div', attrs={'class': 'prt-targeting-area'})
+        parser = bs(self.driver.page_source, 'lxml', parse_only=strainer)
+
+        mob_hps = parser.find_all('span', 'txt-gauge-value')
+        mob_hps = [int(hp.text) for hp in mob_hps]
+
+        return mob_hps
+
     def finish_fight(self):
         # remove the battle scene/advice element from the fight, less clutter
         self.remove_battle_scene_element()
 
         while True:
-            strainer = ss('div', attrs={'class': 'prt-targeting-area'})
-            parser = bs(self.driver.page_source, 'lxml', parse_only=strainer)
-
-            mob_hps = parser.find_all('span', 'txt-gauge-value')
-            mob_hps = [int(hp.text) for hp in mob_hps]
+            mob_hps = self.enemy_hps()
 
             if not all(hp == 0 for hp in mob_hps):
                 try:
@@ -137,11 +142,6 @@ class QuestOnRepeat:
                 self.bot.handle.wait_before_fight(fight_start=False)
 
             print(f"Fight #{current_fight_num}.")
-
-            # Disable auto mode before skill queue
-            if queue and self.bot.handle.auto_button_enabled():
-                self.bot.press.auto_attack()
-                self.bot.wait.for_fight_main_mask()
 
             self.bot.queue.do_queue(queue)
             fight_ended = self.finish_fight()
