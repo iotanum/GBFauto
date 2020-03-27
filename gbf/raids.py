@@ -19,7 +19,7 @@ class Raids:
 
     def get_raid_boss_hps(self):
         try:
-            strainer = ss('div', attrs={'class': 'prt-targeting-area  main-tap-area'})
+            strainer = ss('div', attrs={'class': 'prt-targeting-area main-tap-area'})
             parser = bs(self.driver.page_source, 'lxml', parse_only=strainer)
 
             raid_boss_hps = parser.find_all('span', 'txt-gauge-value')
