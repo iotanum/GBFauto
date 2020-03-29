@@ -50,9 +50,7 @@ class QuestOnRepeat:
         parser = bs(self.driver.page_source, 'lxml', parse_only=strainer)
 
         mob_hps = parser.find_all('span', 'txt-gauge-value')
-        print(mob_hps)
         mob_hps = [int(hp.text) for hp in mob_hps]
-        print(mob_hps, 1)
 
         return mob_hps
 
