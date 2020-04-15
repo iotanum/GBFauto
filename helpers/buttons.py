@@ -1,13 +1,18 @@
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.by import By
 from selenium.webdriver import ActionChains
+from bs4 import BeautifulSoup as bs
+from bs4 import SoupStrainer as ss
 
 from .timeout import Timeout
+
+import time
 
 
 class Press:
     def __init__(self, game_handler):
         self._driver = game_handler.driver
+        self._bot = game_handler
         self._Actions = ActionChains(self._driver)
         self._Timeout = Timeout(self._driver)
         self._quest_button_main_menu_class = "prt-link-quest"
@@ -43,8 +48,7 @@ class Press:
         # TODO
         self._guild_wars_xpath = '//*[@id="wrapper"]/div[3]/div[2]/div[4]/div[2]/div/img'
 
-    def _wait_for_button(self, search_by, element_name, timeout=4):
-        timeout = timeout
+    def _wait_for_button(self, search_by, element_name, timeout=5):
         expected_behaviour = EC.element_to_be_clickable
         search_by = search_by
 
@@ -144,11 +148,20 @@ class Press:
         self._driver.find_element_by_xpath(self._support_summon_confirm_xpath).click()
 
     def attack_button(self):
-        timeout = 2
-        search_by = By.CSS_SELECTOR
+        start = time.time()
 
-        self._wait_for_button(search_by, self._attack_button_css, timeout=timeout)
-        self._driver.find_element_by_css_selector(self._attack_button_css).click()
+        while True:
+            if time.time() - start > 5:
+                break
+
+            strainer = ss('div', attrs={'id': 'cnt-raid-information'})
+            parser = bs(self._driver.page_source, 'lxml', parse_only=strainer)
+
+            attack_button_on = parser.find('div', class_='btn-attack-start display-on')
+
+            if attack_button_on:
+                self._driver.find_element_by_css_selector(self._attack_button_css).click()
+                break
 
     def results_button(self):
         timeout = 10
@@ -337,9 +350,22 @@ class Press:
         self._driver.find_element_by_class_name(self._next_button_class).click()
 
     def auto_attack(self):
-        search_by = By.CLASS_NAME
-        self._wait_for_button(search_by, self._auto_attack_xpath)
-        self._driver.find_element_by_xpath(self._auto_attack_xpath).click()
+        start = time.time()
+
+        while True:
+            if time.time() - start > 5:
+                break
+
+            parser = bs(self._driver.page_source, 'lxml')
+
+            auto_button = parser.find_all('div', {'class': 'btn-auto', 'style': 'display: block;'})
+
+            if auto_button:
+                self._driver.find_element_by_xpath(self._auto_attack_xpath).click()
+                self._bot.auto_button_on = True
+                break
+
+            time.sleep(0.15)
 
     def consumables(self):
         search_by = By.XPATH
