@@ -362,7 +362,6 @@ class Press:
 
             if auto_button:
                 self._driver.find_element_by_xpath(self._auto_attack_xpath).click()
-                self._bot.auto_button_on = True
                 break
 
             time.sleep(0.15)

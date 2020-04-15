@@ -68,6 +68,7 @@ class QuestOnRepeat:
                     if not self.auto_button_on:
                         self.bot.press.attack_button()
                         self.bot.press.auto_attack()
+                        self.auto_button_on = True
 
                     # Refresh the page (after queue) if quest contains 1 fight (F5 works)
                     # if the quest contains more than 1 fight - use BACK key (to be implemented)
@@ -149,9 +150,8 @@ class QuestOnRepeat:
             self.bot.queue.do_queue(queue)
             fight_ended = self.finish_fight()
 
-            # Reset refresh state
+            # Reset quest_on_repeat states
             self.bot.refreshed = False
-            # Reset auto button state
             self.auto_button_on = False
 
             # Skip animations after completing the quest
