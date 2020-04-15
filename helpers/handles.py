@@ -867,13 +867,3 @@ class Handle:
         else:
             parsed_points = [0]
         return int(parsed_points[0])
-
-    def auto_button_enabled(self):
-        parser = bs(self._driver.page_source, 'lxml')
-
-        auto_button = parser.find_all('div', {'class': 'btn-auto',
-                                              'style': re.compile('display: block;')})
-        if auto_button:
-            return True
-
-        return
