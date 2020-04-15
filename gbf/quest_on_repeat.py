@@ -20,6 +20,7 @@ class QuestOnRepeat:
         self.is_repeatable = False
         # In a context of current quest
         self.num_of_fights = 0
+        self.auto_button_on = False
 
     def wait_for_repeatable_quest(self):
         if not self.quest_url:
@@ -64,7 +65,7 @@ class QuestOnRepeat:
             if not all(hp == 0 for hp in mob_hps):
                 try:
                     # Press 'attack' and enable auto if it's not enabled already
-                    if not self.bot.handle.auto_button_enabled() or self.bot.refreshed is False:
+                    if not self.auto_button_on:
                         self.bot.press.attack_button()
                         self.bot.press.auto_attack()
 
@@ -87,6 +88,8 @@ class QuestOnRepeat:
                             if time.time() - start >= 3:
                                 self.bot.handle.wait_before_fight(fight_start=True)
 
+                                # Reset auto_button state
+                                self.auto_button_on = False
                                 # Remove the element again since we refreshed the page
                                 self.remove_battle_scene_element()
                                 self.bot.handle.backup_request()
@@ -148,6 +151,8 @@ class QuestOnRepeat:
 
             # Reset refresh state
             self.bot.refreshed = False
+            # Reset auto button state
+            self.auto_button_on = False
 
             # Skip animations after completing the quest
             if current_fight_num == self.num_of_fights:
