@@ -45,6 +45,7 @@ class Press:
         self._consumables_xpath = '//*[@id="wrapper"]/div[3]/div[2]/div[2]/div[1]/div[1]/div[2]'
         self._consumables_ap_xpath = '//*[@id="prt-target-list"]/div[2]/img'
         self._skippable_battle_xpath = '//*[@id="pop"]/div/div[2]/div/div[4]/label'
+        self._approve_backup_request_gw_xpath = '//*[@id="pop"]/div/div[3]/a'
         # TODO
         self._guild_wars_xpath = '//*[@id="wrapper"]/div[3]/div[2]/div[4]/div[2]/div/img'
 
@@ -173,9 +174,16 @@ class Press:
 
     def approve_backup_request(self):
         search_by = By.CSS_SELECTOR
+        search_by_gw = By.XPATH
 
-        self._wait_for_button(search_by, self._approve_backup_request_css)
-        self._driver.find_element_by_css_selector(self._approve_backup_request_css).click()
+        css = self._wait_for_button(search_by, self._approve_backup_request_css)
+        if css:
+            self._driver.find_element_by_css_selector(self._approve_backup_request_css).click()
+            return
+
+        gw = self._wait_for_button(search_by_gw, self._approve_backup_request_gw_xpath)
+        if gw:
+            self._driver.find_element_by_xpath(self._approve_backup_request_gw_xpath).click()
 
     def usual_ok(self):
         search_by = By.CLASS_NAME
@@ -368,7 +376,7 @@ class Press:
 
     def consumables(self):
         search_by = By.XPATH
-        self._wait_for_button(search_by, self._consumables_xpath)
+        self._wait_for_button(search_by, self._consumables_xpath, timeout=7)
         self._driver.find_element_by_xpath(self._consumables_xpath).click()
 
     def consumables_ap(self):
