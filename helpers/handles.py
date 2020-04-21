@@ -478,7 +478,20 @@ class Handle:
         print(f"{self._bot.current_ap} current", f"{self._bot.quest_cost} quest cost")
 
     def navigate_to_consumables(self):
-        self._driver.execute_script(f"window.location.href = '{self.consumables_url}'")
+        attempts = 0
+
+        while True:
+            if self._driver.current_url == self.consumables_url:
+                break
+
+            else:
+                self._driver.execute_script(f"window.location.href = '{self.consumables_url}'")
+                time.sleep(0.5)
+                attempts += 1
+
+                # Avoid constant location change spam
+                if attempts > 1:
+                    time.sleep(3)
 
     def parse_support_summon_list(self):
         parser = bs(self._driver.page_source, features='lxml')
