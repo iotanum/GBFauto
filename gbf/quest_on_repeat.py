@@ -152,7 +152,9 @@ class QuestOnRepeat:
 
             # Reset quest_on_repeat states
             self.bot.refreshed = False
-            self.auto_button_on = False
+            # Reset only for raid-type of quests, not multi-battles ones
+            if not self.num_of_fights > 1:
+                self.auto_button_on = False
 
             # Skip animations after completing the quest
             if current_fight_num == self.num_of_fights:
@@ -181,7 +183,7 @@ class QuestOnRepeat:
             if self.is_repeatable and self.bot.total_fights >= 2:
                 self.bot.press.play_again_quest()
             # If not repeatable (ex.: hosting gw bosses)
-            # press event home (triggers, IF, nightmare battle popup)
+            # press event home (triggers, IF, nightmare battle popup)s4
             elif not self.is_repeatable:
                 self.bot.press.usual_event_home()
         else:
@@ -235,12 +237,26 @@ class QuestOnRepeat:
             self.go_to_quest()
 
         self.bot.raid_battle = False
+        self.auto_button_on = False
 
         if '#quest/supporter' not in str(self.driver.current_url):
             self.bot.handle.not_enough_of_x()
 
     def go_to_quest(self):
-        self.driver.execute_script(f"window.location.href = '{self.quest_url}'")
+        attempts = 0
+
+        while True:
+            if self.driver.current_url == self.quest_url:
+                break
+
+            else:
+                self.driver.execute_script(f"window.location.href = '{self.quest_url}'")
+                time.sleep(0.5)
+                attempts += 1
+
+                # Avoid constant location change spam
+                if attempts > 1:
+                    time.sleep(3)
 
     def repeatable_quest(self):
         while True:
