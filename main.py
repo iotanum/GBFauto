@@ -6,6 +6,8 @@ from gbf.gw import GW
 from gbf.quest_on_repeat import QuestOnRepeat
 
 from dotenv import load_dotenv
+import selenium
+from selenium import common
 
 import os
 import sys
@@ -32,10 +34,13 @@ options = {1: 'Raids',
 
 
 def game():
-    game_handler = GBFGame()
-    game_handler.login(gbf_login, gbf_password)
-    return game_handler
-
+    try:
+        game_handler = GBFGame()
+        game_handler.login(gbf_login, gbf_password)
+        return game_handler
+    except selenium.common.exceptions.SessionNotCreatedException:
+        chromedriver_dl_link = "https://chromedriver.chromium.org/downloads"
+        sys.exit(f"Chromedriver is outdated - update it!\n{chromedriver_dl_link}")
 
 def print_menu(menu):
     for option_num, option_name in menu.items():
@@ -200,13 +205,20 @@ def choose_option():
             choose_option()
 
     except Exception as e:
-        timestamp = str(datetime.now()).replace(":", "'")[:-7]
-        game_handler.driver.save_screenshot(f'errors/{timestamp}.png')
-        with open(f'errors/{timestamp} source_code.html', 'w', encoding='utf-8') as file:
-            file.write(game_handler.driver.page_source)
+        log_failure()
+        exit_application(e)
 
-        force_kill_chromedriver()
-        sys.exit(traceback.format_exc(e))
+
+def log_failure():
+    timestamp = str(datetime.now()).replace(":", "'")[:-7]
+    game_handler.driver.save_screenshot(f'errors/{timestamp}.png')
+    with open(f'errors/{timestamp} source_code.html', 'w', encoding='utf-8') as file:
+        file.write(game_handler.driver.page_source)
+
+
+def exit_application(e):
+    force_kill_chromedriver()
+    sys.exit(traceback.format_exc(e))
 
 
 if __name__ == '__main__':
