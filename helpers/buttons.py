@@ -272,11 +272,22 @@ class Press:
         self._driver.find_element_by_xpath(chapter_id_btn_xpath).click()
 
     def coop_room(self):
-        search_by = By.XPATH
+        coop_room_xpath = '//*[@id="cnt-result"]/div[1]/div[2]/div[5]'
+        start = time.time()
 
-        coop_room_xpath = '//*[@id="cnt-result"]/div[1]/div[2]/div[3]'
-        self._wait_for_button(search_by, coop_room_xpath)
-        self._driver.find_element_by_xpath(coop_room_xpath).click()
+        while True:
+            if time.time() - start > 5:
+                break
+
+            parser = bs(self._driver.page_source, 'lxml')
+
+            coop_room_button = parser.find_all('div', {'class': 'btn-control', 'style': 'display: block;'})
+
+            if coop_room_button:
+                self._driver.find_element_by_xpath(coop_room_xpath).click()
+                break
+
+            time.sleep(0.15)
 
     def fight_advice(self):
         search_by = By.CLASS_NAME
