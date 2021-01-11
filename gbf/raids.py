@@ -2,6 +2,7 @@ from selenium import common as selenium_err
 
 from bs4 import BeautifulSoup as bs
 from bs4 import SoupStrainer as ss
+from dotenv import load_dotenv
 
 import time
 import os
@@ -36,6 +37,9 @@ class Raids:
         self.bot.handle.wait_before_fight(fight_start=True)
         self.bot.handle.backup_request()
         self.bot.handle.wait_before_fight(fight_start=False)
+
+        # Monkey patch to load stuff config real time while bot is running
+        load_dotenv('config.env', override=True)
         queue = os.getenv('QUEUE_FIRST_FIGHT')
         self.bot.queue.do_queue(queue)
 

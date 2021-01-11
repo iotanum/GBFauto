@@ -5,6 +5,7 @@ import os
 import time
 
 from selenium import common as selenium_err
+from dotenv import load_dotenv
 
 
 class QuestOnRepeat:
@@ -34,6 +35,7 @@ class QuestOnRepeat:
                 break
             if '#coopraid/room/' in url:
                 print("Locked on this CO-OP quest.")
+                self.quest_url = url
                 self.coop = True
                 break
 
@@ -135,6 +137,9 @@ class QuestOnRepeat:
         else:
             self.num_of_fights = self.count_quest_fight_parts()
 
+        # Monkey patch to do 'real time' configuration load while bot is running
+        load_dotenv('config.env', override=True)
+
         first_queue_from_config = os.getenv("QUEUE_FIRST_FIGHT")
         second_queue_from_config = os.getenv("QUEUE_SECOND_FIGHT")
         third_queue_from_config = os.getenv('QUEUE_THIRD_FIGHT')
@@ -187,7 +192,8 @@ class QuestOnRepeat:
             elif not self.is_repeatable:
                 self.bot.press.usual_event_home()
         else:
-            self.bot.press.coop_room()
+            return
+            # self.bot.press.coop_room()
 
     def use_ap_for_non_repeatables(self):
         self.bot.handle.navigate_to_consumables()

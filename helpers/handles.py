@@ -13,8 +13,6 @@ load_dotenv('config.env')
 
 EXTREME_BATTLES = int(os.getenv('EXTREME_BATTLES'))
 REQUEST_BACKUP = int(os.getenv('REQUEST_BACKUP'))
-SUPPORT_ELEMENT = int(os.getenv('SUPPORT_ELEMENT'))
-SUPPORT_SUMMONS = os.getenv('SUPPORT_SUMMONS_TO_PICK')
 
 
 class Handle:
@@ -370,6 +368,10 @@ class Handle:
                 break
 
     def pre_fight_support_summons(self):
+        # Monkey patch to re-load config while the bot is running
+        load_dotenv("config.env", override=True)
+        SUPPORT_ELEMENT = int(os.getenv('SUPPORT_ELEMENT'))
+
         self._bot.wait.for_loading_screen()
 
         instructions_to_run = {'support_element': self._bot.press.support_element,
@@ -540,6 +542,10 @@ class Handle:
         return support_summon_dict
 
     def parse_from_config_summons(self):
+        # Monkey patch to re-load config while the bot is running
+        load_dotenv("config.env", override=True)
+        SUPPORT_SUMMONS = os.getenv('SUPPORT_SUMMONS_TO_PICK')
+
         support_summons_from_config = SUPPORT_SUMMONS.split(', ')
 
         return support_summons_from_config
