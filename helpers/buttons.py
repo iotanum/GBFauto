@@ -101,7 +101,7 @@ class Press:
         self._Actions.double_click(btn).perform()
         # self._driver.find_element_by_class_name(self._join_raid_room_class).click()
 
-    def support_summon(self, supporter_id=None, support_element_num=None, first_summon=False):
+    def support_summon(self, support_dict, support_element_num=None, first_summon=False):
         # TODO
         # Bot should be able to pick a specific support summon
         # Also I'm testing double_click on how it performs in game
@@ -117,10 +117,10 @@ class Press:
             self._wait_for_button(search_by, first_support_summon_xpath)
             self._driver.find_element_by_xpath(first_support_summon_xpath).click()
         else:
-            support_summon_xpath = f'//*[@data-supporter-user-id="{supporter_id}"]' \
-                                   f'[@data-attribute="{support_element_num if support_element_num != 7 else 10}"]'
-            search_by = By.XPATH
+            element_tab_num = (support_element_num + 3) if support_element_num > 7 else 3
+            support_summon_xpath = f'//*[@id="cnt-quest"]/div[2]/div[{element_tab_num}]/div[{support_dict["Num"]}]'
 
+            search_by = By.XPATH
             self._wait_for_button(search_by, support_summon_xpath)
             element = self._driver.find_element_by_xpath(support_summon_xpath)
             self._driver.execute_script("arguments[0].scrollIntoView(true);", element)

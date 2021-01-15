@@ -20,6 +20,8 @@ class Handle:
         self._bot = game_handler
         self._driver = game_handler.driver
         self.support_id = None
+        self.support_num = None
+        self.support_name = ""
         self.consumables_url = 'http://game.granbluefantasy.jp/#item'
         self.skippable_nightmare_battle = None
 
@@ -400,10 +402,9 @@ class Handle:
                     instructions_to_run[instruction_to_run](SUPPORT_ELEMENT)
 
                 if instruction_to_run == 'pick_summon':
-                    support_summon_id = self.get_best_support_summon()
-                    if support_summon_id:
-                        support_summon_id = support_summon_id['ID']
-                        instructions_to_run[instruction_to_run](supporter_id=support_summon_id,
+                    support_dict = self.get_best_support_summon()
+                    if support_dict:
+                        instructions_to_run[instruction_to_run](support_dict=support_dict,
                                                                 support_element_num=SUPPORT_ELEMENT)
                     else:
                         instructions_to_run[instruction_to_run](support_element_num=SUPPORT_ELEMENT,
@@ -517,7 +518,7 @@ class Handle:
 
         support_summon_dict = {}
 
-        for idx, support_summon in enumerate(support_summons):
+        for idx, support_summon in enumerate(support_summons, 1):
             supporter_id = support_summon['data-supporter-user-id']
             support_name = support_summon.find('div', {'class': 'prt-supporter-summon'}).text.strip()
             skill_level = support_summon.find('div', {'class': ['prt-summon-skill']})
@@ -538,6 +539,7 @@ class Handle:
             support_summon_dict[idx]['SkLvl'] = int(re.findall('\d+', skill_level)[0])
             support_summon_dict[idx]['ID'] = int(supporter_id)
             support_summon_dict[idx]['Friend'] = True if friend_summon else False
+            support_summon_dict[idx]['Num'] = idx
 
         return support_summon_dict
 
@@ -603,13 +605,15 @@ class Handle:
                 for idx, summon in enumerate(needed_summons.values(), 1):
                     if True in [summon['Friend'] is True for summon in needed_summons.values()]:
                         # Pick last picked friend summon by ID
-                        if self.support_id == summon['ID']:
+                        if self.support_id == summon['ID'] and self.support_name == summon['Name']:
                             final_summ_pick = summon
                             # Can't be bothered
                             idx = len(needed_summons)
-                        elif summon['SkLvl'] >= final_summ_pick['SkLvl'] and summon['Friend'] is True:
+                        elif summon['SkLvl'] >= final_summ_pick['SkLvl'] and summon['Friend'] is True \
+                                and search_for in summon['Name'].lower():
                             final_summ_pick = summon
                             self.support_id = summon['ID']
+                            self.support_name = summon['Name']
                     else:
                         if summon['SkLvl'] >= final_summ_pick['SkLvl']:
                             final_summ_pick = summon
