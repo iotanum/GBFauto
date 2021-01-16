@@ -61,10 +61,24 @@ class QuestOnRepeat:
         # remove the battle scene/advice element from the fight, less clutter
         self.remove_battle_scene_element()
 
+        queues = self.bot.handle.find_all_queues()
         while True:
             mob_hps = self.enemy_hps()
+            battle = self.bot.handle.get_battle_info()
 
             if not all(hp == 0 for hp in mob_hps):
+                print(battle['turn'], "turn in battle")
+
+                if battle['battle'] != 1 or self.bot.raid_battle is True:
+                    print('waiting')
+                    self.bot.handle.wait_before_fight(fight_start=False)
+
+                queues = self.bot.handle.handle_queue(queues)
+                # if queue:
+                #     self.bot.handle.wait_until_character_attacks()
+
+                print(f"Fight #{battle['battle']}.")
+
                 try:
                     # Press 'attack' and enable auto if it's not enabled already
                     if not self.auto_button_on:
@@ -73,9 +87,11 @@ class QuestOnRepeat:
                         self.auto_button_on = True
 
                     # Refresh the page (after queue) if quest contains 1 fight (F5 works)
-                    # if the quest contains more than 1 fight - use BACK key (to be implemented)
-                    if self.num_of_fights == 1 and self.bot.refreshed is False:
-                        self.bot.refreshed = True
+                    # if the quest contains more than 1 fight - use BACK key TODO
+                    if self.num_of_fights == 1:
+                            # and self.bot.refreshed is False:
+                        print(1)
+                        # self.bot.refreshed = True
                         self.bot.handle.wait_after_queue_refresh()
                         self.driver.refresh()
 
@@ -86,7 +102,7 @@ class QuestOnRepeat:
                             # Check if url was changed after refreshing
                             after_refresh_url = str(self.driver.current_url)
                             if current_url != after_refresh_url:
-                                return True
+                                break
 
                             if time.time() - start >= 3:
                                 self.bot.handle.wait_before_fight(fight_start=True)
@@ -99,9 +115,13 @@ class QuestOnRepeat:
                                 break
                             time.sleep(0.2)
 
+                    if not queues:
+                        return True
+
                 except (selenium_err.exceptions.NoSuchElementException, selenium_err.exceptions.WebDriverException):
                     pass
             else:
+                print(3)
                 break
 
     def count_quest_fight_parts(self):
@@ -138,37 +158,58 @@ class QuestOnRepeat:
             self.num_of_fights = self.count_quest_fight_parts()
 
         # Monkey patch to do 'real time' configuration load while bot is running
-        load_dotenv('config.env', override=True)
+        # load_dotenv('config.env', override=True)
 
-        first_queue_from_config = os.getenv("QUEUE_FIRST_FIGHT")
-        second_queue_from_config = os.getenv("QUEUE_SECOND_FIGHT")
-        third_queue_from_config = os.getenv('QUEUE_THIRD_FIGHT')
-        queues = [first_queue_from_config, second_queue_from_config, third_queue_from_config]
+        # first_queue_from_config = os.getenv("QUEUE_FIRST_FIGHT")
+        # second_queue_from_config = os.getenv("QUEUE_SECOND_FIGHT")
+        # third_queue_from_config = os.getenv('QUEUE_THIRD_FIGHT')
+        # queues = [first_queue_from_config, second_queue_from_config, third_queue_from_config]
 
-        for current_fight_num, queue in enumerate(queues, 1):
-            # Don't need to wait on first iteration
-            if current_fight_num != 1 or self.bot.raid_battle is True:
-                self.bot.handle.wait_before_fight(fight_start=False)
+        # while True:
+        fight_ended = self.finish_fight()
 
-            print(f"Fight #{current_fight_num}.")
+        # Reset quest_on_repeat states
+        self.bot.refreshed = False
+        # Reset only for raid-type of quests, not multi-battles ones
+        if not self.num_of_fights > 1:
+            self.auto_button_on = False
 
-            self.bot.queue.do_queue(queue)
-            fight_ended = self.finish_fight()
+        # Skip animations after completing the quest
+        if current_battle == self.num_of_fights:
+            # Also check if after refreshing the page we're still in a fight
+            # or quest contains more than 1 fight
+            if 'result' not in self.driver.current_url:
+                if fight_ended is not True or self.num_of_fights > 1:
+                    self.driver.refresh()
 
-            # Reset quest_on_repeat states
-            self.bot.refreshed = False
-            # Reset only for raid-type of quests, not multi-battles ones
-            if not self.num_of_fights > 1:
-                self.auto_button_on = False
-
-            # Skip animations after completing the quest
-            if current_fight_num == self.num_of_fights:
-                # Also check if after refreshing the page we're still in a fight
-                # or quest contains more than 1 fight
-                if 'result' not in self.driver.current_url:
-                    if fight_ended is not True or self.num_of_fights > 1:
-                        self.driver.refresh()
-                break
+        # for current_fight_num, queue in enumerate(queues, 1):
+        #     # Don't need to wait on first iteration
+        #     if current_fight_num != 1 or self.bot.raid_battle is True:
+        #         self.bot.handle.wait_before_fight(fight_start=False)
+        #
+        #     print(f"Fight #{current_fight_num}.")
+        #
+        #     battle = self.bot.handle.get_battle_info()
+        #
+        #     if queue:
+        #         self.bot.queue.do_queue(queue)
+        #
+        #     fight_ended = self.finish_fight(battle)
+        #
+        #     # Reset quest_on_repeat states
+        #     self.bot.refreshed = False
+        #     # Reset only for raid-type of quests, not multi-battles ones
+        #     if not self.num_of_fights > 1:
+        #         self.auto_button_on = False
+        #
+        #     # Skip animations after completing the quest
+        #     if current_fight_num == self.num_of_fights:
+        #         # Also check if after refreshing the page we're still in a fight
+        #         # or quest contains more than 1 fight
+        #         if 'result' not in self.driver.current_url:
+        #             if fight_ended is not True or self.num_of_fights > 1:
+        #                 self.driver.refresh()
+        #         break
 
     def convert_seconds_to_hms_format(self):
         seconds = round(self.bot.run_time(), 2)

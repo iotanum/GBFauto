@@ -359,6 +359,7 @@ class Handle:
                 quest_parts = None
 
             if quest_parts:
+                print(quest_parts, 'quest part')
                 break
 
             if side_scroll_quest:
@@ -496,6 +497,92 @@ class Handle:
                 if attempts > 1:
                     time.sleep(3)
 
+    def get_battle_info(self):
+        parser = bs(self._driver.page_source, features='lxml')
+
+        battle = {}
+        print(2)
+
+        turn_num = parser.find("div", {"id": "js-turn-num-count"}).findChild()
+        turn_num = int(re.findall('\d+', turn_num['class'][0])[0])
+
+        ready_ougies = 0
+        party = parser.find("div", {"class": "prt-party"})
+        for ougi_bar in party.findAll('span', {"class": 'txt-gauge-value'}):
+            ougi_bar = int(ougi_bar.text)
+
+            if 200 >= ougi_bar >= 100:
+                ready_ougies += 1
+
+            if ougi_bar == 200:
+                ready_ougies += 2
+
+        battle['turn'] = turn_num
+        battle['ougies'] = ready_ougies
+        battle['battle'] = 1
+
+        return battle
+
+    def wait_until_character_attacks(self):
+        start = time.time()
+        while True:
+            if time.time() - start > 15:
+                break
+
+            parser = bs(self._driver.page_source, features='lxml')
+
+            party = parser.find("div", {"class": "prt-party"})
+
+            second_to_last_chara_attack = party.find('div', {'class': f'list-character3 btn-command-character attack'})
+            last_chara_attack = party.find('div', {'class': f'list-character3 btn-command-character attack'})
+
+            charas_to_attack = [second_to_last_chara_attack, last_chara_attack]
+
+            if any([chara is True for chara in charas_to_attack]):
+                print("ATTACK", second_to_last_chara_attack, last_chara_attack)
+                break
+
+            time.sleep(0.15)
+
+    def handle_queue(self, queues):
+        battle = self._bot.handle.get_battle_info()
+        # Returns a list of queues as described in config for the current battle
+        # there's raids/quests with multiple battle stages
+        current_battle = battle['battle']
+
+        try:
+            queues_for_battle = queues[current_battle]
+            print(queues_for_battle, 'all queues for 1st battle')
+        except KeyError:
+            return None
+
+        # Check if all queues for the current battle are not done
+        if not all([queue is True for queue in queues_for_battle.values()]):
+            # Queue for this current battle and this current turn
+            # all_queues[current_battle][current_turn]
+
+            # Try mapping dict key to battle turn and see if we have a queue for it
+            try:
+                queue_for_turn = queues_for_battle[battle['turn']]
+            except KeyError:
+                queue_for_turn = None
+
+            if queue_for_turn:
+                print(queue_for_turn, 'queue for this turn')
+                self._bot.queue.do_queue(queue_for_turn)
+
+                # Give 'True' to the queue which was just done
+                # this way I do checks later what queues were done
+                queues[current_battle][battle['turn']] = True
+
+        # Check if all queues in the given battle are 'True'
+        # aka all have been done
+        else:
+            del queues[current_battle]
+
+        print(queues, 'in handle queue')
+        return queues if queues_for_battle else None
+
     def parse_support_summon_list(self):
         parser = bs(self._driver.page_source, features='lxml')
 
@@ -629,7 +716,8 @@ class Handle:
         start = time.time()
 
         while True:
-            if time.time() - start > 15:
+            if time.time() - start > 30:
+                print('couldnt wait until ready ended')
                 break
 
             if 'result' in self._driver.current_url:
@@ -690,6 +778,35 @@ class Handle:
                 continue
 
             time.sleep(0.5)
+
+    def find_all_queues(self):
+        queues = {}
+
+        max_battles = 101
+        max_turns = 101
+        temp_queues = []
+
+        load_dotenv('config.env', override=True)
+        # Get all possible variations of queue strings
+        for max_battle in range(1, max_battles):
+            for max_turn in range(1, max_turns):
+                temp_queues.append(f"QUEUE_{max_battle}_{max_turn}")
+
+        # remove all non-existent queue strings
+        temp_queues = [queue for queue in temp_queues if os.getenv(queue)]
+
+        # format everything into a dictionary
+        # {'battle_number': {turn_number: queue, turn_number_2: queue}}
+        for queue in temp_queues:
+            battle = int(queue.split("_")[1])
+            turn = int(queue.split("_")[2])
+
+            if battle not in queues:
+                queues[battle] = {}
+
+            queues[battle][turn] = os.getenv(queue)
+
+        return queues
 
     def wait_after_queue_refresh(self):
         start = time.time()
