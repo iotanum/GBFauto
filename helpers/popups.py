@@ -3,6 +3,11 @@ from selenium.webdriver.common.by import By
 
 from helpers.timeout import Timeout
 
+from bs4 import BeautifulSoup as bs
+from bs4 import SoupStrainer as ss
+
+import time
+
 
 class Popup:
     def __init__(self, game_handler):
@@ -54,7 +59,24 @@ class Popup:
         return self._wait_for_popup(timeout, search_by, self._resume_quest_xpath)
 
     def backup_request(self):
+        start = time.time()
+
+        while True:
+            print("backup request wait")
+            if time.time() - start > 5:
+                break
+
+            strainer = ss('div', attrs={'id': 'cnt-raid-information'})
+            parser = bs(self._driver.page_source, 'lxml', parse_only=strainer)
+
+            attack_button_on = parser.find('div', class_='btn-attack-start display-on')
+
+            if attack_button_on:
+                return
+
+            time.sleep(0.1)
         timeout = 2
+        print('bakcup vistiek ce esu')
         search_by = By.XPATH
 
         return self._wait_for_popup(timeout, search_by, self._backup_request_xpath)

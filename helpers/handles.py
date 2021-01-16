@@ -501,10 +501,14 @@ class Handle:
         parser = bs(self._driver.page_source, features='lxml')
 
         battle = {}
-        print(2)
+        turn_nums = parser.find("div", {"id": "js-turn-num-count"}).findChildren()
+        turn_num = ""
 
-        turn_num = parser.find("div", {"id": "js-turn-num-count"}).findChild()
-        turn_num = int(re.findall('\d+', turn_num['class'][0])[0])
+        for turn_ele in turn_nums:
+            turn_ele = re.findall('\d+', turn_ele['class'][0])[0]
+            turn_num += turn_ele
+
+        turn_num = int(turn_num)
 
         ready_ougies = 0
         party = parser.find("div", {"class": "prt-party"})
@@ -523,26 +527,29 @@ class Handle:
 
         return battle
 
-    def wait_until_character_attacks(self):
-        start = time.time()
-        while True:
-            if time.time() - start > 15:
-                break
+    def check_if_chara_are_attacking(self, timeout=1):
+        # start = time.time()
+        # while True:
+        print("attack handle methd")
+            # if time.time() - start > timeout:
+            #     return
 
-            parser = bs(self._driver.page_source, features='lxml')
+        parser = bs(self._driver.page_source, features='lxml')
 
-            party = parser.find("div", {"class": "prt-party"})
+        party = parser.find("div", {"class": "prt-party"})
 
-            second_to_last_chara_attack = party.find('div', {'class': f'list-character3 btn-command-character attack'})
-            last_chara_attack = party.find('div', {'class': f'list-character3 btn-command-character attack'})
+        first_chara_attack = party.find('div', {'class': f'list-character1 btn-command-character attack'})
+        second_chara_attack = party.find('div', {'class': f'list-character2 btn-command-character attack'})
+        second_to_last_chara_attack = party.find('div', {'class': f'list-character3 btn-command-character attack'})
+        last_chara_attack = party.find('div', {'class': f'list-character3 btn-command-character attack'})
 
-            charas_to_attack = [second_to_last_chara_attack, last_chara_attack]
+        charas_to_attack = [first_chara_attack, second_chara_attack, second_to_last_chara_attack, last_chara_attack]
 
-            if any([chara is True for chara in charas_to_attack]):
-                print("ATTACK", second_to_last_chara_attack, last_chara_attack)
-                break
+        if any([chara is True for chara in charas_to_attack]):
+            print("ATTACK", second_to_last_chara_attack, last_chara_attack)
+            return True
 
-            time.sleep(0.15)
+            # time.sleep(0.1)
 
     def handle_queue(self, queues):
         battle = self._bot.handle.get_battle_info()
@@ -552,9 +559,15 @@ class Handle:
 
         try:
             queues_for_battle = queues[current_battle]
-            print(queues_for_battle, 'all queues for 1st battle')
-        except KeyError:
+        except (KeyError, TypeError):
             return None
+
+        # Check if there's a queue for the upcoming turn
+        # to turn off auto btn
+        try:
+            queue_for_next_turn = queues_for_battle[battle['turn'] + 1]
+        except KeyError:
+            queue_for_next_turn = None
 
         # Check if all queues for the current battle are not done
         if not all([queue is True for queue in queues_for_battle.values()]):
@@ -567,7 +580,7 @@ class Handle:
             except KeyError:
                 queue_for_turn = None
 
-            if queue_for_turn:
+            if queue_for_turn and queue_for_turn is not True:
                 print(queue_for_turn, 'queue for this turn')
                 self._bot.queue.do_queue(queue_for_turn)
 
@@ -575,12 +588,11 @@ class Handle:
                 # this way I do checks later what queues were done
                 queues[current_battle][battle['turn']] = True
 
-        # Check if all queues in the given battle are 'True'
-        # aka all have been done
-        else:
-            del queues[current_battle]
+        # # Check if all queues in the given battle are 'True'
+        # # aka all have been done
+        # else:
+        #     del queues[current_battle]
 
-        print(queues, 'in handle queue')
         return queues if queues_for_battle else None
 
     def parse_support_summon_list(self):
@@ -716,6 +728,7 @@ class Handle:
         start = time.time()
 
         while True:
+            print("bla")
             if time.time() - start > 30:
                 print('couldnt wait until ready ended')
                 break
@@ -746,7 +759,7 @@ class Handle:
                         break
 
             # Eat less CPU
-            time.sleep(0.2)
+            time.sleep(0.15)
 
     def quest_position_change(self):
         parser = bs(self._driver.page_source, 'lxml')
@@ -777,7 +790,7 @@ class Handle:
             except KeyError:
                 continue
 
-            time.sleep(0.5)
+            time.sleep(0.15)
 
     def find_all_queues(self):
         queues = {}

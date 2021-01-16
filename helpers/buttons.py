@@ -202,7 +202,6 @@ class Press:
 
         self._wait_for_button(search_by, char_xpath)
         self._driver.find_element_by_xpath(char_xpath).click()
-        print('clicked chara', char_num)
 
     def next_char(self):
         search_by = By.CLASS_NAME
@@ -217,7 +216,7 @@ class Press:
         self._driver.find_element_by_class_name(self._previous_char_class).click()
 
     def char_skill(self, char_num, skill_num):
-        ability_xpath = f'//*[@id="wrapper"]/div[3]/div[2]/div[10]/div[{char_num + 2}]/div[3]/div[{skill_num}]/div[1]'
+        ability_xpath = f'//*[@id="wrapper"]/div[3]/div[2]/div[9]/div[{char_num + 2}]/div[3]/div[{skill_num}]'
         search_by = By.XPATH
 
         self._wait_for_button(search_by, ability_xpath)
