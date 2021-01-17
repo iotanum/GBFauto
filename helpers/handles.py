@@ -528,28 +528,30 @@ class Handle:
         return battle
 
     def check_if_chara_are_attacking(self, timeout=1):
-        # start = time.time()
-        # while True:
-        print("attack handle methd")
-            # if time.time() - start > timeout:
-            #     return
+        start = time.time()
 
-        parser = bs(self._driver.page_source, features='lxml')
+        while True:
+            print("check if attack handle methd")
 
-        party = parser.find("div", {"class": "prt-party"})
+            if time.time() - start > timeout:
+                return
 
-        first_chara_attack = party.find('div', {'class': f'list-character1 btn-command-character attack'})
-        second_chara_attack = party.find('div', {'class': f'list-character2 btn-command-character attack'})
-        second_to_last_chara_attack = party.find('div', {'class': f'list-character3 btn-command-character attack'})
-        last_chara_attack = party.find('div', {'class': f'list-character3 btn-command-character attack'})
+            parser = bs(self._driver.page_source, features='lxml')
 
-        charas_to_attack = [first_chara_attack, second_chara_attack, second_to_last_chara_attack, last_chara_attack]
+            party = parser.find("div", {"class": "prt-party"})
 
-        if any([chara is True for chara in charas_to_attack]):
-            print("ATTACK", second_to_last_chara_attack, last_chara_attack)
-            return True
+            first_chara_attack = party.find('div', {'class': f'list-character1 btn-command-character attack'})
+            second_chara_attack = party.find('div', {'class': f'list-character2 btn-command-character attack'})
+            second_to_last_chara_attack = party.find('div', {'class': f'list-character3 btn-command-character attack'})
+            last_chara_attack = party.find('div', {'class': f'list-character3 btn-command-character attack'})
 
-            # time.sleep(0.1)
+            charas_to_attack = [first_chara_attack, second_chara_attack, second_to_last_chara_attack, last_chara_attack]
+
+            if any([chara is True for chara in charas_to_attack]):
+                print("ATTACK", second_to_last_chara_attack, last_chara_attack)
+                return True
+
+            time.sleep(0.1)
 
     def handle_queue(self, queues):
         battle = self._bot.handle.get_battle_info()

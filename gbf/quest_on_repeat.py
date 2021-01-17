@@ -61,6 +61,7 @@ class QuestOnRepeat:
         # remove the battle scene/advice element from the fight, less clutter
         self.remove_battle_scene_element()
 
+        load_dotenv('config.env', override=True)
         queues = self.bot.handle.find_all_queues()
         pressed_on_turn = None
         while True:
@@ -68,7 +69,9 @@ class QuestOnRepeat:
             battle = self.bot.handle.get_battle_info()
 
             if not all(hp == 0 for hp in mob_hps):
-                if battle['battle'] != 1 or self.bot.raid_battle is True:
+                # Wait only for multi-battles
+                if battle['battle'] != 1:
+                    print("ce tas waitas")
                     self.bot.handle.wait_before_fight(fight_start=False)
 
                 queues = self.bot.handle.handle_queue(queues)
@@ -76,6 +79,11 @@ class QuestOnRepeat:
 
                 if battle['turn'] == 1:
                     print(f"Fight #{battle['battle']}.")
+
+                if next_turn_queue and self.auto_button_on:
+                    self.bot.handle.check_if_chara_are_attacking()
+                    self.bot.press.auto_attack()
+                    self.auto_button_on = False
 
                 try:
                     # Press 'attack' and enable auto if it's not enabled already
@@ -92,7 +100,7 @@ class QuestOnRepeat:
 
                     # Refresh the page (after queue) if quest contains 1 fight (F5 works)
                     # if the quest contains more than 1 fight - use BACK key TODO
-                    if (self.num_of_fights == 1 and battle['ougies'] > 1 and self.auto_button_on) \
+                    if (self.num_of_fights == 1 and battle['ougies'] >= 1) \
                             or (self.num_of_fights == 1 and battle['turn'] == 1):
                         print(battle)
                         # self.bot.refreshed = True
