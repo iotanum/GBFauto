@@ -729,6 +729,8 @@ class Handle:
         element_found = False
         start = time.time()
 
+        strainer = ss('div', attrs={'id': 'cnt-raid-information'})
+
         while True:
             print("bla")
             if time.time() - start > 30:
@@ -743,7 +745,6 @@ class Handle:
                 self.wait_for_main_fight_window()
                 break
 
-            strainer = ss('div', attrs={'id': 'cnt-raid-information'})
             parser = bs(self._driver.page_source, 'lxml', parse_only=strainer)
 
             if fight_start is True:
@@ -792,7 +793,7 @@ class Handle:
             except KeyError:
                 continue
 
-            time.sleep(0.15)
+            time.sleep(0.05)
 
     def find_all_queues(self):
         queues = {}

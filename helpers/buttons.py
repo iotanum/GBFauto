@@ -150,11 +150,11 @@ class Press:
     def attack_button(self):
         start = time.time()
 
+        strainer = ss('div', attrs={'id': 'cnt-raid-information'})
         while True:
             if time.time() - start > 5:
                 break
 
-            strainer = ss('div', attrs={'id': 'cnt-raid-information'})
             parser = bs(self._driver.page_source, 'lxml', parse_only=strainer)
 
             attack_button_on = parser.find('div', class_='btn-attack-start display-on')

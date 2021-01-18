@@ -1,4 +1,5 @@
 from bs4 import BeautifulSoup as bs
+from bs4 import SoupStrainer as ss
 
 from selenium import common as selenium_err
 
@@ -115,6 +116,39 @@ class Skills:
             if back_button:
                 return True
 
+    def check_if_skill_is_disabled(self, chara_num, skill_num):
+        start = time.time()
+
+        charas = ss('div', attrs={"class": 'prt-command'})
+
+        while True:
+            if time.time() - start > 2:
+                break
+
+            parser = bs(self._driver.page_source, features='lxml', parse_only=charas)
+            chara = parser.find('div', attrs={"class": re.compile(f'prt-command-chara chara{chara_num}')})
+
+            if parser:
+                available_skill = parser.find_all('div', {'class': 'lis-ability btn-ability-available'})
+
+                if available_skill:
+                    print('available skill, all good')
+                    return False
+
+                print(chara.attrs)
+                print(parser.attrs)
+                if 'turn-disable' in chara['class']:
+                    print('blocked chara')
+                    return True
+
+                abilities = parser.find('div', {'class': 'prt-ability-list'})
+                abilities = abilities.findAll('div', {'class': re.compile('lis-ability btn-ability')})
+                for idx, ability in enumerate(abilities, 1):
+                    if skill_num == idx and 'ability-disable' in ability['class']:
+                        return True
+
+            time.sleep(0.1)
+
     def do_queue(self, queue_from_config):
         self.remove_ability_log_element()
         self.remove_backup_request_element()
@@ -141,7 +175,8 @@ class Skills:
                 # Click on a first character in the queue to open up it's abilities 'menu'
                 if step == 1 and char_num != 5 or summon_was_used is True:
                     self._bot.press.char_to_start_queue(char_num)
-                    self.handle_skill_press(char_num, ability_num)
+                    if not self.check_if_skill_is_disabled(char_num, ability_num):
+                        self.handle_skill_press(char_num, ability_num)
                     current_char_num = char_num
                     # Set this variable to false so it wouldn't spam char_to_start_queue
                     # when summon was/is used
@@ -162,12 +197,11 @@ class Skills:
                                 self.handle_char_switching(direction='previous')
                                 time.sleep(0.15)
                     current_char_num = char_num
-                    self.handle_skill_press(char_num, ability_num)
-                    time.sleep(0.15)
-                    # This is for 'Select party member' type of ability
-                    if select_party_member:
-                        self._bot.press.select_part_member(select_party_member)
-                        time.sleep(0.15)
+                    if not self.check_if_skill_is_disabled(char_num, ability_num):
+                        self.handle_skill_press(char_num, ability_num)
+                        # This is for 'Select party member' type of ability
+                        if select_party_member:
+                            self._bot.press.select_part_member(select_party_member)
                 # if char_num is 5, then it means it's a support summon
                 else:
                     # Exit character skill selection 'window'
