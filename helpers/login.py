@@ -65,6 +65,10 @@ class GBFGame:
             self.chrome_options.add_argument("--window-size=500,720")
 
         self.chrome_options.add_argument("--mute-audio")
+        self.chrome_options.add_argument("--window-size=130,760")
+
+        self.chrome_options.add_experimental_option("useAutomationExtension", False)
+        self.chrome_options.add_experimental_option("excludeSwitches", ["enable-automation"])
 
     def get_screen_resolution(self):
         user32 = ctypes.windll.user32
