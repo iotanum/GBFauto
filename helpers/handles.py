@@ -165,6 +165,10 @@ class Handle:
                     print('New rank!')
                     self._bot.press.usual_ok()
 
+                elif 'pop-common-rank-up' in popup_name:
+                    print('New rank!')
+                    self._bot.press.usual_ok()
+
                 elif 'notification-title' in popup_name:
                     print('New achievement!')
                     self._bot.press.usual_close()
@@ -301,6 +305,26 @@ class Handle:
                     reward_text = popup.find('div', {'class': 'txt-reward'}).text
                     print(f"'{reward_text}")
                     self._bot.press.usual_ok()
+
+                elif 'pop-mission-update' in popup_name:
+                    mission = popup.find('div', {'class': 'txt-mission-description'}).text
+                    try:
+                        mission_progress = popup.find('span', {'class': 'txt-progress-num'}).text
+                        print(f"{mission} - {mission_progress}")
+                    except AttributeError:
+                        print(f"{mission} - completed!")
+
+                    self._bot.press.usual_close()
+
+                elif 'pop-teamforce-quest-list' in popup_name:
+                    print('Unparalleled Foe!')
+
+                    self._bot.press.usual_close()
+
+                elif 'js-pop-skyscope-achieved' in popup_name:
+                    print('Skyscope mission, w/e done!')
+
+                    self._bot.press.usual_close()
 
                 else:
                     print("Unhandled popup!\nPage source and error picture in 'errors' folder.")
@@ -898,6 +922,7 @@ class Handle:
                 if REQUEST_BACKUP == 1:
                     if not self._bot.refreshed:
                         try:
+                            print("yes, 69")
                             self._bot.press.approve_backup_request()
                             self._bot.press.usual_ok()
                         except selenium_err.exceptions.NoSuchElementException:

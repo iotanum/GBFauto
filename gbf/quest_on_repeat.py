@@ -61,7 +61,6 @@ class QuestOnRepeat:
         # remove the battle scene/advice element from the fight, less clutter
         self.remove_battle_scene_element()
 
-        load_dotenv('config.env', override=True)
         queues = self.bot.handle.find_all_queues()
         pressed_on_turn = None
         while True:
@@ -100,16 +99,15 @@ class QuestOnRepeat:
 
                     # Refresh the page (after queue) if quest contains 1 fight (F5 works)
                     # if the quest contains more than 1 fight - use BACK key TODO
-                    if (self.num_of_fights == 1 and battle['ougies'] >= 1) \
+                    if (self.num_of_fights == 1 and battle['ougies'] > 4 and pressed_on_turn == battle['turn']) \
                             or (self.num_of_fights == 1 and battle['turn'] == 1):
                         print(battle)
                         # self.bot.refreshed = True
                         self.bot.handle.wait_after_queue_refresh()
+                        current_url = str(self.driver.current_url)
                         self.driver.refresh()
 
                         start = time.time()
-                        current_url = str(self.driver.current_url)
-
                         while True:
                             print("waiting for refresh")
                             # Check if url was changed after refreshing

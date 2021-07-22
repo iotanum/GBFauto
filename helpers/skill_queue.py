@@ -131,21 +131,20 @@ class Skills:
             if parser:
                 available_skill = parser.find_all('div', {'class': 'lis-ability btn-ability-available'})
 
-                if available_skill:
-                    print('available skill, all good')
-                    return False
-
-                print(chara.attrs)
-                print(parser.attrs)
                 if 'turn-disable' in chara['class']:
                     print('blocked chara')
                     return True
 
-                abilities = parser.find('div', {'class': 'prt-ability-list'})
+                abilities = chara.find('div', {'class': 'prt-ability-list'})
                 abilities = abilities.findAll('div', {'class': re.compile('lis-ability btn-ability')})
                 for idx, ability in enumerate(abilities, 1):
                     if skill_num == idx and 'ability-disable' in ability['class']:
+                        print('blocked skill')
                         return True
+
+                if available_skill:
+                    print('available skill, all good')
+                    return False
 
             time.sleep(0.1)
 
@@ -201,28 +200,32 @@ class Skills:
                         self.handle_skill_press(char_num, ability_num)
                         # This is for 'Select party member' type of ability
                         if select_party_member:
+                            time.sleep(0.15)
                             self._bot.press.select_part_member(select_party_member)
                 # if char_num is 5, then it means it's a support summon
                 else:
                     # Exit character skill selection 'window'
                     if step > 1:
                         self._bot.press.back()
-                    actions_for_summon = [self._bot.press.summon_card,
-                                          self._bot.press.summon_num,
-                                          self._bot.press.confirm_summon_fight,
-                                          self._bot.press.back]
-                    for idx, summ_action in enumerate(actions_for_summon, 1):
-                        # second step is choosing which summon
-                        if idx == 2:
-                            summ_action(ability_num)
-                        elif idx == 4:
-                            if self.check_for_back_button():
+                    # If MC is fked - no summon usage
+                    if not self.check_if_skill_is_disabled(1, 1):
+                        actions_for_summon = [self._bot.press.summon_card,
+                                              self._bot.press.summon_num,
+                                              self._bot.press.confirm_summon_fight,
+                                              self._bot.press.back]
+                        for idx, summ_action in enumerate(actions_for_summon, 1):
+                            # second step is choosing which summon
+                            if idx == 2:
+                                summ_action(ability_num)
+                            elif idx == 4:
+                                if self.check_for_back_button():
+                                    summ_action()
+                            else:
                                 summ_action()
-                        else:
-                            summ_action()
-                        time.sleep(0.35)
-                    summon_was_used = True
+                            time.sleep(0.35)
+                        summon_was_used = True
             except (selenium_err.exceptions.ElementNotVisibleException, selenium_err.exceptions.WebDriverException) as e:
                 print(f"Broke on {step} step.")
-                print(F"Reason: {e}")
+                print(action)
+                print(e)
                 break

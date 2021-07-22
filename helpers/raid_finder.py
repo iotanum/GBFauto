@@ -17,7 +17,7 @@ class RaidFinder:
         self.chrome_options = Options()
         self.headless_chrome()
         self.driver = webdriver.Chrome(executable_path='utils/chromedriver.exe', options=self.chrome_options)
-        self.raid_finder_url = "https://gbf-raidfinder-tw.herokuapp.com/"
+        self.raid_finder_url = "http://212.24.110.117:5555/"
         self.raid = []
         self.window_already_closed = False
         self.launched = True

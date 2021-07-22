@@ -61,20 +61,20 @@ class Popup:
     def backup_request(self):
         start = time.time()
 
-        while True:
-            print("backup request wait")
-            if time.time() - start > 5:
-                break
-
-            strainer = ss('div', attrs={'id': 'cnt-raid-information'})
-            parser = bs(self._driver.page_source, 'lxml', parse_only=strainer)
-
-            attack_button_on = parser.find('div', class_='btn-attack-start display-on')
-
-            if attack_button_on:
-                return
-
-            time.sleep(0.1)
+        # while True:
+        #     print("backup request wait")
+        #     if time.time() - start > 5:
+        #         break
+        #
+        #     strainer = ss('div', attrs={'id': 'cnt-raid-information'})
+        #     parser = bs(self._driver.page_source, 'lxml', parse_only=strainer)
+        #
+        #     attack_button_on = parser.find('div', class_='btn-attack-start display-on')
+        #
+        #     if attack_button_on:
+        #         return
+        #
+        #     time.sleep(0.1)
         timeout = 2
         print('bakcup vistiek ce esu')
         search_by = By.XPATH

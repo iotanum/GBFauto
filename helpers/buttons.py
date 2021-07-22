@@ -304,7 +304,7 @@ class Press:
     def play_again_quest(self):
         search_by = By.CSS_SELECTOR
 
-        elem = self._wait_for_button(search_by, self._play_again_quest_css)
+        elem = self._wait_for_button(search_by, self._play_again_quest_css, timeout=10)
         self._driver.find_element_by_css_selector(self._play_again_quest_css).click() if elem else None
         return elem
 
