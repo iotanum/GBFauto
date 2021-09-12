@@ -159,7 +159,8 @@ class QuestOnRepeat:
         # then it means that it's a raid.
         self.bot.raid_battle = '#raid_multi' in self.driver.current_url
         if self.bot.raid_battle is True:
-            self.bot.handle.backup_request()
+            # TODO
+            #self.bot.handle.backup_request()
             self.num_of_fights = 1
         else:
             self.num_of_fights = self.count_quest_fight_parts()
