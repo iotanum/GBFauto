@@ -131,7 +131,7 @@ class Raids:
                 print("Raid boss is defeated.")
                 raid_boss_is_alive = False
                 self.driver.refresh()
-            time.sleep(0.15)
+            time.sleep(0.3)
 
     def get_raid_id(self):
         # Get a RAID ID from raid_finder
