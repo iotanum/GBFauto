@@ -2,12 +2,18 @@ import time
 import re
 import os
 import random
+import asyncio
+import json
+from datetime import datetime
 
 from selenium import common as selenium_err
+from selenium.webdriver.common.keys import Keys
 
 from bs4 import BeautifulSoup as bs
 from bs4 import SoupStrainer as ss
 from dotenv import load_dotenv
+import aiohttp
+from aiohttp import web
 
 load_dotenv('config.env')
 
@@ -1024,17 +1030,128 @@ class Handle:
 
     def human_verification(self):
         verification = self._bot.popup.human_verification()
+        timestamp = str(datetime.now()).replace(":", "'")[:-7]
+        verification_image_name = f'{timestamp}.png'
+        verification_image_path = f'verification/{verification_image_name}'
+
+        # Time to start the fuckery of async http servers in a sync application
+        async def send_image_to_discord():
+            DISCORD_ID = os.getenv('DISCORD_ID')
+            DISCORD_BOT_SERVER_IP = os.getenv('DISCORD_BOT_SERVER_IP')
+            DISCORD_BOT_SERVER_PORT = int(os.getenv('DISCORD_BOT_SERVER_PORT'))
+            endpoint = '/verification'
+            self._driver.save_screenshot(verification_image_path)
+
+            async with aiohttp.ClientSession() as session:
+                form_data = aiohttp.FormData()
+                form_data.add_field('discord_id', DISCORD_ID)
+                form_data.add_field('image', open(verification_image_path, 'rb'), filename=verification_image_name,
+                                    content_type='image/png')
+
+                async with session.post(f'http://{DISCORD_BOT_SERVER_IP}:{DISCORD_BOT_SERVER_PORT}{endpoint}',
+                                        data=form_data) as resp:
+                    if resp.status == 200:
+                        print(f"Successfully sent verification image to '{DISCORD_ID}'.")
+                    else:
+                        print(f'{resp.status}, {resp.text()}')
+
+            await asyncio.sleep(5)
+
+        def make_sleep():
+            async def sleep(delay, result=None, *, loop=None):
+                coro = asyncio.sleep(delay, result=result, loop=loop)
+                task = asyncio.ensure_future(coro)
+                sleep.tasks.add(task)
+                try:
+                    return await task
+                except asyncio.CancelledError:
+                    return result
+                finally:
+                    sleep.tasks.remove(task)
+
+            sleep.tasks = set()
+            sleep.cancel_all = lambda: sum(task.cancel() for task in sleep.tasks)
+            return sleep
+
+        async def http_server(sleep):
+            HTTP_SERVER_PORT = int(os.getenv('HTTP_SERVER_PORT'))
+
+            async def input_code(code):
+                await asyncio.sleep(1)
+                input_field = self._driver.find_element_by_class_name('frm-message')
+                input_field.send_keys(code)
+                await asyncio.sleep(1)
+                self._driver.find_element_by_class_name('btn-talk-message').click()
+                await asyncio.sleep(3)
+
+                verification = self._bot.popup.human_verification()
+                if verification:
+                    return False
+                else:
+                    return True
+
+            async def parse_verification_code(request):
+                r_body = await request.json()
+                verification_code = r_body['verification_code']
+                return verification_code
+
+            async def stop_server():
+                sleep.cancel_all()
+                await asyncio.wait(sleep.tasks)
+
+            async def post_handler(request):
+                code = await parse_verification_code(request)
+                print(f"Successfully received verification code: '{code}', trying it...")
+
+                # TODO
+                # need to thoroughly test this if it works
+                successful = await input_code(code)
+                if not successful:
+                    await repeat_handler('test')
+                    return
+
+                await stop_server()
+
+            async def get_handler(request):
+                return web.Response(text=f"Running on: {os.environ['COMPUTERNAME']}")
+
+            async def repeat_handler(request):
+                input_field = self._driver.find_element_by_class_name('frm-message')
+                input_field.send_keys(Keys.CONTROL + "a")
+                await asyncio.sleep(1)
+                input_field.send_keys(Keys.DELETE)
+
+                await send_image_to_discord()
+                return web.Response(status=200)
+
+            app = web.Application()
+            app.router.add_get("/verification", get_handler)
+            app.router.add_post("/verification", post_handler)
+            app.router.add_get('/repeat', repeat_handler)
+
+            runner = aiohttp.web.AppRunner(app)
+            await runner.setup()
+            site = aiohttp.web.TCPSite(runner, port=HTTP_SERVER_PORT)
+            await site.start()
+
+            print(f"Temporarily started HTTP server: {'0.0.0.0' if not site._host else site._host}:{site._port} ")
+
+            while True:
+                await sleep(9000000)
+                print('Stopped the temporary HTTP server. Continuing on..')
+                break
 
         if verification is True:
             # Need to sleep this, because the captcha image takes time to load
             time.sleep(3)
-            self._driver.save_screenshot('verification/screenshot.png')
+            self._driver.save_screenshot(verification_image_path)
             input_field = self._driver.find_element_by_class_name('frm-message')
-            verification_code = input('Input verification code: ')
-            input_field.send_keys(verification_code)
-            time.sleep(1)
-            self._driver.find_element_by_class_name('btn-talk-message').click()
-            time.sleep(1)
+
+            # First is blocked for 10s and 2nd is blocked indefinitely (or until the user responds)
+            sleep = make_sleep()
+            asyncio.run(send_image_to_discord())
+            asyncio.run(http_server(sleep))
+
             return True
 
     def raid_points(self):

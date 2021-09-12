@@ -5,3 +5,4 @@ python-dotenv>=0.10.1
 selenium
 soupsieve>=1.9.1
 urllib3>=1.24.2
+aiohttp
