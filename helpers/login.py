@@ -161,6 +161,7 @@ class GBFGame:
             GBFGame.started = True
             print("Logging in w/ Google+ log-in method.")
             self.press_login()
+            self.driver.execute_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})")
             if MANUAL_LOGIN is 1:
                 self.handle_manual_login()
             else:
