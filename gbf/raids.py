@@ -179,7 +179,7 @@ class Raids:
             return
 
     def handle_raid_mechanics(self):
-        self.bot.wait.for_loading_screen()
+        # self.bot.wait.for_loading_screen()
 
         # Happens ever so often that after joining the raid
         # raid boss is immediately killed.
