@@ -63,71 +63,94 @@ class QuestOnRepeat:
 
         queues = self.bot.handle.find_all_queues()
         pressed_on_turn = None
+        just_started = True
+        printed_battle = False
+        placeholder_current_battle = 1
+        did_one_scan = False
         while True:
             mob_hps = self.enemy_hps()
-            battle = self.bot.handle.get_battle_info()
 
-            if not all(hp == 0 for hp in mob_hps):
-                # Wait only for multi-battles
-                if battle['battle'] != 1:
-                    print("ce tas waitas")
-                    self.bot.handle.wait_before_fight(fight_start=False)
+            # Give defaults to the battle variables on your first battle join
+            # anything else - just spam get_battle_info()
+            if just_started:
+                just_started = False
+                battle = dict()
+                battle['turn'] = 1
+                battle['ougies'] = 0
+                battle['battle'] = 1
+                battle['total_battles'] = self.num_of_fights
+            elif not all(hp == 0 for hp in mob_hps):
+                battle = self.bot.handle.get_battle_info(self.num_of_fights)
+                if placeholder_current_battle != battle['battle']:
+                    printed_battle = False
+                    placeholder_current_battle = battle['battle']
 
-                queues = self.bot.handle.handle_queue(queues)
+            final_battle = battle['battle'] == self.num_of_fights
+            # not all(hp == 0 for hp in mob_hps) all mobs hp 0 check
+            # if battle si the last battle of multi battle quest/raid or all hp of mobs are 0
+            # if not final_battle:
+            queues = self.bot.handle.handle_queue(queues, self.num_of_fights)
+            print(queues, "finish_fight")
+            if queues is not None:
                 next_turn_queue = battle['turn'] + 1 in queues[battle['battle']]
+            else:
+                next_turn_queue = None
 
-                if battle['turn'] == 1:
-                    print(f"Fight #{battle['battle']}.")
+            if not printed_battle:
+                print(f"Fight #{battle['battle']}.")
+                printed_battle = True
+
+            if next_turn_queue and self.auto_button_on:
+                self.bot.handle.check_if_chara_are_attacking()
+                self.bot.press.auto_attack()
+                self.auto_button_on = False
+
+            try:
+                # Press 'attack' and enable auto if it's not enabled already
+                if not self.auto_button_on and pressed_on_turn != battle['turn']:
+                    self.bot.press.attack_button()
+                    pressed_on_turn = battle['turn']
+                    if not next_turn_queue:
+                        self.bot.press.auto_attack()
+                        self.auto_button_on = True
 
                 if next_turn_queue and self.auto_button_on:
-                    self.bot.handle.check_if_chara_are_attacking()
                     self.bot.press.auto_attack()
                     self.auto_button_on = False
 
-                try:
-                    # Press 'attack' and enable auto if it's not enabled already
-                    if not self.auto_button_on and pressed_on_turn != battle['turn']:
-                        self.bot.press.attack_button()
-                        pressed_on_turn = battle['turn']
-                        if not next_turn_queue:
-                            self.bot.press.auto_attack()
-                            self.auto_button_on = True
+                # Refresh the page (after queue) if quest contains 1 fight (F5 works)
+                # if the quest contains more than 1 fight - use BACK key TODO
+                if (self.num_of_fights == 1 and battle['ougies'] > 4 and pressed_on_turn == battle['turn']) \
+                        or (self.num_of_fights == 1 and battle['turn'] == 1):
+                    print(battle)
+                    # self.bot.refreshed = True
+                    self.bot.handle.wait_after_queue_refresh()
+                    current_url = str(self.driver.current_url)
+                    self.driver.refresh()
 
-                    if next_turn_queue and self.auto_button_on:
-                        self.bot.press.auto_attack()
-                        self.auto_button_on = False
+                    start = time.time()
+                    while True:
+                        print("waiting for refresh")
+                        # Check if url was changed after refreshing
+                        after_refresh_url = str(self.driver.current_url)
+                        if current_url != after_refresh_url:
+                            return True
 
-                    # Refresh the page (after queue) if quest contains 1 fight (F5 works)
-                    # if the quest contains more than 1 fight - use BACK key TODO
-                    if (self.num_of_fights == 1 and battle['ougies'] > 4 and pressed_on_turn == battle['turn']) \
-                            or (self.num_of_fights == 1 and battle['turn'] == 1):
-                        print(battle)
-                        # self.bot.refreshed = True
-                        self.bot.handle.wait_after_queue_refresh()
-                        current_url = str(self.driver.current_url)
-                        self.driver.refresh()
+                        if time.time() - start >= 3:
+                            self.bot.handle.wait_before_fight(fight_start=True)
 
-                        start = time.time()
-                        while True:
-                            print("waiting for refresh")
-                            # Check if url was changed after refreshing
-                            after_refresh_url = str(self.driver.current_url)
-                            if current_url != after_refresh_url:
-                                return True
+                            # Reset auto_button state
+                            self.auto_button_on = False
+                            # Remove the element again since we refreshed the page
+                            self.remove_battle_scene_element()
+                            self.bot.handle.backup_request()
+                            break
+                        time.sleep(0.2)
+            except (selenium_err.exceptions.NoSuchElementException, selenium_err.exceptions.WebDriverException):
+                pass
 
-                            if time.time() - start >= 3:
-                                self.bot.handle.wait_before_fight(fight_start=True)
-
-                                # Reset auto_button state
-                                self.auto_button_on = False
-                                # Remove the element again since we refreshed the page
-                                self.remove_battle_scene_element()
-                                self.bot.handle.backup_request()
-                                break
-                            time.sleep(0.2)
-                except (selenium_err.exceptions.NoSuchElementException, selenium_err.exceptions.WebDriverException):
-                    pass
-            else:
+                did_one_scan = True
+            if all(hp == 0 for hp in mob_hps) and final_battle:
                 print(3)
                 return True
 
@@ -164,6 +187,7 @@ class QuestOnRepeat:
             self.num_of_fights = 1
         else:
             self.num_of_fights = self.count_quest_fight_parts()
+            print(self.num_of_fights, 'num of fights')
 
         fight_ended = self.finish_fight()
 

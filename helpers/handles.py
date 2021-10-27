@@ -30,20 +30,29 @@ class Handle:
         self.support_name = ""
         self.consumables_url = 'http://game.granbluefantasy.jp/#item'
         self.skippable_nightmare_battle = None
+        self.battle = dict()
 
     def after_fight_popups(self, kill=False):
         # After the page loads, there's no way to 'tell' if there will be
         # x popup or y popup, its load time depends on what popup it is
-        # so plain old 'sleep' will do the trick
+        # so we wait until we are in the result screen for the 'xp' popup to appear
         # Don't need to sleep if this is being called
         # for the second bunch of popups
         if kill is True:
             while True:
                 current_url = self._driver.current_url
+
                 if 'result' in current_url:
-                    time.sleep(1.5)
-                    break
-                time.sleep(0.5)
+                    try:
+                        parser = bs(self._driver.page_source, 'lxml')
+
+                        popup = parser.find('div', {'class': ['pop-show']})
+                        if popup:
+                            break
+                    except:
+                        continue
+
+                time.sleep(0.2)
 
         popup_search_start = time.time()
         # Just a declaration for a placeholders
@@ -373,6 +382,7 @@ class Handle:
                 break
 
             if popup_search_time - popup_search_start > 5:
+                print("pre_fight_screens timeout")
                 break
 
             parser = bs(self._driver.page_source, 'lxml')
@@ -527,35 +537,49 @@ class Handle:
                 if attempts > 1:
                     time.sleep(3)
 
-    def get_battle_info(self):
+    def get_battle_info(self, total_battles=None):
         parser = bs(self._driver.page_source, features='lxml')
 
-        battle = {}
-        turn_nums = parser.find("div", {"id": "js-turn-num-count"}).findChildren()
-        turn_num = ""
+        try:
+            battle = dict()
+            turn_nums = parser.find("div", {"id": "js-turn-num-count"}).findChildren()
+            turn_num = ""
 
-        for turn_ele in turn_nums:
-            turn_ele = re.findall('\d+', turn_ele['class'][0])[0]
-            turn_num += turn_ele
+            for turn_ele in turn_nums:
+                turn_ele = re.findall('\d+', turn_ele['class'][0])[0]
+                turn_num += turn_ele
 
-        turn_num = int(turn_num)
+            turn_num = int(turn_num)
 
-        ready_ougies = 0
-        party = parser.find("div", {"class": "prt-party"})
-        for ougi_bar in party.findAll('span', {"class": 'txt-gauge-value'}):
-            ougi_bar = int(ougi_bar.text)
+            ready_ougies = 0
+            party = parser.find("div", {"class": "prt-party"})
+            for ougi_bar in party.findAll('span', {"class": 'txt-gauge-value'}):
+                ougi_bar = int(ougi_bar.text)
 
-            if 200 >= ougi_bar >= 100:
-                ready_ougies += 1
+                if 200 >= ougi_bar >= 100:
+                    ready_ougies += 1
 
-            if ougi_bar == 200:
-                ready_ougies += 2
+                if ougi_bar == 200:
+                    ready_ougies += 2
 
-        battle['turn'] = turn_num
-        battle['ougies'] = ready_ougies
-        battle['battle'] = 1
+            if total_battles > 1:
+                wave = parser.find("div", {"id": "prt-wave-num"}).findChildren()
 
-        return battle
+                for wave_class in wave:
+                    if wave_class['class'] == ['txt-info-num']:
+                        wave_nums = wave_class.find_all('div', {'class': re.compile('num-info')})
+                        current_wave = int(re.findall('\d+', wave_nums[0]['class'][0])[0])
+                        total_waves = int(re.findall('\d+', wave_nums[1]['class'][0])[0])
+
+            battle['turn'] = turn_num
+            battle['ougies'] = ready_ougies
+            battle['battle'] = current_wave if total_battles > 1 and current_wave is not None else 1
+            battle['total_battles'] = total_waves if total_battles > 1 and total_battles is not None else 1
+            self.battle = battle
+            return self.battle
+        except (ValueError):
+            print("get_battle_info exception block")
+            return self.battle
 
     def check_if_chara_are_attacking(self, timeout=1):
         start = time.time()
@@ -570,27 +594,34 @@ class Handle:
 
             party = parser.find("div", {"class": "prt-party"})
 
-            first_chara_attack = party.find('div', {'class': f'list-character1 btn-command-character attack'})
-            second_chara_attack = party.find('div', {'class': f'list-character2 btn-command-character attack'})
-            second_to_last_chara_attack = party.find('div', {'class': f'list-character3 btn-command-character attack'})
-            last_chara_attack = party.find('div', {'class': f'list-character3 btn-command-character attack'})
+            charas_to_attack = []
+            for chara_num in range(4, 1):
+                chara_atk = party.find('div', {'class': f'list-character{chara_num} btn-command-character attack'})
+                charas_to_attack.append(chara_atk)
 
-            charas_to_attack = [first_chara_attack, second_chara_attack, second_to_last_chara_attack, last_chara_attack]
+            # first_chara_attack = party.find('div', {'class': f'list-character1 btn-command-character attack'})
+            # second_chara_attack = party.find('div', {'class': f'list-character2 btn-command-character attack'})
+            # second_to_last_chara_attack = party.find('div', {'class': f'list-character3 btn-command-character attack'})
+            # last_chara_attack = party.find('div', {'class': f'list-character4 btn-command-character attack'})
+
+            # charas_to_attack = [first_chara_attack, second_chara_attack, second_to_last_chara_attack, last_chara_attack]
 
             if any([chara is True for chara in charas_to_attack]):
-                print("ATTACK", second_to_last_chara_attack, last_chara_attack)
+                print("ATTACK???")
                 return True
 
             time.sleep(0.1)
 
-    def handle_queue(self, queues):
-        battle = self._bot.handle.get_battle_info()
+    def handle_queue(self, queues, total_battles):
+        battle = self._bot.handle.get_battle_info(total_battles)
         # Returns a list of queues as described in config for the current battle
         # there's raids/quests with multiple battle stages
+        print(battle, 'handle_queue')
         current_battle = battle['battle']
 
         try:
             queues_for_battle = queues[current_battle]
+            print(queues_for_battle, "queues_for_battle handle_queue")
         except (KeyError, TypeError):
             return None
 
@@ -762,7 +793,6 @@ class Handle:
         strainer = ss('div', attrs={'id': 'cnt-raid-information'})
 
         while True:
-            print("bla")
             if time.time() - start > 30:
                 print('couldnt wait until ready ended')
                 break
@@ -792,7 +822,7 @@ class Handle:
                         break
 
             # Eat less CPU
-            time.sleep(0.15)
+            time.sleep(0.1)
 
     def quest_position_change(self):
         parser = bs(self._driver.page_source, 'lxml')
@@ -997,9 +1027,49 @@ class Handle:
                 elif 'pendants' in gain_name:
                     self._bot.total_pendants += gain_num
 
+    def _enemy_hps(self):
+        strainer = ss('div', attrs={'class': 'prt-targeting-area main-tap-area'})
+        parser = bs(self._driver.page_source, 'lxml', parse_only=strainer)
+
+        mob_hps = parser.find_all('span', 'txt-gauge-value')
+        mob_hps = [int(hp.text) for hp in mob_hps]
+
+        return mob_hps
+
+    def _extreme_battle_queue(self):
+        made_a_leech_hit = False
+        waiting_until_dead = False
+
+        self.pre_fight_support_summons()
+        self.wait_before_fight(fight_start=True)
+
+        # Monkey patch to load stuff config real time while bot is running
+        load_dotenv('config.env', override=True)
+        queue = os.getenv("QUEUE_EXTREME")
+        self._bot.queue.do_queue(queue)
+
+        while True:
+            mob_hps = self._enemy_hps()
+            if not all(hp == 0 for hp in mob_hps) and made_a_leech_hit is False:
+                try:
+                    self._bot.press.attack_button()
+                    self._bot.press.auto_attack()
+                    made_a_leech_hit = True
+
+                except selenium_err.exceptions.WebDriverException:
+                    continue
+            elif made_a_leech_hit is True and waiting_until_dead is False:
+                print("Waiting for the raid boss to be killed..")
+                waiting_until_dead = True
+            elif all(hp == 0 for hp in mob_hps):
+                self._driver.refresh()
+                break
+            time.sleep(0.3)
+
     def _extreme_fight(self):
         self._bot.wait.for_loading_screen()
         if not self.skippable_nightmare_battle:
+            self._extreme_battle_queue()
             print('Waiting until you kill the boss...')
 
         url_to_wait_for = '#result'
@@ -1057,6 +1127,7 @@ class Handle:
 
             await asyncio.sleep(5)
 
+        # HOLY FUCK
         def make_sleep():
             async def sleep(delay, result=None, *, loop=None):
                 coro = asyncio.sleep(delay, result=result, loop=loop)
