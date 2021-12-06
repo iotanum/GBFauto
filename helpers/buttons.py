@@ -41,7 +41,7 @@ class Press:
         self._retreat_class = 'btn-withdraw'
         self._skip_button_class = 'btn-command-skip'
         self._next_button_class = 'btn-usual-next'
-        self._auto_attack_xpath = '//*[@id="wrapper"]/div[3]/div[2]/div[7]'
+        self._auto_attack_xpath = '//*[@id="wrapper"]/div[3]/div[2]/div[8]'
         self._consumables_xpath = '//*[@id="wrapper"]/div[3]/div[2]/div[2]/div[1]/div[1]/div[2]'
         self._consumables_ap_xpath = '//*[@id="prt-target-list"]/div[2]/img'
         self._skippable_battle_xpath = '//*[@id="pop"]/div/div[2]/div/div[4]/label'
@@ -379,7 +379,10 @@ class Press:
             auto_button = parser.find_all('div', {'class': 'btn-auto', 'style': 'display: block;'})
 
             if auto_button:
-                self._driver.find_element_by_xpath(self._auto_attack_xpath).click()
+                # With "auto-guard" auto-attack xpath
+                # self._driver.find_element_by_xpath(self._auto_attack_xpath).click()
+                # Without one
+                self._driver.find_element_by_xpath('//*[@id="wrapper"]/div[3]/div[2]/div[7]').click()
                 break
 
             time.sleep(0.15)

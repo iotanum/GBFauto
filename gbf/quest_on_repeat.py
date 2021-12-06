@@ -111,10 +111,12 @@ class QuestOnRepeat:
                     self.bot.press.attack_button()
                     pressed_on_turn = battle['turn']
                     if not next_turn_queue:
+                        print("no next queue")
                         self.bot.press.auto_attack()
                         self.auto_button_on = True
 
                 if next_turn_queue and self.auto_button_on:
+                    print("next turn queue and auto btn on")
                     self.bot.press.auto_attack()
                     self.auto_button_on = False
 
@@ -122,11 +124,16 @@ class QuestOnRepeat:
                 # if the quest contains more than 1 fight - use BACK key TODO
                 if (self.num_of_fights == 1 and battle['ougies'] > 4 and pressed_on_turn == battle['turn']) \
                         or (self.num_of_fights == 1 and battle['turn'] == 1):
-                    print(battle)
+                    print(battle, "refresh boi")
                     # self.bot.refreshed = True
-                    self.bot.handle.wait_after_queue_refresh()
+                    # gw = true for ex+
+                    self.bot.handle.wait_for_queue()
                     current_url = str(self.driver.current_url)
                     self.driver.refresh()
+
+                    if not next_turn_queue:
+                        self.enable_auto_in_loading_screen()
+                        self.auto_button_on = True
 
                     start = time.time()
                     while True:
@@ -139,8 +146,8 @@ class QuestOnRepeat:
                         if time.time() - start >= 3:
                             self.bot.handle.wait_before_fight(fight_start=True)
 
-                            # Reset auto_button state
-                            self.auto_button_on = False
+                            # # Reset auto_button state
+                            # self.auto_button_on = False
                             # Remove the element again since we refreshed the page
                             self.remove_battle_scene_element()
                             self.bot.handle.backup_request()
@@ -174,7 +181,34 @@ class QuestOnRepeat:
 
         return chapter_id
 
+    def enable_auto_in_loading_screen(self):
+        start = time.time()
+
+        while True:
+            if time.time() - start >= 10:
+                break
+
+            try:
+                parser = bs(self.driver.page_source, 'lxml')
+
+                auto_enabled_button = parser.find_all('div', {'class': ['btn-ready-auto', 'anim-simple-fadein']})
+
+                if not auto_enabled_button:
+                    self.driver.find_element_by_class_name('txt-auto-setting').click()
+                else:
+                    print("Since there's no queue - enabled auto attacks.")
+                    break
+            except:
+                continue
+
     def handle_fight(self):
+        load_dotenv('config.env', override=True)
+        queue = os.getenv("QUEUE_1_1")
+
+        if not queue:
+            self.enable_auto_in_loading_screen()
+            self.auto_button_on = True
+
         self.bot.handle.pre_fight_screens()
         self.bot.handle.wait_before_fight(fight_start=True)
 
