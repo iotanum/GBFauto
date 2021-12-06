@@ -43,6 +43,8 @@ class Handle:
                 current_url = self._driver.current_url
 
                 if 'result' in current_url:
+                    if "empty" in current_url:
+                        break
                     try:
                         parser = bs(self._driver.page_source, 'lxml')
 
@@ -435,7 +437,7 @@ class Handle:
                     self._bot.press.usual_ok()
 
                 # Just return if there was any type of a popup during this stage
-                return True
+                return False
 
             # Execute the instruction
             if self._bot.wait.for_support_summon():
@@ -577,7 +579,7 @@ class Handle:
             battle['total_battles'] = total_waves if total_battles > 1 and total_battles is not None else 1
             self.battle = battle
             return self.battle
-        except (ValueError):
+        except (ValueError, AttributeError):
             print("get_battle_info exception block")
             return self.battle
 
@@ -804,6 +806,10 @@ class Handle:
             if self.quest_position_change() and not fight_start:
                 self.wait_for_main_fight_window()
                 break
+            #
+            # if not all(hp == 0 for hp in self._enemy_hps()):
+            #     print("saw enemy hp - continuing, wait_before_fight")
+            #     break
 
             parser = bs(self._driver.page_source, 'lxml', parse_only=strainer)
 
@@ -884,24 +890,39 @@ class Handle:
 
         return queues
 
-    def wait_after_queue_refresh(self):
+    def wait_for_queue(self, gw=False):
         start = time.time()
 
         while True:
             if time.time() - start > 60:
                 break
 
-            # Wait for the skill overlay to 'hide' (that means it's finished) and exit
-            # the loop
-            strainer = ss('div', attrs={'id': 'cnt-raid-information'})
-            parser = bs(self._driver.page_source, 'lxml', parse_only=strainer)
+            if gw:
+                print("gw wait_for_queue")
+                current_fight_honors = self.raid_points()
+                if current_fight_honors and current_fight_honors > 0:
+                    break
 
-            finished_queue = parser.find('div', class_='prt-ability-rail-overlayer hide')
-            if finished_queue:
-                break
+                for _ in range(4):
+                    parser = bs(self._driver.page_source, 'lxml')
+                    character_attacking = parser.find("div", {"class": f"lis-character{_} btn-command-character attack"})
+
+                    if character_attacking:
+                        print(f"Char {_} is attacking.")
+                        return
+
+            if not gw:
+                # Wait for the skill overlay to 'hide' (that means it's finished) and exit
+                # the loop
+                strainer = ss('div', attrs={'id': 'cnt-raid-information'})
+                parser = bs(self._driver.page_source, 'lxml', parse_only=strainer)
+
+                finished_queue = parser.find('div', class_='prt-ability-rail-overlayer hide')
+                if finished_queue:
+                    break
 
             # Eat less CPU
-            time.sleep(0.5)
+            time.sleep(0.2)
 
     def wait_results_button(self):
         start = time.time()
@@ -1028,11 +1049,14 @@ class Handle:
                     self._bot.total_pendants += gain_num
 
     def _enemy_hps(self):
-        strainer = ss('div', attrs={'class': 'prt-targeting-area main-tap-area'})
-        parser = bs(self._driver.page_source, 'lxml', parse_only=strainer)
+        try:
+            strainer = ss('div', attrs={'class': 'prt-targeting-area main-tap-area'})
+            parser = bs(self._driver.page_source, 'lxml', parse_only=strainer)
 
-        mob_hps = parser.find_all('span', 'txt-gauge-value')
-        mob_hps = [int(hp.text) for hp in mob_hps]
+            mob_hps = parser.find_all('span', 'txt-gauge-value')
+            mob_hps = [int(hp.text) for hp in mob_hps]
+        except:
+            mob_hps = None
 
         return mob_hps
 
@@ -1228,11 +1252,14 @@ class Handle:
     def raid_points(self):
         parser = bs(self._driver.page_source, 'lxml')
 
-        battle_menu = parser.find_all('div', {'class': 'prt-mvp'})
-        if battle_menu:
-            main_char_battle_menu = battle_menu[0]
-            points = main_char_battle_menu.find('div', {'class': 'txt-point'}).text
-            parsed_points = re.findall('\d+', points)
-        else:
-            parsed_points = [0]
-        return int(parsed_points[0])
+        try:
+            battle_menu = parser.find_all('div', {'class': 'prt-mvp'})
+            if battle_menu:
+                main_char_battle_menu = battle_menu[0]
+                points = main_char_battle_menu.find('div', {'class': 'txt-point'}).text
+                parsed_points = re.findall('\d+', points)
+            else:
+                parsed_points = [0]
+            return int(parsed_points[0])
+        except:
+            return 0
