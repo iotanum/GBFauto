@@ -1,4 +1,5 @@
 from bs4 import BeautifulSoup as bs
+from bs4 import SoupStrainer as ss
 
 from selenium import common as selenium_err
 
@@ -115,6 +116,38 @@ class Skills:
             if back_button:
                 return True
 
+    def check_if_skill_is_disabled(self, chara_num, skill_num):
+        start = time.time()
+
+        charas = ss('div', attrs={"class": 'prt-command'})
+
+        while True:
+            if time.time() - start > 2:
+                break
+
+            parser = bs(self._driver.page_source, features='lxml', parse_only=charas)
+            chara = parser.find('div', attrs={"class": re.compile(f'prt-command-chara chara{chara_num}')})
+
+            if parser:
+                available_skill = parser.find_all('div', {'class': 'lis-ability btn-ability-available'})
+
+                if 'turn-disable' in chara['class']:
+                    print('blocked chara')
+                    return True
+
+                abilities = chara.find('div', {'class': 'prt-ability-list'})
+                abilities = abilities.findAll('div', {'class': re.compile('lis-ability btn-ability')})
+                for idx, ability in enumerate(abilities, 1):
+                    if skill_num == idx and 'ability-disable' in ability['class']:
+                        print('blocked skill')
+                        return True
+
+                if available_skill:
+                    print('available skill, all good')
+                    return False
+
+            time.sleep(0.1)
+
     def do_queue(self, queue_from_config):
         self.remove_ability_log_element()
         self.remove_backup_request_element()
@@ -128,8 +161,10 @@ class Skills:
             pass
         summon_was_used = False
         current_char_num = None
+        executed_step = []
 
         for step, action in self._queue.items():
+            print(step, action, "queue step action")
             # Try/Except in case of fight ending while queueing skills
             try:
                 char_num = self._queue[step]['Character']
@@ -140,8 +175,17 @@ class Skills:
                     break
                 # Click on a first character in the queue to open up it's abilities 'menu'
                 if step == 1 and char_num != 5 or summon_was_used is True:
+                    print(1)
                     self._bot.press.char_to_start_queue(char_num)
-                    self.handle_skill_press(char_num, ability_num)
+                    if not self.check_if_skill_is_disabled(char_num, ability_num):
+                        self.handle_skill_press(char_num, ability_num)
+
+                        if select_party_member:
+                            time.sleep(0.15)
+                            self._bot.press.select_part_member(select_party_member)
+                            # Fuckery with select_party_member setup that I have, this will be fine I guess
+                        executed_step = [step, action]
+
                     current_char_num = char_num
                     # Set this variable to false so it wouldn't spam char_to_start_queue
                     # when summon was/is used
@@ -149,11 +193,22 @@ class Skills:
                         summon_was_used = False
                 # Check if action to take in queue is for a character
                 if char_num <= 4:
+                    print(2)
                     if char_num != current_char_num:
+                        print(3)
                         num_of_actions_to_take = current_char_num - char_num
                         # Convert possible negative number to positive
                         num_of_actions_to_take = max(num_of_actions_to_take, -num_of_actions_to_take)
-                        if current_char_num < char_num:
+                        print(current_char_num, char_num, 'current, char')
+                        if current_char_num == 4 and char_num == 1:
+                            print("moving forward")
+                            self.handle_char_switching(direction='next')
+                            time.sleep(0.15)
+                        elif current_char_num == 1 and char_num == 4:
+                            print("moving backward")
+                            self.handle_char_switching(direction='previous')
+                            time.sleep(0.15)
+                        elif current_char_num < char_num:
                             for _ in range(num_of_actions_to_take):
                                 self.handle_char_switching(direction='next')
                                 time.sleep(0.15)
@@ -162,33 +217,38 @@ class Skills:
                                 self.handle_char_switching(direction='previous')
                                 time.sleep(0.15)
                     current_char_num = char_num
-                    self.handle_skill_press(char_num, ability_num)
-                    time.sleep(0.15)
-                    # This is for 'Select party member' type of ability
-                    if select_party_member:
-                        self._bot.press.select_part_member(select_party_member)
-                        time.sleep(0.15)
+                    if not self.check_if_skill_is_disabled(char_num, ability_num) and [step, action] != executed_step:
+                        print(4)
+                        self.handle_skill_press(char_num, ability_num)
+                        # This is for 'Select party member' type of ability
+                        if select_party_member:
+                            time.sleep(0.3)
+                            self._bot.press.select_part_member(select_party_member)
                 # if char_num is 5, then it means it's a support summon
                 else:
+                    print(5)
                     # Exit character skill selection 'window'
                     if step > 1:
                         self._bot.press.back()
-                    actions_for_summon = [self._bot.press.summon_card,
-                                          self._bot.press.summon_num,
-                                          self._bot.press.confirm_summon_fight,
-                                          self._bot.press.back]
-                    for idx, summ_action in enumerate(actions_for_summon, 1):
-                        # second step is choosing which summon
-                        if idx == 2:
-                            summ_action(ability_num)
-                        elif idx == 4:
-                            if self.check_for_back_button():
+                    # If MC is fked - no summon usage
+                    if not self.check_if_skill_is_disabled(1, 1):
+                        actions_for_summon = [self._bot.press.summon_card,
+                                              self._bot.press.summon_num,
+                                              self._bot.press.confirm_summon_fight,
+                                              self._bot.press.back]
+                        for idx, summ_action in enumerate(actions_for_summon, 1):
+                            # second step is choosing which summon
+                            if idx == 2:
+                                summ_action(ability_num)
+                            elif idx == 4:
+                                if self.check_for_back_button():
+                                    summ_action()
+                            else:
                                 summ_action()
-                        else:
-                            summ_action()
-                        time.sleep(0.35)
-                    summon_was_used = True
+                            time.sleep(0.35)
+                        summon_was_used = True
             except (selenium_err.exceptions.ElementNotVisibleException, selenium_err.exceptions.WebDriverException) as e:
                 print(f"Broke on {step} step.")
-                print(F"Reason: {e}")
+                print(action)
+                print(e)
                 break

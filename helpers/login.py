@@ -64,6 +64,11 @@ class GBFGame:
         if self.get_screen_resolution() == [1366, 768]:
             self.chrome_options.add_argument("--window-size=500,720")
 
+        self.chrome_options.add_argument("--window-size=130,760")
+
+        self.chrome_options.add_experimental_option("useAutomationExtension", False)
+        self.chrome_options.add_experimental_option("excludeSwitches", ["enable-automation"])
+
         self.chrome_options.add_argument("--mute-audio")
         self.chrome_options.add_argument("--window-size=130,760")
 
@@ -112,7 +117,7 @@ class GBFGame:
                 self.driver.switch_to.window(mobage_window)
             except (selenium_err.exceptions.NoSuchWindowException, IndexError):
                 pass
-        if str(self.driver.title) is not "Mobage Connect":
+        if str(self.driver.title) != "Mobage Connect":
             self.driver.refresh()
 
     def press_google_login(self):
@@ -154,13 +159,18 @@ class GBFGame:
             if '#mypage' in url:
                 break
 
+    def run_additional_cdp_commands(self):
+        self.driver.execute_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})")
+
     def login(self, login, password):
         if GBFGame.started is False:
+            self.run_additional_cdp_commands()
             self.driver.get(self.login_page)
             GBFGame.started = True
             print("Logging in w/ Google+ log-in method.")
             self.press_login()
-            if MANUAL_LOGIN is 1:
+
+            if MANUAL_LOGIN == 1:
                 self.handle_manual_login()
             else:
                 self.press_google_login()

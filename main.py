@@ -224,7 +224,5 @@ def exit_application(e):
 if __name__ == '__main__':
     game_handler = game()
     # Headless chrome options resizes default window size
-    if int(headless) == 1:
-        game_handler.driver.set_window_size(500, 900)
 
     choose_option()

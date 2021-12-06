@@ -2,12 +2,18 @@ import time
 import re
 import os
 import random
+import asyncio
+import json
+from datetime import datetime
 
 from selenium import common as selenium_err
+from selenium.webdriver.common.keys import Keys
 
 from bs4 import BeautifulSoup as bs
 from bs4 import SoupStrainer as ss
 from dotenv import load_dotenv
+import aiohttp
+from aiohttp import web
 
 load_dotenv('config.env')
 
@@ -24,20 +30,31 @@ class Handle:
         self.support_name = ""
         self.consumables_url = 'http://game.granbluefantasy.jp/#item'
         self.skippable_nightmare_battle = None
+        self.battle = dict()
 
     def after_fight_popups(self, kill=False):
         # After the page loads, there's no way to 'tell' if there will be
         # x popup or y popup, its load time depends on what popup it is
-        # so plain old 'sleep' will do the trick
+        # so we wait until we are in the result screen for the 'xp' popup to appear
         # Don't need to sleep if this is being called
         # for the second bunch of popups
         if kill is True:
             while True:
                 current_url = self._driver.current_url
+
                 if 'result' in current_url:
-                    time.sleep(1.5)
-                    break
-                time.sleep(0.5)
+                    if "empty" in current_url:
+                        break
+                    try:
+                        parser = bs(self._driver.page_source, 'lxml')
+
+                        popup = parser.find('div', {'class': ['pop-show']})
+                        if popup:
+                            break
+                    except:
+                        continue
+
+                time.sleep(0.2)
 
         popup_search_start = time.time()
         # Just a declaration for a placeholders
@@ -162,6 +179,10 @@ class Handle:
                     self._bot.press.usual_ok()
 
                 elif 'player-up' in popup_name:
+                    print('New rank!')
+                    self._bot.press.usual_ok()
+
+                elif 'pop-common-rank-up' in popup_name:
                     print('New rank!')
                     self._bot.press.usual_ok()
 
@@ -302,6 +323,26 @@ class Handle:
                     print(f"'{reward_text}")
                     self._bot.press.usual_ok()
 
+                elif 'pop-mission-update' in popup_name:
+                    mission = popup.find('div', {'class': 'txt-mission-description'}).text
+                    try:
+                        mission_progress = popup.find('span', {'class': 'txt-progress-num'}).text
+                        print(f"{mission} - {mission_progress}")
+                    except AttributeError:
+                        print(f"{mission} - completed!")
+
+                    self._bot.press.usual_close()
+
+                elif 'pop-teamforce-quest-list' in popup_name:
+                    print('Unparalleled Foe!')
+
+                    self._bot.press.usual_close()
+
+                elif 'js-pop-skyscope-achieved' in popup_name:
+                    print('Skyscope mission, w/e done!')
+
+                    self._bot.press.usual_close()
+
                 else:
                     print("Unhandled popup!\nPage source and error picture in 'errors' folder.")
                     print(f"Popup element: {popup}")
@@ -343,6 +384,7 @@ class Handle:
                 break
 
             if popup_search_time - popup_search_start > 5:
+                print("pre_fight_screens timeout")
                 break
 
             parser = bs(self._driver.page_source, 'lxml')
@@ -359,6 +401,7 @@ class Handle:
                 quest_parts = None
 
             if quest_parts:
+                print(quest_parts, 'quest part')
                 break
 
             if side_scroll_quest:
@@ -394,7 +437,7 @@ class Handle:
                     self._bot.press.usual_ok()
 
                 # Just return if there was any type of a popup during this stage
-                return True
+                return False
 
             # Execute the instruction
             if self._bot.wait.for_support_summon():
@@ -495,6 +538,127 @@ class Handle:
                 # Avoid constant location change spam
                 if attempts > 1:
                     time.sleep(3)
+
+    def get_battle_info(self, total_battles=None):
+        parser = bs(self._driver.page_source, features='lxml')
+
+        try:
+            battle = dict()
+            turn_nums = parser.find("div", {"id": "js-turn-num-count"}).findChildren()
+            turn_num = ""
+
+            for turn_ele in turn_nums:
+                turn_ele = re.findall('\d+', turn_ele['class'][0])[0]
+                turn_num += turn_ele
+
+            turn_num = int(turn_num)
+
+            ready_ougies = 0
+            party = parser.find("div", {"class": "prt-party"})
+            for ougi_bar in party.findAll('span', {"class": 'txt-gauge-value'}):
+                ougi_bar = int(ougi_bar.text)
+
+                if 200 >= ougi_bar >= 100:
+                    ready_ougies += 1
+
+                if ougi_bar == 200:
+                    ready_ougies += 2
+
+            if total_battles > 1:
+                wave = parser.find("div", {"id": "prt-wave-num"}).findChildren()
+
+                for wave_class in wave:
+                    if wave_class['class'] == ['txt-info-num']:
+                        wave_nums = wave_class.find_all('div', {'class': re.compile('num-info')})
+                        current_wave = int(re.findall('\d+', wave_nums[0]['class'][0])[0])
+                        total_waves = int(re.findall('\d+', wave_nums[1]['class'][0])[0])
+
+            battle['turn'] = turn_num
+            battle['ougies'] = ready_ougies
+            battle['battle'] = current_wave if total_battles > 1 and current_wave is not None else 1
+            battle['total_battles'] = total_waves if total_battles > 1 and total_battles is not None else 1
+            self.battle = battle
+            return self.battle
+        except (ValueError, AttributeError):
+            print("get_battle_info exception block")
+            return self.battle
+
+    def check_if_chara_are_attacking(self, timeout=1):
+        start = time.time()
+
+        while True:
+            print("check if attack handle methd")
+
+            if time.time() - start > timeout:
+                return
+
+            parser = bs(self._driver.page_source, features='lxml')
+
+            party = parser.find("div", {"class": "prt-party"})
+
+            charas_to_attack = []
+            for chara_num in range(4, 1):
+                chara_atk = party.find('div', {'class': f'list-character{chara_num} btn-command-character attack'})
+                charas_to_attack.append(chara_atk)
+
+            # first_chara_attack = party.find('div', {'class': f'list-character1 btn-command-character attack'})
+            # second_chara_attack = party.find('div', {'class': f'list-character2 btn-command-character attack'})
+            # second_to_last_chara_attack = party.find('div', {'class': f'list-character3 btn-command-character attack'})
+            # last_chara_attack = party.find('div', {'class': f'list-character4 btn-command-character attack'})
+
+            # charas_to_attack = [first_chara_attack, second_chara_attack, second_to_last_chara_attack, last_chara_attack]
+
+            if any([chara is True for chara in charas_to_attack]):
+                print("ATTACK???")
+                return True
+
+            time.sleep(0.1)
+
+    def handle_queue(self, queues, total_battles):
+        battle = self._bot.handle.get_battle_info(total_battles)
+        # Returns a list of queues as described in config for the current battle
+        # there's raids/quests with multiple battle stages
+        print(battle, 'handle_queue')
+        current_battle = battle['battle']
+
+        try:
+            queues_for_battle = queues[current_battle]
+            print(queues_for_battle, "queues_for_battle handle_queue")
+        except (KeyError, TypeError):
+            return None
+
+        # Check if there's a queue for the upcoming turn
+        # to turn off auto btn
+        try:
+            queue_for_next_turn = queues_for_battle[battle['turn'] + 1]
+        except KeyError:
+            queue_for_next_turn = None
+
+        # Check if all queues for the current battle are not done
+        if not all([queue is True for queue in queues_for_battle.values()]):
+            # Queue for this current battle and this current turn
+            # all_queues[current_battle][current_turn]
+
+            # Try mapping dict key to battle turn and see if we have a queue for it
+            try:
+                queue_for_turn = queues_for_battle[battle['turn']]
+            except KeyError:
+                queue_for_turn = None
+
+            if queue_for_turn and queue_for_turn is not True:
+                print(queue_for_turn, 'queue for this turn')
+                self._bot.queue.do_queue(queue_for_turn)
+
+                # Give 'True' to the queue which was just done
+                # this way I do checks later what queues were done
+                queues[current_battle][battle['turn']] = True
+
+        # # Check if all queues in the given battle are 'True'
+        # # aka all have been done
+        # else:
+        #     del queues[current_battle]
+
+        return queues if queues_for_battle else None
 
     def parse_support_summon_list(self):
         parser = bs(self._driver.page_source, features='lxml')
@@ -628,8 +792,11 @@ class Handle:
         element_found = False
         start = time.time()
 
+        strainer = ss('div', attrs={'id': 'cnt-raid-information'})
+
         while True:
-            if time.time() - start > 15:
+            if time.time() - start > 30:
+                print('couldnt wait until ready ended')
                 break
 
             if 'result' in self._driver.current_url:
@@ -639,8 +806,11 @@ class Handle:
             if self.quest_position_change() and not fight_start:
                 self.wait_for_main_fight_window()
                 break
+            #
+            # if not all(hp == 0 for hp in self._enemy_hps()):
+            #     print("saw enemy hp - continuing, wait_before_fight")
+            #     break
 
-            strainer = ss('div', attrs={'id': 'cnt-raid-information'})
             parser = bs(self._driver.page_source, 'lxml', parse_only=strainer)
 
             if fight_start is True:
@@ -658,7 +828,7 @@ class Handle:
                         break
 
             # Eat less CPU
-            time.sleep(0.2)
+            time.sleep(0.1)
 
     def quest_position_change(self):
         parser = bs(self._driver.page_source, 'lxml')
@@ -689,26 +859,70 @@ class Handle:
             except KeyError:
                 continue
 
-            time.sleep(0.5)
+            time.sleep(0.05)
 
-    def wait_after_queue_refresh(self):
+    def find_all_queues(self):
+        queues = {}
+
+        max_battles = 101
+        max_turns = 101
+        temp_queues = []
+
+        load_dotenv('config.env', override=True)
+        # Get all possible variations of queue strings
+        for max_battle in range(1, max_battles):
+            for max_turn in range(1, max_turns):
+                temp_queues.append(f"QUEUE_{max_battle}_{max_turn}")
+
+        # remove all non-existent queue strings
+        temp_queues = [queue for queue in temp_queues if os.getenv(queue)]
+
+        # format everything into a dictionary
+        # {'battle_number': {turn_number: queue, turn_number_2: queue}}
+        for queue in temp_queues:
+            battle = int(queue.split("_")[1])
+            turn = int(queue.split("_")[2])
+
+            if battle not in queues:
+                queues[battle] = {}
+
+            queues[battle][turn] = os.getenv(queue)
+
+        return queues
+
+    def wait_for_queue(self, gw=False):
         start = time.time()
 
         while True:
             if time.time() - start > 60:
                 break
 
-            # Wait for the skill overlay to 'hide' (that means it's finished) and exit
-            # the loop
-            strainer = ss('div', attrs={'id': 'cnt-raid-information'})
-            parser = bs(self._driver.page_source, 'lxml', parse_only=strainer)
+            if gw:
+                print("gw wait_for_queue")
+                current_fight_honors = self.raid_points()
+                if current_fight_honors and current_fight_honors > 0:
+                    break
 
-            finished_queue = parser.find('div', class_='prt-ability-rail-overlayer hide')
-            if finished_queue:
-                break
+                for _ in range(4):
+                    parser = bs(self._driver.page_source, 'lxml')
+                    character_attacking = parser.find("div", {"class": f"lis-character{_} btn-command-character attack"})
+
+                    if character_attacking:
+                        print(f"Char {_} is attacking.")
+                        return
+
+            if not gw:
+                # Wait for the skill overlay to 'hide' (that means it's finished) and exit
+                # the loop
+                strainer = ss('div', attrs={'id': 'cnt-raid-information'})
+                parser = bs(self._driver.page_source, 'lxml', parse_only=strainer)
+
+                finished_queue = parser.find('div', class_='prt-ability-rail-overlayer hide')
+                if finished_queue:
+                    break
 
             # Eat less CPU
-            time.sleep(0.5)
+            time.sleep(0.2)
 
     def wait_results_button(self):
         start = time.time()
@@ -765,6 +979,7 @@ class Handle:
                 if REQUEST_BACKUP == 1:
                     if not self._bot.refreshed:
                         try:
+                            print("yes, 69")
                             self._bot.press.approve_backup_request()
                             self._bot.press.usual_ok()
                         except selenium_err.exceptions.NoSuchElementException:
@@ -833,9 +1048,52 @@ class Handle:
                 elif 'pendants' in gain_name:
                     self._bot.total_pendants += gain_num
 
+    def _enemy_hps(self):
+        try:
+            strainer = ss('div', attrs={'class': 'prt-targeting-area main-tap-area'})
+            parser = bs(self._driver.page_source, 'lxml', parse_only=strainer)
+
+            mob_hps = parser.find_all('span', 'txt-gauge-value')
+            mob_hps = [int(hp.text) for hp in mob_hps]
+        except:
+            mob_hps = None
+
+        return mob_hps
+
+    def _extreme_battle_queue(self):
+        made_a_leech_hit = False
+        waiting_until_dead = False
+
+        self.pre_fight_support_summons()
+        self.wait_before_fight(fight_start=True)
+
+        # Monkey patch to load stuff config real time while bot is running
+        load_dotenv('config.env', override=True)
+        queue = os.getenv("QUEUE_EXTREME")
+        self._bot.queue.do_queue(queue)
+
+        while True:
+            mob_hps = self._enemy_hps()
+            if not all(hp == 0 for hp in mob_hps) and made_a_leech_hit is False:
+                try:
+                    self._bot.press.attack_button()
+                    self._bot.press.auto_attack()
+                    made_a_leech_hit = True
+
+                except selenium_err.exceptions.WebDriverException:
+                    continue
+            elif made_a_leech_hit is True and waiting_until_dead is False:
+                print("Waiting for the raid boss to be killed..")
+                waiting_until_dead = True
+            elif all(hp == 0 for hp in mob_hps):
+                self._driver.refresh()
+                break
+            time.sleep(0.3)
+
     def _extreme_fight(self):
         self._bot.wait.for_loading_screen()
         if not self.skippable_nightmare_battle:
+            self._extreme_battle_queue()
             print('Waiting until you kill the boss...')
 
         url_to_wait_for = '#result'
@@ -866,27 +1124,142 @@ class Handle:
 
     def human_verification(self):
         verification = self._bot.popup.human_verification()
+        timestamp = str(datetime.now()).replace(":", "'")[:-7]
+        verification_image_name = f'{timestamp}.png'
+        verification_image_path = f'verification/{verification_image_name}'
+
+        # Time to start the fuckery of async http servers in a sync application
+        async def send_image_to_discord():
+            DISCORD_ID = os.getenv('DISCORD_ID')
+            DISCORD_BOT_SERVER_IP = os.getenv('DISCORD_BOT_SERVER_IP')
+            DISCORD_BOT_SERVER_PORT = int(os.getenv('DISCORD_BOT_SERVER_PORT'))
+            endpoint = '/verification'
+            self._driver.save_screenshot(verification_image_path)
+
+            async with aiohttp.ClientSession() as session:
+                form_data = aiohttp.FormData()
+                form_data.add_field('discord_id', DISCORD_ID)
+                form_data.add_field('image', open(verification_image_path, 'rb'), filename=verification_image_name,
+                                    content_type='image/png')
+
+                async with session.post(f'http://{DISCORD_BOT_SERVER_IP}:{DISCORD_BOT_SERVER_PORT}{endpoint}',
+                                        data=form_data) as resp:
+                    if resp.status == 200:
+                        print(f"Successfully sent verification image to '{DISCORD_ID}'.")
+                    else:
+                        print(f'{resp.status}, {resp.text()}')
+
+            await asyncio.sleep(5)
+
+        # HOLY FUCK
+        def make_sleep():
+            async def sleep(delay, result=None, *, loop=None):
+                coro = asyncio.sleep(delay, result=result, loop=loop)
+                task = asyncio.ensure_future(coro)
+                sleep.tasks.add(task)
+                try:
+                    return await task
+                except asyncio.CancelledError:
+                    return result
+                finally:
+                    sleep.tasks.remove(task)
+
+            sleep.tasks = set()
+            sleep.cancel_all = lambda: sum(task.cancel() for task in sleep.tasks)
+            return sleep
+
+        async def http_server(sleep):
+            HTTP_SERVER_PORT = int(os.getenv('HTTP_SERVER_PORT'))
+
+            async def input_code(code):
+                await asyncio.sleep(1)
+                input_field = self._driver.find_element_by_class_name('frm-message')
+                input_field.send_keys(code)
+                await asyncio.sleep(1)
+                self._driver.find_element_by_class_name('btn-talk-message').click()
+                await asyncio.sleep(3)
+
+                verification = self._bot.popup.human_verification()
+                if verification:
+                    return False
+                else:
+                    return True
+
+            async def parse_verification_code(request):
+                r_body = await request.json()
+                verification_code = r_body['verification_code']
+                return verification_code
+
+            async def stop_server():
+                sleep.cancel_all()
+                await asyncio.wait(sleep.tasks)
+
+            async def post_handler(request):
+                code = await parse_verification_code(request)
+                print(f"Successfully received verification code: '{code}', trying it...")
+
+                # TODO
+                # need to thoroughly test this if it works
+                successful = await input_code(code)
+                if not successful:
+                    await repeat_handler('test')
+                    return
+
+                await stop_server()
+
+            async def get_handler(request):
+                return web.Response(text=f"Running on: {os.environ['COMPUTERNAME']}")
+
+            async def repeat_handler(request):
+                input_field = self._driver.find_element_by_class_name('frm-message')
+                input_field.send_keys(Keys.CONTROL + "a")
+                await asyncio.sleep(1)
+                input_field.send_keys(Keys.DELETE)
+
+                await send_image_to_discord()
+                return web.Response(status=200)
+
+            app = web.Application()
+            app.router.add_get("/verification", get_handler)
+            app.router.add_post("/verification", post_handler)
+            app.router.add_get('/repeat', repeat_handler)
+
+            runner = aiohttp.web.AppRunner(app)
+            await runner.setup()
+            site = aiohttp.web.TCPSite(runner, port=HTTP_SERVER_PORT)
+            await site.start()
+
+            print(f"Temporarily started HTTP server: {'0.0.0.0' if not site._host else site._host}:{site._port} ")
+
+            while True:
+                await sleep(9000000)
+                print('Stopped the temporary HTTP server. Continuing on..')
+                break
 
         if verification is True:
             # Need to sleep this, because the captcha image takes time to load
             time.sleep(3)
-            self._driver.save_screenshot('verification/screenshot.png')
+            self._driver.save_screenshot(verification_image_path)
             input_field = self._driver.find_element_by_class_name('frm-message')
-            verification_code = input('Input verification code: ')
-            input_field.send_keys(verification_code)
-            time.sleep(1)
-            self._driver.find_element_by_class_name('btn-talk-message').click()
-            time.sleep(1)
+
+            # First is blocked for 10s and 2nd is blocked indefinitely (or until the user responds)
+            sleep = make_sleep()
+            asyncio.run(send_image_to_discord())
+            asyncio.run(http_server(sleep))
+
             return True
 
     def raid_points(self):
         parser = bs(self._driver.page_source, 'lxml')
 
-        battle_menu = parser.find_all('div', {'class': 'prt-mvp'})
-        if battle_menu:
-            main_char_battle_menu = battle_menu[0]
-            points = main_char_battle_menu.find('div', {'class': 'txt-point'}).text
-            parsed_points = re.findall('\d+', points)
-        else:
-            parsed_points = [0]
-        return int(parsed_points[0])
+        try:
+            battle_menu = parser.find_all('div', {'class': 'prt-mvp'})
+            if battle_menu:
+                main_char_battle_menu = battle_menu[0]
+                points = main_char_battle_menu.find('div', {'class': 'txt-point'}).text
+                parsed_points = re.findall('\d+', points)
+            else:
+                parsed_points = [0]
+            return int(parsed_points[0])
+        except:
+            return 0
