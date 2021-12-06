@@ -161,8 +161,10 @@ class Skills:
             pass
         summon_was_used = False
         current_char_num = None
+        executed_step = []
 
         for step, action in self._queue.items():
+            print(step, action, "queue step action")
             # Try/Except in case of fight ending while queueing skills
             try:
                 char_num = self._queue[step]['Character']
@@ -173,9 +175,17 @@ class Skills:
                     break
                 # Click on a first character in the queue to open up it's abilities 'menu'
                 if step == 1 and char_num != 5 or summon_was_used is True:
+                    print(1)
                     self._bot.press.char_to_start_queue(char_num)
                     if not self.check_if_skill_is_disabled(char_num, ability_num):
                         self.handle_skill_press(char_num, ability_num)
+
+                        if select_party_member:
+                            time.sleep(0.15)
+                            self._bot.press.select_part_member(select_party_member)
+                            # Fuckery with select_party_member setup that I have, this will be fine I guess
+                        executed_step = [step, action]
+
                     current_char_num = char_num
                     # Set this variable to false so it wouldn't spam char_to_start_queue
                     # when summon was/is used
@@ -183,11 +193,22 @@ class Skills:
                         summon_was_used = False
                 # Check if action to take in queue is for a character
                 if char_num <= 4:
+                    print(2)
                     if char_num != current_char_num:
+                        print(3)
                         num_of_actions_to_take = current_char_num - char_num
                         # Convert possible negative number to positive
                         num_of_actions_to_take = max(num_of_actions_to_take, -num_of_actions_to_take)
-                        if current_char_num < char_num:
+                        print(current_char_num, char_num, 'current, char')
+                        if current_char_num == 4 and char_num == 1:
+                            print("moving forward")
+                            self.handle_char_switching(direction='next')
+                            time.sleep(0.15)
+                        elif current_char_num == 1 and char_num == 4:
+                            print("moving backward")
+                            self.handle_char_switching(direction='previous')
+                            time.sleep(0.15)
+                        elif current_char_num < char_num:
                             for _ in range(num_of_actions_to_take):
                                 self.handle_char_switching(direction='next')
                                 time.sleep(0.15)
@@ -196,14 +217,16 @@ class Skills:
                                 self.handle_char_switching(direction='previous')
                                 time.sleep(0.15)
                     current_char_num = char_num
-                    if not self.check_if_skill_is_disabled(char_num, ability_num):
+                    if not self.check_if_skill_is_disabled(char_num, ability_num) and [step, action] != executed_step:
+                        print(4)
                         self.handle_skill_press(char_num, ability_num)
                         # This is for 'Select party member' type of ability
                         if select_party_member:
-                            time.sleep(0.15)
+                            time.sleep(0.3)
                             self._bot.press.select_part_member(select_party_member)
                 # if char_num is 5, then it means it's a support summon
                 else:
+                    print(5)
                     # Exit character skill selection 'window'
                     if step > 1:
                         self._bot.press.back()
