@@ -96,6 +96,9 @@ class QuestOnRepeat:
             else:
                 next_turn_queue = None
 
+            if "result" in str(self.driver.current_url):
+                return True
+
             if not printed_battle:
                 print(f"Fight #{battle['battle']}.")
                 printed_battle = True
