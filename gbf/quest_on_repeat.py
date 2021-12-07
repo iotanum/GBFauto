@@ -105,6 +105,9 @@ class QuestOnRepeat:
                 self.bot.press.auto_attack()
                 self.auto_button_on = False
 
+            if "result" in str(self.driver.current_url):
+                return True
+
             try:
                 # Press 'attack' and enable auto if it's not enabled already
                 if not self.auto_button_on and pressed_on_turn != battle['turn']:
