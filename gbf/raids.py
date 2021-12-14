@@ -207,7 +207,16 @@ class Raids:
 
             if time.time() - start_time > change_time and current_page == before_joining_url:
                 print(f"URL didn't change in {change_time}s. Searching for another raid.")
-                return
+
+                if '#result_multi' in current_page:
+                    return
+
+                if '#quest' in current_page:
+                    self.driver.refresh()
+                    return
+
+                if '#supporter_raid' in current_page:
+                    return
 
             if current_page != before_joining_url or fight_end is True:
                 print('different url')
