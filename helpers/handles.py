@@ -343,6 +343,14 @@ class Handle:
 
                     self._bot.press.usual_close()
 
+                elif 'pop-master-level-up' in popup_name:
+                    mastery = popup.find('div', {'class': 'txt-master-level-up'}).text
+                    bonus = popup.find('div', {'class': 'txt-bonus-name'}).text
+                    current_bonus = popup.find('div', {'class': 'txt-current-bonus'}).text
+
+                    print(f"{mastery}, {bonus} - {current_bonus}")
+                    self._bot.press.usual_ok()
+
                 else:
                     print("Unhandled popup!\nPage source and error picture in 'errors' folder.")
                     print(f"Popup element: {popup}")
@@ -426,19 +434,6 @@ class Handle:
         instruction_to_run = 'support_element'
 
         while True:
-            parser = bs(self._driver.page_source, 'lxml')
-            popup = parser.find('div', {'class': ['common-pop-error']})
-
-            # Handle 'battle' type popups here
-            if popup:
-                popup_header = str(popup.find('div', {'class': 'prt-popup-header'}).text)
-
-                if 'Battle' in popup_header:
-                    self._bot.press.usual_ok()
-
-                # Just return if there was any type of a popup during this stage
-                return False
-
             # Execute the instruction
             if self._bot.wait.for_support_summon():
                 if instruction_to_run == 'support_element':
@@ -471,6 +466,21 @@ class Handle:
                     instruction_to_run = next_instruction
 
                 except IndexError:
+                    # Last check before exiting summon picking
+                    # needs rewrite
+                    # TODO
+                    if '#raid_multi' in str(self._driver.current_url):
+                        print("Got into raid, skipping popup search.")
+                        break
+
+                    parser = bs(self._driver.page_source, 'lxml')
+                    popup = parser.find('div', {'class': ['pop-usual']})
+
+                    if popup:
+                        print("Popup detected during summon picking")
+
+                        # Just return if there was any type of a popup during this stage
+                        return False
                     break
             else:
                 return True
