@@ -199,9 +199,15 @@ class Raids:
     def handle_return_page(self, fight_end=False):
         # self.bot.wait.for_loading_screen()
 
+        change_time = 2
+        start_time = time.time()
         before_joining_url = str(self.driver.current_url)
         while True:
             current_page = str(self.driver.current_url)
+
+            if time.time() - start_time > change_time and current_page == before_joining_url:
+                print(f"URL didn't change in {change_time}s. Searching for another raid.")
+                return
 
             if current_page != before_joining_url or fight_end is True:
                 print('different url')
@@ -218,7 +224,7 @@ class Raids:
                     self.driver.refresh()
                     return
 
-                if 'supporter_raid' in current_page:
+                if '#supporter_raid' in current_page:
                     return
 
                 if '#mypage' in current_page:
