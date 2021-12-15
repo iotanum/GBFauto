@@ -3,7 +3,6 @@ from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.by import By
-from selenium.webdriver.common.keys import Keys
 from selenium import common as selenium_err
 
 from helpers.buttons import Press
@@ -12,6 +11,8 @@ from helpers.popups import Popup
 from helpers.skill_queue import Skills
 from helpers.actions import Action
 from helpers.handles import Handle
+
+import undetected_chromedriver.v2 as uc
 
 import time
 import os
@@ -29,9 +30,9 @@ class GBFGame:
     started = False
 
     def __init__(self):
-        self.chrome_options = Options()
+        self.chrome_options = uc.ChromeOptions()
         self.custom_chrome_options()
-        self.driver = webdriver.Chrome(executable_path='utils/chromedriver.exe', options=self.chrome_options)
+        self.driver = uc.Chrome(executable_path='utils/chromedriver.exe', options=self.chrome_options)
         self.login_page = "http://game.granbluefantasy.jp/#authentication"
         self._start_time = time.time()
         self.press = Press(self)
@@ -64,16 +65,8 @@ class GBFGame:
         if self.get_screen_resolution() == [1366, 768]:
             self.chrome_options.add_argument("--window-size=500,720")
 
-        self.chrome_options.add_argument("--window-size=130,760")
-
-        self.chrome_options.add_experimental_option("useAutomationExtension", False)
-        self.chrome_options.add_experimental_option("excludeSwitches", ["enable-automation"])
-
         self.chrome_options.add_argument("--mute-audio")
         self.chrome_options.add_argument("--window-size=130,760")
-
-        self.chrome_options.add_experimental_option("useAutomationExtension", False)
-        self.chrome_options.add_experimental_option("excludeSwitches", ["enable-automation"])
 
     def get_screen_resolution(self):
         user32 = ctypes.windll.user32

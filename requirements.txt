@@ -5,3 +5,4 @@ selenium
 soupsieve
 urllib3
 aiohttp
+undetected-chromedriver
