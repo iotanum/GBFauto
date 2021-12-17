@@ -14,6 +14,7 @@ from bs4 import SoupStrainer as ss
 from dotenv import load_dotenv
 import aiohttp
 from aiohttp import web
+import aioconsole
 
 load_dotenv('config.env')
 
@@ -1240,6 +1241,11 @@ class Handle:
             await site.start()
 
             print(f"Temporarily started HTTP server: {'0.0.0.0' if not site._host else site._host}:{site._port} ")
+
+            code_input = await aioconsole.ainput("Please enter verification code: ")
+            if code_input:
+                await input_code(code_input)
+                await stop_server()
 
             while True:
                 await sleep(9000000)
