@@ -352,6 +352,12 @@ class Handle:
                     print(f"{mastery}, {bonus} - {current_bonus}")
                     self._bot.press.usual_ok()
 
+                elif 'pop-ex-pose-open' in popup_name:
+                    char = popup.find('div', {'class': 'txt-ex-pose-open'}).text
+
+                    print(f"{char}")
+                    self._bot.press.usual_close()
+
                 else:
                     print("Unhandled popup!\nPage source and error picture in 'errors' folder.")
                     print(f"Popup element: {popup}")
