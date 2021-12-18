@@ -67,7 +67,7 @@ class Raids:
         self.bot.handle.wait_before_fight(fight_start=False)
 
         if queue:
-            self.bot.queue.do_queue(queue)
+            self.bot.queue.do_queue(queue, raids=True)
 
         raid_boss_is_alive = True
         made_a_leech_hit = False
@@ -199,7 +199,7 @@ class Raids:
     def handle_return_page(self, fight_end=False):
         # self.bot.wait.for_loading_screen()
 
-        change_time = 2
+        change_time = 3
         start_time = time.time()
         before_joining_url = str(self.driver.current_url)
         while True:

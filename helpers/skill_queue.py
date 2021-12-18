@@ -59,8 +59,8 @@ class Skills:
             elif char_num > 5:
                 raise AttributeError('Please check your queue, number of playables cannot be more than 5')
 
-    def handle_skill_press(self, char_num, ability_num):
-        self._bot.press.char_skill(char_num, ability_num)
+    def handle_skill_press(self, char_num, ability_num, raids=False):
+        self._bot.press.char_skill(char_num, ability_num, raids=raids)
 
     def handle_char_switching(self, direction=None):
         if direction is 'next':
@@ -148,7 +148,7 @@ class Skills:
 
             time.sleep(0.1)
 
-    def do_queue(self, queue_from_config):
+    def do_queue(self, queue_from_config, raids=False):
         self.remove_ability_log_element()
         self.remove_backup_request_element()
         self.remove_active_mask_element()
@@ -178,7 +178,7 @@ class Skills:
                     print(1)
                     self._bot.press.char_to_start_queue(char_num)
                     if not self.check_if_skill_is_disabled(char_num, ability_num):
-                        self.handle_skill_press(char_num, ability_num)
+                        self.handle_skill_press(char_num, ability_num, raids)
 
                         if select_party_member:
                             time.sleep(0.15)
@@ -219,7 +219,7 @@ class Skills:
                     current_char_num = char_num
                     if not self.check_if_skill_is_disabled(char_num, ability_num) and [step, action] != executed_step:
                         print(4)
-                        self.handle_skill_press(char_num, ability_num)
+                        self.handle_skill_press(char_num, ability_num, raids)
                         # This is for 'Select party member' type of ability
                         if select_party_member:
                             time.sleep(0.3)
