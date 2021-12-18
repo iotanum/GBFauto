@@ -1139,11 +1139,28 @@ class Handle:
                 break
             time.sleep(0.8)
 
+    # TODO
+    # temp solution for manual code input
+    def input_code(self, code):
+        await asyncio.sleep(1)
+        input_field = self._driver.find_element_by_class_name('frm-message')
+        input_field.send_keys(code)
+        await asyncio.sleep(1)
+        self._driver.find_element_by_class_name('btn-talk-message').click()
+        await asyncio.sleep(3)
+
+        verification = self._bot.popup.human_verification()
+        if verification:
+            return False
+        else:
+            return True
+
     def human_verification(self):
         verification = self._bot.popup.human_verification()
         timestamp = str(datetime.now()).replace(":", "'")[:-7]
         verification_image_name = f'{timestamp}.png'
         verification_image_path = f'verification/{verification_image_name}'
+        manual_input = False
 
         # Time to start the fuckery of async http servers in a sync application
         async def send_image_to_discord():
@@ -1247,11 +1264,7 @@ class Handle:
             await site.start()
 
             print(f"Temporarily started HTTP server: {'0.0.0.0' if not site._host else site._host}:{site._port} ")
-
-            code_input = await aioconsole.ainput("Please enter verification code: ")
-            if code_input:
-                await input_code(code_input)
-                await stop_server()
+            print("If you want to manually input the verification code - press CTRL+C.")
 
             while True:
                 await sleep(9000000)
@@ -1264,10 +1277,27 @@ class Handle:
             self._driver.save_screenshot(verification_image_path)
             input_field = self._driver.find_element_by_class_name('frm-message')
 
-            # First is blocked for 10s and 2nd is blocked indefinitely (or until the user responds)
-            sleep = make_sleep()
-            asyncio.run(send_image_to_discord())
-            asyncio.run(http_server(sleep))
+            try:
+                # First is blocked for 10s and 2nd is blocked indefinitely (or until the user responds)
+                sleep = make_sleep()
+                asyncio.run(send_image_to_discord())
+                asyncio.run(http_server(sleep))
+            except KeyboardInterrupt:
+                print("Stopped the server.")
+                manual_input = True
+
+            if manual_input:
+                while True:
+                    code = input("Please input the code: ")
+                    successful = self.input_code(code)
+                    if not successful:
+                        print("Looks like the code was incorrect - retrying..")
+                        input_field = self._driver.find_element_by_class_name('frm-message')
+                        input_field.send_keys(Keys.CONTROL + "a")
+                        time.sleep(1)
+                        input_field.send_keys(Keys.DELETE)
+                    else:
+                        break
 
             return True
 

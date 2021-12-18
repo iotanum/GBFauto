@@ -6,4 +6,3 @@ soupsieve
 urllib3
 aiohttp
 undetected-chromedriver
-aioconsole
