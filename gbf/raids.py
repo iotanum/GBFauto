@@ -68,6 +68,7 @@ class Raids:
 
         if queue:
             self.bot.queue.do_queue(queue, raids=True)
+            self.bot.press.auto_attack()
 
         raid_boss_is_alive = True
         made_a_leech_hit = False

@@ -239,7 +239,7 @@ class Skills:
                         for idx, summ_action in enumerate(actions_for_summon, 1):
                             # second step is choosing which summon
                             if idx == 2:
-                                summ_action(ability_num)
+                                summ_action(ability_num, raids)
                             elif idx == 4:
                                 if self.check_for_back_button():
                                     summ_action()

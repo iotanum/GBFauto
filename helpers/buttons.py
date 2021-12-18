@@ -236,18 +236,21 @@ class Press:
         self._wait_for_button(search_by, self._back_button_css)
         self._driver.find_element_by_css_selector(self._back_button_css).click()
 
-    def summon_num(self, summon_num):
-        summon_xpath = f'//*[@id="wrapper"]/div[3]/div[2]/div[9]/div[2]/div/div[{summon_num + 1}]'
+    def summon_num(self, summon_num, raids=False):
+        div = 'div[10]' if raids else 'div[9]'
+        summon_xpath = f'//*[@id="wrapper"]/div[3]/div[2]/{div}/div[2]/div/div[{summon_num + 1}]'
         search_by = By.XPATH
 
         self._wait_for_button(search_by, summon_xpath)
         self._driver.find_element_by_xpath(summon_xpath).click()
 
-    def summon_card(self):
+    def summon_card(self, raids=False):
+        div = "div[10]" if raids else "div[9]"
+        summon_card_xpath = f'//*[@id="wrapper"]/div[3]/div[2]/{div}/div[2]/div/div[1]'
         search_by = By.XPATH
 
-        self._wait_for_button(search_by, self._summon_card_xpath)
-        self._driver.find_element_by_xpath(self._summon_card_xpath).click()
+        self._wait_for_button(search_by, summon_card_xpath)
+        self._driver.find_element_by_xpath(summon_card_xpath).click()
 
     def special_quests(self):
         search_by = By.CLASS_NAME
@@ -309,7 +312,8 @@ class Press:
         self._driver.find_element_by_css_selector(self._play_again_quest_css).click() if elem else None
         return elem
 
-    def confirm_summon_fight(self):
+    # raids arg is not needed here, but added to make it easier for the queue adaptation
+    def confirm_summon_fight(self, raids=False):
         search_by = By.XPATH
 
         self._wait_for_button(search_by, self._confirm_summon_battle_xpath)
