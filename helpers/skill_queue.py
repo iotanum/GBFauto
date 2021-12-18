@@ -244,7 +244,7 @@ class Skills:
                                 if self.check_for_back_button():
                                     summ_action()
                             else:
-                                summ_action()
+                                summ_action(raids)
                             time.sleep(0.35)
                         summon_was_used = True
             except (selenium_err.exceptions.ElementNotVisibleException, selenium_err.exceptions.WebDriverException) as e:
