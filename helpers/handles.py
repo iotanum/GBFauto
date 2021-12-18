@@ -1142,12 +1142,12 @@ class Handle:
     # TODO
     # temp solution for manual code input
     def input_code(self, code):
-        await asyncio.sleep(1)
+        time.sleep(1)
         input_field = self._driver.find_element_by_class_name('frm-message')
         input_field.send_keys(code)
-        await asyncio.sleep(1)
+        time.sleep(1)
         self._driver.find_element_by_class_name('btn-talk-message').click()
-        await asyncio.sleep(3)
+        time.sleep(3)
 
         verification = self._bot.popup.human_verification()
         if verification:
@@ -1275,8 +1275,10 @@ class Handle:
             # Need to sleep this, because the captcha image takes time to load
             time.sleep(3)
             self._driver.save_screenshot(verification_image_path)
-            input_field = self._driver.find_element_by_class_name('frm-message')
 
+            # TODO
+            # Same as the self.input_code method - needs rewriting
+            # I should be using threading here, catching signals is not the right move here
             try:
                 # First is blocked for 10s and 2nd is blocked indefinitely (or until the user responds)
                 sleep = make_sleep()
