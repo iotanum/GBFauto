@@ -805,7 +805,7 @@ class Handle:
 
         return final_summ_pick
 
-    def wait_before_fight(self, fight_start=True):
+    def wait_before_fight(self, fight_start=True, gw=False):
         element_found = False
         start = time.time()
 
@@ -823,10 +823,11 @@ class Handle:
             if self.quest_position_change() and not fight_start:
                 self.wait_for_main_fight_window()
                 break
-            #
-            # if not all(hp == 0 for hp in self._enemy_hps()):
-            #     print("saw enemy hp - continuing, wait_before_fight")
-            #     break
+
+            if gw:
+                if not all(hp == 0 for hp in self._enemy_hps()):
+                    print("saw enemy hp - continuing, wait_before_fight")
+                    break
 
             parser = bs(self._driver.page_source, 'lxml', parse_only=strainer)
 

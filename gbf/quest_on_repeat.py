@@ -130,7 +130,8 @@ class QuestOnRepeat:
                     print(battle, "refresh boi")
                     # self.bot.refreshed = True
                     # gw = true for ex+
-                    self.bot.handle.wait_for_queue()
+                    gw = True if battle['ougies'] >= 2 else False
+                    self.bot.handle.wait_for_queue(gw=gw)
                     current_url = str(self.driver.current_url)
                     self.driver.refresh()
 
@@ -213,7 +214,7 @@ class QuestOnRepeat:
             self.auto_button_on = True
 
         self.bot.handle.pre_fight_screens()
-        self.bot.handle.wait_before_fight(fight_start=True)
+        self.bot.handle.wait_before_fight(fight_start=True, gw=True if not queue else False)
 
         # If 'Quest' has a backup request screen
         # then it means that it's a raid.
