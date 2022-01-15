@@ -151,17 +151,20 @@ class Press:
         start = time.time()
 
         strainer = ss('div', attrs={'id': 'cnt-raid-information'})
-        while True:
-            if time.time() - start > 5:
-                break
+        try:
+            while True:
+                if time.time() - start > 5:
+                    break
 
-            parser = bs(self._driver.page_source, 'lxml', parse_only=strainer)
+                parser = bs(self._driver.page_source, 'lxml', parse_only=strainer)
 
-            attack_button_on = parser.find('div', class_='btn-attack-start display-on')
+                attack_button_on = parser.find('div', class_='btn-attack-start display-on')
 
-            if attack_button_on:
-                self._driver.find_element_by_css_selector(self._attack_button_css).click()
-                break
+                if attack_button_on:
+                    self._driver.find_element_by_css_selector(self._attack_button_css).click()
+                    break
+        except:
+            pass
 
     def results_button(self):
         timeout = 10
