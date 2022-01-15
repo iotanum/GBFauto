@@ -825,9 +825,13 @@ class Handle:
                 break
 
             if gw:
-                if not all(hp == 0 for hp in self._enemy_hps()):
-                    print("saw enemy hp - continuing, wait_before_fight")
-                    break
+                source = bs(self._driver.page_source, features="lxml")
+
+                hp_visable = source.find("div", {"class": "btn-enemy-gauge", "style": "display: block;"})
+                if hp_visable:
+                    if not all(hp == 0 for hp in self._enemy_hps()):
+                        print("saw enemy hp - continuing, wait_before_fight")
+                        break
 
             parser = bs(self._driver.page_source, 'lxml', parse_only=strainer)
 
@@ -915,6 +919,9 @@ class Handle:
             if time.time() - start > 60:
                 break
 
+            if "result" in str(self._driver.current_url):
+                break
+
             if gw:
                 print("gw wait_for_queue")
                 current_fight_honors = self.raid_points()
@@ -975,7 +982,7 @@ class Handle:
             various_popup = parser.find('div', {'class': ['common-pop-error']})
 
             if ap_ep_popup or ap_consumable_popup:
-                ap_ep_amount = random.randint(3, 5)
+                ap_ep_amount = random.randint(1, 10)
                 self._bot.action.use_potions_or_pills(ap_ep_amount, consumable=True if ap_consumable_popup else False)
                 self._bot.wait.for_loading_screen()
                 self._bot.press.usual_ok() if not ap_consumable_popup else None
