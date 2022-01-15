@@ -128,14 +128,15 @@ class QuestOnRepeat:
                 if (self.num_of_fights == 1 and battle['ougies'] > 4 and pressed_on_turn == battle['turn']) \
                         or (self.num_of_fights == 1 and battle['turn'] == 1):
                     print(battle, "refresh boi")
-                    # self.bot.refreshed = True
-                    # gw = true for ex+
-                    gw = True if battle['ougies'] >= 2 else False
+
+                    # gw arg means there's no queue and we should use
+                    # different means to determine the start of a battle
+                    gw = True if battle['ougies'] >= 1 and not queues else False
                     self.bot.handle.wait_for_queue(gw=gw)
                     current_url = str(self.driver.current_url)
                     self.driver.refresh()
 
-                    if not next_turn_queue:
+                    if not next_turn_queue and "result" not in str(self.driver.current_url):
                         self.enable_auto_in_loading_screen()
                         self.auto_button_on = True
 
@@ -192,6 +193,9 @@ class QuestOnRepeat:
             if time.time() - start >= 10:
                 break
 
+            if "result" in str(self.driver.current_url):
+                break
+
             try:
                 parser = bs(self.driver.page_source, 'lxml')
 
@@ -240,8 +244,8 @@ class QuestOnRepeat:
             # Also check if after refreshing the page we're still in a fight
             # or quest contains more than 1 fight
             if 'result' not in self.driver.current_url:
-                if not self.num_of_fights > 1:
-                    self.driver.refresh()
+                # if not self.num_of_fights > 1:
+                self.driver.refresh()
 
     def convert_seconds_to_hms_format(self):
         seconds = round(self.bot.run_time(), 2)
