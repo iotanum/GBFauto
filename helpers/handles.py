@@ -33,7 +33,7 @@ class Handle:
         self.skippable_nightmare_battle = None
         self.battle = dict()
 
-    def after_fight_popups(self, kill=False):
+    def after_fight_popups(self, kill=False, gw=False):
         # After the page loads, there's no way to 'tell' if there will be
         # x popup or y popup, its load time depends on what popup it is
         # so we wait until we are in the result screen for the 'xp' popup to appear
@@ -177,6 +177,11 @@ class Handle:
                 elif 'pop-exp' in popup_name:
                     self._count_after_fight_xp(popup)
                     exp_popup = True
+
+                    # skip everything if GW mode is active
+                    if gw:
+                        self._bot.total_fights += 1
+                        return
                     self._bot.press.usual_ok()
 
                 elif 'player-up' in popup_name:

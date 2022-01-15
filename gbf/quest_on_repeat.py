@@ -254,8 +254,8 @@ class QuestOnRepeat:
 
         return int(round(hours, 2)), int(round(minutes, 2)), int(round(seconds, 2))
 
-    def determine_type_of_quest(self):
-        if self.coop is not True:
+    def determine_type_of_quest(self, gw=False):
+        if self.coop is not True and gw is False:
             # Check if a quest is not repeatable only if it wasn't done
             # before and if total fights is 1 and lower
             if not self.is_repeatable and self.bot.total_fights <= 1:
@@ -281,29 +281,49 @@ class QuestOnRepeat:
         self.bot.handle.not_enough_of_x()
         self.bot.need_ap = False
 
+    def check_if_gw(self):
+        load_dotenv('config.env', override=True)
+        gw = os.getenv("GW")
+
+        if gw == "1":
+            return True
+        return False
+
     def handle_after_fight(self):
+        # Used to optimize GW runs
+        # if this is true it skips some popups/screens (just like bookmarking)
+        gw = self.check_if_gw()
+        print(gw, 'gw')
+
         self.bot.wait.for_loading_screen()
 
-        self.bot.handle.after_fight_popups(kill=True)
+        self.bot.handle.after_fight_popups(kill=True, gw=gw if gw else False)
 
         hours, minutes, seconds = self.convert_seconds_to_hms_format()
+        if self.bot.total_fights == 0:
+            self.bot.total_fights += 1
+
         avg_time_per_quest = round(self.bot.run_time() / self.bot.total_fights, 2)
         print(f"Total fights: {self.bot.total_fights}, EXP: {self.bot.total_exp}, Rank points: {self.bot.total_ranks}\n"
               f"Running for {hours}h:{minutes}min:{seconds}s, "
               f"Average time per quest: {avg_time_per_quest}s")
 
-        self.determine_type_of_quest()
+        self.determine_type_of_quest(gw=gw)
         temp_nightmare_state = False
 
-        nightmare_battle = self.bot.handle.after_fight_popups()
-        if nightmare_battle is True:
-            self.repeat = False
-            # After nightmare battle quest is *obviously*
-            # not repeatable, so set a temp state of it to false
-            if self.is_repeatable:
-                temp_nightmare_state = True
-                self.is_repeatable = False
-            # self.bot.need_ap = False
+        if not gw:
+            nightmare_battle = self.bot.handle.after_fight_popups()
+            if nightmare_battle is True:
+                self.repeat = False
+                # After nightmare battle quest is *obviously*
+                # not repeatable, so set a temp state of it to false
+                if self.is_repeatable:
+                    temp_nightmare_state = True
+                    self.is_repeatable = False
+                # self.bot.need_ap = False
+        else:
+            nightmare_battle = False
+            self.is_repeatable = False
 
         # Use AP (if needed) and navigate to quest if only
         # the quest is not repeatable
