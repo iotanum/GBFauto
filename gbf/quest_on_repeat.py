@@ -126,7 +126,8 @@ class QuestOnRepeat:
                 # Refresh the page (after queue) if quest contains 1 fight (F5 works)
                 # if the quest contains more than 1 fight - use BACK key TODO
                 if (self.num_of_fights == 1 and battle['ougies'] > 4 and pressed_on_turn == battle['turn']) \
-                        or (self.num_of_fights == 1 and battle['turn'] == 1):
+                        or (self.num_of_fights == 1 and battle['turn'] == 1)\
+                        or (queues and pressed_on_turn == battle['turn']):
                     print(battle, "refresh boi")
 
                     # gw arg means there's no queue and we should use
