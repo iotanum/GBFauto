@@ -8,6 +8,7 @@ from datetime import datetime
 
 from selenium import common as selenium_err
 from selenium.webdriver.common.keys import Keys
+from selenium.common.exceptions import WebDriverException
 
 from bs4 import BeautifulSoup as bs
 from bs4 import SoupStrainer as ss
@@ -636,8 +637,7 @@ class Handle:
 
             time.sleep(0.1)
 
-    def handle_queue(self, queues, total_battles):
-        battle = self._bot.handle.get_battle_info(total_battles)
+    def handle_queue(self, queues, battle):
         # Returns a list of queues as described in config for the current battle
         # there's raids/quests with multiple battle stages
         print(battle, 'handle_queue')
@@ -917,42 +917,47 @@ class Handle:
 
         return queues
 
-    def wait_for_queue(self, gw=False):
+    # by valid I mean it's fuckign AFTER I requested it
+    def attack_response_is_valid(self, request_ids, battle):
+        while True:
+            try:
+                print(request_ids, 'valid_btn_stuff_2')
+                for request_id in request_ids:
+                    resp_body = self._driver.execute_cdp_cmd("Network.getResponseBody", {"requestId": request_id})
+                    resp_body = json.loads(resp_body['body'])
+                    resp_turn = resp_body['status']['turn']
+                    current_turn = battle['turn']
+
+                    # + turn from perceived turn, because response returns what happens
+                    # AFTER pressing ATK (ougies, turns, animations, hps, etc)
+                    print(resp_turn, current_turn, 'turns')
+                    if resp_turn == current_turn + 1:
+                        print("Found the corresponding ATK BTN request.")
+                        return True, False
+                    if resp_turn == current_turn:
+                        print("Probably killed the boss.")
+                        return True, True
+            except WebDriverException:
+                print("ATK BTN response didn't load, retrying.")
+
+    def wait_for_next_turn(self, battle):
         start = time.time()
 
         while True:
+            # Find all 'needed' responses
+            request_ids = self._bot.game_requests.find_attack_btn_response()
+            if request_ids:
+                valid, needs_refresh = self.attack_response_is_valid(request_ids, battle)
+                if valid:
+                    if needs_refresh:
+                        return True
+                    else:
+                        break
+
             if time.time() - start > 60:
+                print("Didn't find a atk btn request?")
                 break
 
-            if "result" in str(self._driver.current_url):
-                break
-
-            if gw:
-                print("gw wait_for_queue")
-                current_fight_honors = self.raid_points()
-                if current_fight_honors and current_fight_honors > 0:
-                    break
-
-                for _ in range(4):
-                    parser = bs(self._driver.page_source, 'lxml')
-                    character_attacking = parser.find("div", {"class": f"lis-character{_} btn-command-character attack"})
-
-                    if character_attacking:
-                        print(f"Char {_} is attacking.")
-                        return
-
-            if not gw:
-                # Wait for the skill overlay to 'hide' (that means it's finished) and exit
-                # the loop
-                strainer = ss('div', attrs={'id': 'cnt-raid-information'})
-                parser = bs(self._driver.page_source, 'lxml', parse_only=strainer)
-
-                finished_queue = parser.find('div', class_='prt-ability-rail-overlayer hide')
-                if finished_queue:
-                    break
-
-            # Eat less CPU
-            time.sleep(0.2)
 
     def wait_results_button(self):
         start = time.time()

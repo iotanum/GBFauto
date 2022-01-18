@@ -4,6 +4,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.by import By
 from selenium import common as selenium_err
+from selenium.webdriver import DesiredCapabilities
 
 from helpers.buttons import Press
 from helpers.screens import Wait
@@ -11,8 +12,8 @@ from helpers.popups import Popup
 from helpers.skill_queue import Skills
 from helpers.actions import Action
 from helpers.handles import Handle
-
-import undetected_chromedriver.v2 as uc
+from helpers.game_requests import GbfRequests
+from helpers.battle import BattleInfo
 
 import time
 import os
@@ -30,9 +31,12 @@ class GBFGame:
     started = False
 
     def __init__(self):
-        self.chrome_options = uc.ChromeOptions()
+        self.chrome_options = Options()
+        self.capabilities = DesiredCapabilities.CHROME
+        self.capabilities["goog:loggingPrefs"] = {"performance": "ALL"}
         self.custom_chrome_options()
-        self.driver = uc.Chrome(executable_path='utils/chromedriver.exe', options=self.chrome_options)
+        self.driver = webdriver.Chrome(executable_path='utils/chromedriver.exe', options=self.chrome_options,
+                                       desired_capabilities=self.capabilities)
         self.login_page = "http://game.granbluefantasy.jp/#authentication"
         self._start_time = time.time()
         self.press = Press(self)
@@ -41,6 +45,8 @@ class GBFGame:
         self.action = Action(self)
         self.queue = Skills(self)
         self.handle = Handle(self)
+        self.game_requests = GbfRequests(self)
+        self.battle = BattleInfo(self)
         ##############################################
         self.total_ranks = 0
         self.total_exp = 0
@@ -65,6 +71,14 @@ class GBFGame:
         if self.get_screen_resolution() == [1366, 768]:
             self.chrome_options.add_argument("--window-size=500,720")
 
+        # Disable occlusion; no throttling when the window is not on-top
+        state = {'browser.enabled_labs_experiments': ["calculate-native-win-occlusion@2"]}
+        self.chrome_options.add_experimental_option('localState', state)
+
+        # annoying information bar below ur url bar
+        self.chrome_options.add_experimental_option("excludeSwitches", ["enable-automation"])
+
+        # make life easier
         self.chrome_options.add_argument("--mute-audio")
         self.chrome_options.add_argument("--window-size=130,760")
 
