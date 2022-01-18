@@ -939,6 +939,7 @@ class Handle:
                         return True, True
             except WebDriverException:
                 print("ATK BTN response didn't load, retrying.")
+            time.sleep(0.050)
 
     def wait_for_next_turn(self, battle):
         start = time.time()
@@ -958,6 +959,8 @@ class Handle:
                 print("Didn't find a atk btn request?")
                 break
 
+            # doing my best here ok
+            time.sleep(0.050)
 
     def wait_results_button(self):
         start = time.time()
