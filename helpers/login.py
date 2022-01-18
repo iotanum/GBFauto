@@ -4,6 +4,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.by import By
 from selenium import common as selenium_err
+from selenium.common.exceptions import WebDriverException
 from selenium.webdriver import DesiredCapabilities
 
 from helpers.buttons import Press
@@ -122,7 +123,7 @@ class GBFGame:
             try:
                 mobage_window = self.driver.window_handles[1]
                 self.driver.switch_to.window(mobage_window)
-            except (selenium_err.exceptions.NoSuchWindowException, IndexError):
+            except (selenium_err.exceptions.NoSuchWindowException, IndexError, WebDriverException):
                 pass
         if str(self.driver.title) != "Mobage Connect":
             self.driver.refresh()
