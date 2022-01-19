@@ -105,10 +105,15 @@ class QuestOnRepeat:
 
                 # placeholder var if I plan on NOT doing refresh every turn
                 boss_killed = self.bot.handle.wait_for_next_turn(battle)
-                self.driver.refresh()
+
+                # we only want to refresh if there's no more parts to the battle
+                if battle['total_battles'] == 1:
+                    self.driver.refresh()
+
                 if boss_killed:
                     print("Everyone died.")
                     return True
+
                 # after refreshing get the status of a battle
                 battle = self.bot.battle.get_battle_start_info()
 
