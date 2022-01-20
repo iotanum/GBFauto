@@ -89,6 +89,6 @@ class BattleInfo:
                 # and starting request of a battle will obviously
                 # happen only once
                 request_id = request_ids[0]
-                response = self.get_response_body(request_id, request="start.json")
+                response = self.get_response_body(request_id, response="start.json")
                 battle = self.parse_battle_start_info(response)
                 return battle
