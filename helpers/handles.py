@@ -675,10 +675,10 @@ class Handle:
                 # this way I do checks later what queues were done
                 queues[current_battle][battle['turn']] = True
 
-        # # Check if all queues in the given battle are 'True'
-        # # aka all have been done
-        # else:
-        #     del queues[current_battle]
+            # Map done queues with "True" if queue turn is lower than the current turn in battle
+            for turn, queue in queues_for_battle.items():
+                if turn < battle['turn']:
+                    queues[current_battle][turn] = True
 
         return queues if queues_for_battle else None
 
