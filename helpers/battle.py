@@ -1,4 +1,6 @@
 import json
+import time
+
 from selenium.common.exceptions import WebDriverException
 
 
@@ -8,14 +10,37 @@ class BattleInfo:
         self.driver = game_handler.driver
         self.game_requests = self.bot.game_requests
 
-    def transform_response(self, request_id):
+    def retry(self, response):
+        # refresh and try finding a new request of a battle start
+        self.driver.refresh()
+
+        while True:
+            print(f"Trying to find another '{response}' request.")
+            request_ids = self.game_requests.find_battle_start_response()
+            if request_ids:
+                return request_ids[0]
+
+    def get_response_body(self, request_id, response=None):
+        start_time_check = False
+        loading_time = 5
+        start = None
+
         while True:
             try:
                 resp_body = self.driver.execute_cdp_cmd("Network.getResponseBody", {"requestId": request_id})
                 resp_body = json.loads(resp_body['body'])
                 return resp_body
             except WebDriverException:
-                print("Battle start response didn't load, retrying.")
+                print(f"'{response}' response didn't load, retrying.")
+                # sometimes request never gets loaded? like 5% chance per battle or smth
+                # give 5s to load, if not - retry
+                if not start_time_check:
+                    start = time.time()
+                    start_time_check = True
+
+                if start and time.time() - start >= loading_time:
+                    request_id = self.retry(response)
+
                 continue
 
     def parse_battle_start_info(self, resp):
@@ -64,6 +89,6 @@ class BattleInfo:
                 # and starting request of a battle will obviously
                 # happen only once
                 request_id = request_ids[0]
-                response = self.transform_response(request_id)
+                response = self.get_response_body(request_id, request="start.json")
                 battle = self.parse_battle_start_info(response)
                 return battle
