@@ -60,13 +60,13 @@ class QuestOnRepeat:
         # remove the battle scene/advice element from the fight, less clutter
         self.remove_battle_scene_element()
 
-        queues = self.bot.handle.find_all_queues()
         pressed_on_turn = None
         printed_battle = False
         battle = initial_info
         while True:
             final_battle = battle['battle'] == battle['total_battles']
 
+            queues = self.bot.handle.find_all_queues()
             queues = self.bot.handle.handle_queue(queues, battle)
             print(queues, "finish_fight")
             if queues is not None:
