@@ -918,7 +918,13 @@ class Handle:
         return queues
 
     # by valid I mean it's fuckign AFTER I requested it
+    # sadly I can't do this in battle.py, since it requires pressing atk and shit
+    # have to handle stuff here
     def attack_response_is_valid(self, request_ids, battle):
+        start_time_check = False
+        loading_time = 5
+        start = None
+
         while True:
             try:
                 print(request_ids, 'valid_btn_stuff_2')
@@ -939,6 +945,15 @@ class Handle:
                         return True, True
             except WebDriverException:
                 print("ATK BTN response didn't load, retrying.")
+                if not start_time_check:
+                    start = time.time()
+                    start_time_check = True
+
+                # just return if atk btn response is not loaded
+                # wait_for_next_turn will retry/handle it
+                if start and time.time() - start >= loading_time:
+                    return
+
             time.sleep(0.050)
 
     def wait_for_next_turn(self, battle):
