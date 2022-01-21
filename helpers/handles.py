@@ -952,7 +952,7 @@ class Handle:
                 # just return if atk btn response is not loaded
                 # wait_for_next_turn will retry/handle it
                 if start and time.time() - start >= loading_time:
-                    return
+                    return False, False
 
             time.sleep(0.050)
 
@@ -973,6 +973,9 @@ class Handle:
             if time.time() - start > 60:
                 print("Didn't find a atk btn request?")
                 break
+
+            if 'result' in str(self._driver.current_url):
+                return True
 
             # doing my best here ok
             time.sleep(0.050)
