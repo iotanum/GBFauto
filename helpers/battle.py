@@ -47,7 +47,7 @@ class BattleInfo:
         battle = dict()
 
         # battles/total battles are easy
-        battle['battle'] = resp['battle']['count']
+        battle['battle'] = int(resp['battle']['count'])
         battle['total_battles'] = resp['battle']['total']
 
         # ougies are placed within player obj in root['player']['param']

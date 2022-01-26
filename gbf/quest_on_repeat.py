@@ -83,9 +83,6 @@ class QuestOnRepeat:
                 self.bot.press.auto_attack()
                 self.auto_button_on = False
 
-            if "result" in str(self.driver.current_url):
-                return True
-
             try:
                 # Press 'attack' and enable auto if it's not enabled already
                 if not self.auto_button_on and pressed_on_turn != battle['turn']:
@@ -106,8 +103,14 @@ class QuestOnRepeat:
                 # placeholder var if I plan on NOT doing refresh every turn
                 boss_killed = self.bot.handle.wait_for_next_turn(battle)
 
+                if "result" in str(self.driver.current_url):
+                    return True
+
                 # we only want to refresh if there's no more parts to the battle
-                if battle['total_battles'] == 1:
+                # or wer are in the final battle
+                print(battle['battle'] == battle['total_battles'], 'check for battle equal')
+                if (battle['battle'] == battle['total_battles']) \
+                        or battle['total_battles'] == 1:
                     self.driver.refresh()
 
                 if boss_killed:
