@@ -364,6 +364,10 @@ class Handle:
                     print(f"{char}")
                     self._bot.press.usual_close()
 
+                elif 'pop-treasureraid-event-mission' in popup_name:
+                    print("Some sort of mission raid finished, gj.")
+                    self._bot.press.usual_close()
+
                 else:
                     print("Unhandled popup!\nPage source and error picture in 'errors' folder.")
                     print(f"Popup element: {popup}")
