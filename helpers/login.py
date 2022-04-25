@@ -139,7 +139,7 @@ class GBFGame:
         wait.until(EC.element_to_be_clickable((By.NAME, 'identifier')))
 
     def wait_for_password(self):
-        wait = WebDriverWait(self.driver, 3)
+        wait = WebDriverWait(self.driver, 6)
         wait.until(EC.element_to_be_clickable((By.XPATH, '//*[@id="password"]/div[1]/div/div[1]/input')))
 
     def enter_login_email(self, login, password):

@@ -6,6 +6,7 @@ from dotenv import load_dotenv
 
 import time
 import os
+import traceback
 
 
 class Raids:
@@ -17,6 +18,7 @@ class Raids:
         #########################
         self.raid_id = None
         self.raid_name = ""
+        self.auto_button_on = False
 
     def get_raid_boss_hps(self):
         try:
@@ -37,18 +39,53 @@ class Raids:
             if time.time() - start >= 10:
                 break
 
+            if "result" in str(self.driver.current_url):
+                break
+
             try:
-                parser = bs(self.driver.page_source, 'lxml')
+                self.driver.find_element_by_class_name('txt-auto-setting').click()
+                return True
 
-                auto_enabled_button = parser.find_all('div', {'class': ['btn-ready-auto', 'anim-simple-fadein']})
-
-                if not auto_enabled_button:
-                    self.driver.find_element_by_class_name('txt-auto-setting').click()
-                else:
-                    print("Since there's no queue - enabled auto attacks.")
-                    break
             except:
                 continue
+
+    def check_for_stale_hp(self, hp_timer, stale_hp_timer, old_raid_boss_hp, battle):
+        refreshed = False
+
+        # monitor for how long raid boss hp/hps hasn't changed
+        if old_raid_boss_hp != battle['boss_hps']:
+            old_raid_boss_hp = battle['boss_hps']
+            # If HP has changed - reset the timer
+            # hp_timer = time, when HP has changed
+            hp_timer = time.time()
+        else:
+            # If HP hasn't changed - subtract hp_timer with current time
+            # = seconds for how long HP hasn't changed
+            stale_hp_timer = time.time() - hp_timer
+
+        # If stale_hp_timer is more or equal 60 seconds - refresh the page.
+        if stale_hp_timer >= 60:
+            print("Raid boss HP didn't change for 60 seconds, refreshing.")
+            stale_hp_timer = 0
+            hp_timer = time.time()
+            self.driver.refresh()
+            refreshed = True
+
+        return hp_timer, stale_hp_timer, old_raid_boss_hp, refreshed
+
+    def auto_attack_enabled(self):
+        js_err = selenium_err.exceptions.JavascriptException
+
+        # stage.gGameStatus.auto_attack
+        while True:
+            try:
+                response = self.driver.execute_script("return stage.gGameStatus.auto_attack;")
+                print(response, type(response))
+                return
+            except (TypeError, js_err) as e:
+                print("Error'd on auto_attack check.")
+                print(e)
+                pass
 
     def monitor_raid_boss_hp(self):
         # monitors and handles attacks, attacks the boss if it's below 50% hp and then just
@@ -58,32 +95,32 @@ class Raids:
         load_dotenv('config.env', override=True)
         queue = os.getenv('QUEUE_FIRST_FIGHT')
 
+        # Wait for a start.json request from the game to get info
+        # on the state of a battle when starting a battle
+        battle = self.bot.battle.get_battle_start_info()
+
         # If there's no queue - just enable auto stuff in the loading screen
         if not queue:
             self.enable_auto_in_loading_screen()
+            # self.auto_attack_enabled()
+            self.auto_button_on = True
 
-        self.bot.handle.wait_before_fight(fight_start=True)
-        self.bot.handle.backup_request()
-        self.bot.handle.wait_before_fight(fight_start=False)
+        # self.bot.handle.wait_before_fight(fight_start=True)
+        print(5)
+        self.bot.handle.wait_before_fight(fight_start=True, gw=True if not queue else False)
+        print(6)
 
-        if queue:
-            self.bot.queue.do_queue(queue, raids=True)
-            self.bot.press.attack_button()
-            self.bot.press.auto_attack()
-
-        raid_boss_is_alive = True
-        made_a_leech_hit = False
-        waiting_for_kill = False
         old_raid_boss_hp = []
         hp_timer = time.time()
         stale_hp_timer = 0
-        times_refreshed = 0
-        point_threshold_reached = False
+        pressed_on_turn = None
 
-        while raid_boss_is_alive is True:
-            raid_boss_hps = self.get_raid_boss_hps()
+        while True:
+            # battle['turn']
+            # battle['battle']
+            # battle['boss_hps']
 
-            if raid_boss_hps is None:
+            if not battle['boss_hps']:
                 # This occurs if after refreshing there's no element named "prt-targeting-area"
                 # aka bot is no longer in the fight screen
                 page = self.handle_return_page()
@@ -94,80 +131,73 @@ class Raids:
                     raid_boss_is_alive = False
                     break
 
-            # Check if HP is 0
-            if all(hp == 0 for hp in raid_boss_hps):
-                print("Raid boss is defeated.")
-                raid_boss_is_alive = False
-                self.driver.refresh()
-
-            # monitor for how long raid boss hp/hps hasn't changed
-            if old_raid_boss_hp != raid_boss_hps:
-                old_raid_boss_hp = raid_boss_hps
-                # If HP has changed - reset the timer
-                # hp_timer = time, when HP has changed
-                hp_timer = time.time()
+            queues = self.bot.handle.find_all_queues()
+            queues = self.bot.handle.handle_queue(queues, battle)
+            print(queues, "finish_fight")
+            if queues is not None:
+                next_turn_queue = battle['turn'] + 1 in queues[battle['battle']]
             else:
-                # If HP hasn't changed - subtract hp_timer with current time
-                # = seconds for how long HP hasn't changed
-                stale_hp_timer = time.time() - hp_timer
+                next_turn_queue = None
 
-            # If stale_hp_timer is more or equal 60 seconds - refresh the page.
-            if stale_hp_timer >= 60:
-                print("Raid boss HP didn't change for 60 seconds, refreshing.")
-                stale_hp_timer = 0
-                hp_timer = time.time()
-                times_refreshed += 1
+            if next_turn_queue and self.auto_button_on:
+                self.bot.handle.check_if_chara_are_attacking()
+                self.bot.press.auto_attack()
+                self.auto_button_on = False
+
+            hp_timer, stale_hp_timer, old_raid_boss_hp, refreshed = \
+                self.check_for_stale_hp(hp_timer, stale_hp_timer, old_raid_boss_hp, battle)
+
+            ###############
+            try:
+                # Press 'attack' and enable auto if it's not enabled already
+                if not self.auto_button_on and pressed_on_turn != battle['turn']:
+                    self.bot.press.attack_button()
+                    pressed_on_turn = battle['turn']
+
+                    if not next_turn_queue:
+                        print("no next queue")
+                        self.bot.press.auto_attack()
+                        self.auto_button_on = True
+
+                if next_turn_queue and self.auto_button_on:
+                    print("next turn queue and auto btn on")
+                    self.bot.press.auto_attack()
+                    self.auto_button_on = False
+
+                print(battle, "refresh boi")
+
+                # placeholder var if I plan on NOT doing refresh every turn
+                boss_killed = self.bot.handle.wait_for_next_turn(battle)
+
+                if "result" in str(self.driver.current_url):
+                    return True
+
+                # we only want to refresh if there's no more parts to the battle
+                # or wer are in the final battle
                 self.driver.refresh()
 
-                if not queue:
+                if boss_killed:
+                    print("Everyone died.")
+                    return True
+
+                # after refreshing get the status of a battle
+                battle = self.bot.battle.get_battle_start_info()
+                if not battle:
+                    print(69)
+                    return
+
+                if not next_turn_queue and "result" not in str(self.driver.current_url):
+                    print("yes")
                     self.enable_auto_in_loading_screen()
+                    # self.auto_attack_enabled()
+                    self.auto_button_on = True
 
-                self.bot.handle.wait_before_fight(fight_start=False)
-                # Reset everything after refresh
-                self.bot.handle.backup_request()
-                # If this handle returns 'none' it means that the raid boss is dead
-                # or bot is outside raid boss battle
-                page = self.handle_return_page(fight_end=True)
-                if page is None:
-                    return False
+                if next_turn_queue:
+                    self.bot.handle.wait_before_fight(fight_start=True)
 
-            if times_refreshed == 2:
-                try:
-                    self.bot.press.attack_button()
-                except:
-                    pass
-                times_refreshed = 0
-
-            battle_finished = self.bot.popup.battle_concluded()
-            if battle_finished is True:
-                self.bot.press.usual_ok()
-
-            # Check if raid points are up to threshold
-            if self.bot.point_threshold:
-                if made_a_leech_hit is True:
-
-                    points = self.bot.handle.raid_points()
-                    if points >= int(self.bot.point_threshold) and point_threshold_reached is False:
-                        self.bot.press.auto_attack()
-                        point_threshold_reached = True
-                        print('Point limit reached. Turning off auto attacks.')
-
-            if any(0 < hp <= 101 for hp in raid_boss_hps) and made_a_leech_hit is False and queue:
-                try:
-                    self.bot.press.attack_button()
-                    print('Made the leech hit.')
-                    made_a_leech_hit = True
-
-                    if self.bot.point_threshold:
-                        self.bot.press.auto_attack()
-                        print(f'Auto attacks are on until I reach {self.bot.point_threshold} points.')
-                except selenium_err.exceptions.WebDriverException:
-                    continue
-
-            if (made_a_leech_hit is True and waiting_for_kill is False) or \
-                    (not queue and waiting_for_kill is False):
-                print("Waiting for the raid boss to be killed..")
-                waiting_for_kill = True
+                    # Remove the element again since we refreshed the page
+            except (selenium_err.exceptions.NoSuchElementException, selenium_err.exceptions.WebDriverException):
+                pass
 
             time.sleep(0.3)
 
@@ -209,16 +239,7 @@ class Raids:
 
             if time.time() - start_time > change_time and current_page == before_joining_url:
                 print(f"URL didn't change in {change_time}s. Searching for another raid.")
-
-                if '#result_multi' in current_page:
-                    return
-
-                if '#quest' in current_page:
-                    self.driver.refresh()
-                    return
-
-                if '#supporter_raid' in current_page:
-                    return
+                return
 
             if current_page != before_joining_url or fight_end is True:
                 print('different url')

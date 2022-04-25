@@ -178,10 +178,14 @@ class QuestOnRepeat:
     def handle_fight(self):
         load_dotenv('config.env', override=True)
         queue = os.getenv("QUEUE_1_1")
+
         # Wait for a start.json request from the game to get info
         # on the state of a battle when starting a battle
         initial_battle_info = self.bot.battle.get_battle_start_info()
         print(initial_battle_info, 'handle_fight')
+        if not initial_battle_info:
+            return
+
         if not queue:
             self.enable_auto_in_loading_screen()
             self.auto_button_on = True

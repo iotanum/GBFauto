@@ -1,5 +1,6 @@
 import json
 import time
+import traceback
 
 from selenium.common.exceptions import WebDriverException
 
@@ -27,9 +28,13 @@ class BattleInfo:
 
         while True:
             try:
-                resp_body = self.driver.execute_cdp_cmd("Network.getResponseBody", {"requestId": request_id})
-                resp_body = json.loads(resp_body['body'])
-                return resp_body
+                # only try to find that when you're no longer in support summon page
+                # TODO
+                # probably check if every funciton call here is being made inside a battle (stage)
+                if "supporter" not in str(self.driver.current_url):
+                    resp_body = self.driver.execute_cdp_cmd("Network.getResponseBody", {"requestId": request_id})
+                    resp_body = json.loads(resp_body['body'])
+                    return resp_body
             except WebDriverException:
                 print(f"'{response}' response didn't load, retrying.")
                 # sometimes request never gets loaded? like 5% chance per battle or smth
@@ -46,40 +51,49 @@ class BattleInfo:
     def parse_battle_start_info(self, resp):
         battle = dict()
 
-        # battles/total battles are easy
-        battle['battle'] = int(resp['battle']['count'])
-        battle['total_battles'] = resp['battle']['total']
+        try:
+            # battles/total battles are easy
+            battle['battle'] = int(resp['battle']['count'])
+            battle['total_battles'] = resp['battle']['total']
 
-        # ougies are placed within player obj in root['player']['param']
-        ougi_bars = []
-        for player in resp['player']['param']:
-            # we only want to know ougies for the frontline
-            if len(ougi_bars) == 4:
-                break
-            ougi_bars.append(player['recast'])
+            # ougies are placed within player obj in root['player']['param']
+            ougi_bars = []
+            for player in resp['player']['param']:
+                # we only want to know ougies for the frontline
+                if len(ougi_bars) == 4:
+                    break
+                ougi_bars.append(player['recast'])
 
-        ougies = 0
-        for ougi_bar in ougi_bars:
-            if ougi_bar != 100 and ougi_bar != 200:
-                continue
-            ougies += 1
+            ougies = 0
+            for ougi_bar in ougi_bars:
+                if ougi_bar != 100 and ougi_bar != 200:
+                    continue
+                ougies += 1
 
-        battle['ougies'] = ougies
+            battle['ougies'] = ougies
 
-        # turn is self explanatory
-        battle['turn'] = resp['turn']
+            # turn is self explanatory
+            battle['turn'] = resp['turn']
 
-        # boss_hp is the same as player ougies above
-        boss_hps = []
-        for boss in resp['boss']['param']:
-            hp_max = int(boss['hpmax'])
-            current_hp = int(boss['hp'])
-            hp_perc = (current_hp / hp_max) * 100
-            boss_hps.append(hp_perc)
+            # boss_hp is the same as player ougies above
+            boss_hps = []
+            for boss in resp['boss']['param']:
+                hp_max = int(boss['hpmax'])
+                current_hp = int(boss['hp'])
+                hp_perc = (current_hp / hp_max) * 100
+                boss_hps.append(hp_perc)
 
-        battle['boss_hps'] = boss_hps
+            battle['boss_hps'] = boss_hps
 
-        return battle
+            return battle
+        except KeyError as e:
+            print("Error'd on battle info parse.")
+            if 'redirect' in resp.keys():
+                print("Battle ended, cuz start.json returned a redirect.")
+                return
+            traceback.print_exc()
+            print(resp)
+            return
 
     def get_battle_start_info(self):
         while True:
@@ -91,4 +105,12 @@ class BattleInfo:
                 request_id = request_ids[0]
                 response = self.get_response_body(request_id, response="start.json")
                 battle = self.parse_battle_start_info(response)
-                return battle
+                if battle is not None and len(battle.keys()) >= 2:
+                    return battle
+
+                if battle is None:
+                    return
+
+            if "result" in str(self.driver.current_url):
+                print("Battle finished, 'result' in URL.")
+                return
