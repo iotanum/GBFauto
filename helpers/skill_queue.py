@@ -63,7 +63,7 @@ class Skills:
         self._bot.press.char_skill(char_num, ability_num, raids=raids)
 
     def handle_char_switching(self, direction=None):
-        if direction is 'next':
+        if direction == 'next':
             self._bot.press.next_char()
         else:
             self._bot.press.previous_char()

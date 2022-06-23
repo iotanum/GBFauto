@@ -219,7 +219,7 @@ class Press:
         self._driver.find_element_by_class_name(self._previous_char_class).click()
 
     def char_skill(self, char_num, skill_num, raids=False):
-        div = "div[10]" if raids else "div[9]"
+        div = "div[10]" if raids else "div[10]"
         ability_xpath = f'//*[@id="wrapper"]/div[3]/div[2]/{div}/div[{char_num + 2}]/div[3]/div[{skill_num}]'
         search_by = By.XPATH
 
@@ -248,7 +248,7 @@ class Press:
         self._driver.find_element_by_xpath(summon_xpath).click()
 
     def summon_card(self, raids=False):
-        div = "div[10]" if raids else "div[11]"
+        div = "div[10]" if raids else "div[10]"
         summon_card_xpath = f'//*[@id="wrapper"]/div[3]/div[2]/{div}/div[2]/div/div[1]'
         search_by = By.XPATH
 

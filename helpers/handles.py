@@ -15,7 +15,6 @@ from bs4 import SoupStrainer as ss
 from dotenv import load_dotenv
 import aiohttp
 from aiohttp import web
-import aioconsole
 
 load_dotenv('config.env')
 
