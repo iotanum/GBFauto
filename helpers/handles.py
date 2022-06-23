@@ -9,6 +9,7 @@ from datetime import datetime
 from selenium import common as selenium_err
 from selenium.webdriver.common.keys import Keys
 from selenium.common.exceptions import WebDriverException
+from selenium.webdriver.common.by import By
 
 from bs4 import BeautifulSoup as bs
 from bs4 import SoupStrainer as ss
@@ -371,7 +372,7 @@ class Handle:
                     print("Unhandled popup!\nPage source and error picture in 'errors' folder.")
                     print(f"Popup element: {popup}")
                     # Placeholder handling of unhandled popup
-                    self._driver.find_element_by_class_name(popup_button).click()
+                    self._driver.find_element(By.CLASS_NAME, popup_button).click()
 
             if extended_mastery:
                 print('New extended mastery!')
@@ -379,7 +380,7 @@ class Handle:
                 time.sleep(4)
                 # Also needs a timer reset
                 popup_search_start = time.time()
-                elem = self._driver.find_element_by_class_name('onm-anim-parts')
+                elem = self._driver.find_element(By.CLASS_NAME, 'onm-anim-parts')
                 elem.click()
                 time.sleep(1)
 
@@ -1185,10 +1186,10 @@ class Handle:
     # temp solution for manual code input
     def input_code(self, code):
         time.sleep(1)
-        input_field = self._driver.find_element_by_class_name('frm-message')
+        input_field = self._driver.find_element(By.CLASS_NAME, 'frm-message')
         input_field.send_keys(code)
         time.sleep(1)
-        self._driver.find_element_by_class_name('btn-talk-message').click()
+        self._driver.find_element(By.CLASS_NAME, 'btn-talk-message').click()
         time.sleep(3)
 
         verification = self._bot.popup.human_verification()
@@ -1249,10 +1250,10 @@ class Handle:
 
             async def input_code(code):
                 await asyncio.sleep(1)
-                input_field = self._driver.find_element_by_class_name('frm-message')
+                input_field = self._driver.find_element(By.CLASS_NAME, 'frm-message')
                 input_field.send_keys(code)
                 await asyncio.sleep(1)
-                self._driver.find_element_by_class_name('btn-talk-message').click()
+                self._driver.find_element(By.CLASS_NAME, 'btn-talk-message').click()
                 await asyncio.sleep(3)
 
                 verification = self._bot.popup.human_verification()
@@ -1287,7 +1288,7 @@ class Handle:
                 return web.Response(text=f"Running on: {os.environ['COMPUTERNAME']}")
 
             async def repeat_handler(request):
-                input_field = self._driver.find_element_by_class_name('frm-message')
+                input_field = self._driver.find_element(By.CLASS_NAME, 'frm-message')
                 input_field.send_keys(Keys.CONTROL + "a")
                 await asyncio.sleep(1)
                 input_field.send_keys(Keys.DELETE)
@@ -1336,7 +1337,7 @@ class Handle:
                     successful = self.input_code(code)
                     if not successful:
                         print("Looks like the code was incorrect - retrying..")
-                        input_field = self._driver.find_element_by_class_name('frm-message')
+                        input_field = self._driver.find_element(By.CLASS_NAME, 'frm-message')
                         input_field.send_keys(Keys.CONTROL + "a")
                         time.sleep(1)
                         input_field.send_keys(Keys.DELETE)

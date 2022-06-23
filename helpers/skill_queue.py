@@ -2,6 +2,7 @@ from bs4 import BeautifulSoup as bs
 from bs4 import SoupStrainer as ss
 
 from selenium import common as selenium_err
+from selenium.webdriver.common.by import By
 
 import time
 import re
@@ -76,15 +77,15 @@ class Skills:
 
     def remove_ability_log_element(self):
         try:
-            elem = self._driver.find_element_by_class_name('prt-raid-log')
+            elem = self._driver.find_element(By.CLASS_NAME, 'prt-raid-log')
             self._driver.execute_script("arguments[0].parentNode.removeChild(arguments[0]);", elem)
         except selenium_err.exceptions.NoSuchElementException:
             pass
 
     def remove_backup_request_element(self):
         try:
-            popup = self._driver.find_element_by_class_name('txt-raid-assist')
-            popup_footer = self._driver.find_element_by_class_name('prt-popup-footer')
+            popup = self._driver.find_element(By.CLASS_NAME, 'txt-raid-assist')
+            popup_footer = self._driver.find_element(By.CLASS_NAME, 'prt-popup-footer')
             self._driver.execute_script('arguments[0].parentNode.removeChild(arguments[0]);', popup)
             self._driver.execute_script('arguments[0].parentNode.removeChild(arguments[0]);', popup_footer)
         except selenium_err.exceptions.NoSuchElementException:

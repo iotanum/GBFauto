@@ -5,6 +5,7 @@ import os
 import time
 
 from selenium import common as selenium_err
+from selenium.webdriver.common.by import By
 from dotenv import load_dotenv
 
 
@@ -42,7 +43,7 @@ class QuestOnRepeat:
 
     def remove_battle_scene_element(self):
         try:
-            elem = self.driver.find_element_by_class_name('btn-scene-next')
+            elem = self.driver.find_element(By.CLASS_NAME, 'btn-scene-next')
             self.driver.execute_script("arguments[0].parentNode.removeChild(arguments[0]);", elem)
         except selenium_err.exceptions.NoSuchElementException:
             pass
@@ -168,7 +169,7 @@ class QuestOnRepeat:
                 auto_enabled_button = parser.find_all('div', {'class': ['btn-ready-auto', 'anim-simple-fadein']})
 
                 if not auto_enabled_button:
-                    self.driver.find_element_by_class_name('txt-auto-setting').click()
+                    self.driver.find_element(By.CLASS_NAME, 'txt-auto-setting').click()
                 else:
                     print("Since there's no queue - enabled auto attacks.")
                     break

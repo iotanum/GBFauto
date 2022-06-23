@@ -105,7 +105,7 @@ class GBFGame:
 
     def press_login(self):
         self.wait_for_gbf_login()
-        elem = self.driver.find_element_by_class_name('btn-auth-login')
+        elem = self.driver.find_element(By.CLASS_NAME, 'btn-auth-login')
         self.handle_click(elem)
 
     def wait_for_title_change(self):
@@ -131,7 +131,7 @@ class GBFGame:
     def press_google_login(self):
         self.switch_to_mobage_window()
         self.wait_for_google_login()
-        elem = self.driver.find_element_by_css_selector('.btn-google.w-max')
+        elem = self.driver.find_element(By.CSS_SELECTOR, '.btn-google.w-max')
         self.handle_click(elem)
 
     def wait_for_email(self):
@@ -144,15 +144,15 @@ class GBFGame:
 
     def enter_login_email(self, login, password):
         self.wait_for_email()
-        form_email = self.driver.find_element_by_name('identifier')
+        form_email = self.driver.find_element(By.NAME, 'identifier')
         form_email.send_keys(login)
         time.sleep(0.5)
-        self.driver.find_element_by_xpath('//*[@id="identifierNext"]').click()
+        self.driver.find_element(By.XPATH, '//*[@id="identifierNext"]').click()
         self.wait_for_password()
-        form_password = self.driver.find_element_by_xpath('//*[@id="password"]/div[1]/div/div[1]/input')
+        form_password = self.driver.find_element(By.XPATH, '//*[@id="password"]/div[1]/div/div[1]/input')
         form_password.send_keys(password)
         time.sleep(0.5)
-        self.driver.find_element_by_xpath('//*[@id="passwordNext"]').click()
+        self.driver.find_element(By.XPATH, '//*[@id="passwordNext"]').click()
 
     def switch_window_to_gbf(self):
         gbf_window = self.driver.window_handles[0]

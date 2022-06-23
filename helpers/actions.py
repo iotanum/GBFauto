@@ -18,7 +18,7 @@ class Action:
         self._input_raid_id_class = "frm-battle-key"
 
     def input_raid_id(self, raid_id):
-        elem = self._driver.find_element_by_class_name(self._input_raid_id_class)
+        elem = self._driver.find_element(By.CLASS_NAME, self._input_raid_id_class)
         elem.clear()
         time.sleep(1)
         elem.send_keys(raid_id)
@@ -39,11 +39,11 @@ class Action:
 
         # Click on the options button
         self._Timeout.wait_for_element(timeout, expected_behaviour, search_by, option_list)
-        self._driver.find_element_by_xpath(option_list).click()
+        self._driver.find_element(By.XPATH, option_list).click()
         # Pick x amount of pills/potions
         self._Timeout.wait_for_element(timeout, expected_behaviour, search_by, amount_in_list)
-        self._driver.find_element_by_xpath(amount_in_list).click()
+        self._driver.find_element(By.XPATH, amount_in_list).click()
         # Click 'Use'
         self._bot.wait.for_loading_screen()
         self._Timeout.wait_for_element(timeout, expected_behaviour, search_by, use_button)
-        self._driver.find_element_by_xpath(use_button).click()
+        self._driver.find_element(By.XPATH, use_button).click()
