@@ -240,7 +240,7 @@ class Press:
         self._driver.find_element_by_css_selector(self._back_button_css).click()
 
     def summon_num(self, summon_num, raids=False):
-        div = 'div[10]' if raids else 'div[11]'
+        div = 'div[10]' if raids else 'div[10]'
         summon_xpath = f'//*[@id="wrapper"]/div[3]/div[2]/{div}/div[2]/div/div[{summon_num + 1}]'
         search_by = By.XPATH
 
