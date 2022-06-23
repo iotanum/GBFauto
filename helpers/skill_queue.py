@@ -93,7 +93,7 @@ class Skills:
 
     def remove_active_mask_element(self):
         try:
-            mask = self._driver.find_element_by_id('main-mask')
+            mask = self._driver.find_element(By.ID, 'main-mask')
             self._driver.execute_script('arguments[0].parentNode.removeChild(arguments[0]);', mask)
         except selenium_err.exceptions.NoSuchElementException:
             pass
