@@ -72,15 +72,17 @@ class QuestOnRepeat:
             print(queues, "finish_fight")
             if queues is not None:
                 next_turn_queue = battle['turn'] + 1 in queues[battle['battle']]
+                this_turn_queue = battle['turn'] in queues[battle['battle']]
             else:
                 next_turn_queue = None
+                this_turn_queue = None
 
             if not printed_battle:
                 print(f"Fight #{battle['battle']}.")
                 printed_battle = True
 
             try:
-                if queues:
+                if queues and this_turn_queue:
                     self.bot.press.attack_button()
 
                 print(battle, "refresh boi")
