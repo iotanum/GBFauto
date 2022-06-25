@@ -20,19 +20,22 @@ import time
 import os
 import ctypes
 
+import undetected_chromedriver as uc
+
 from dotenv import load_dotenv
 
 load_dotenv('config.env')
 
 HEADLESS_MODE = int(os.getenv('HEADLESS_MODE'))
 MANUAL_LOGIN = int(os.getenv('MANUAL_LOGIN'))
+UNDETECTED_CHROME_MODE = int(os.getenv('UC_MODE'))
 
 
 class GBFGame:
     started = False
 
     def __init__(self):
-        self.chrome_options = Options()
+        self.chrome_options = self.set_webdriver()
         self.capabilities = DesiredCapabilities.CHROME
         self.capabilities["goog:loggingPrefs"] = {"performance": "ALL"}
         self.custom_chrome_options()
@@ -66,6 +69,11 @@ class GBFGame:
 
     def run_time(self):
         return time.time() - self._start_time
+
+    def set_webdriver(self):
+        if UNDETECTED_CHROME_MODE == 1:
+            return uc.ChromeOptions()
+        return Options()
 
     def custom_chrome_options(self):
         # Resize chrome window on smaller screens (otherwise chrome driver crashes?)
