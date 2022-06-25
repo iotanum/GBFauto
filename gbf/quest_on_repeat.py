@@ -79,10 +79,10 @@ class QuestOnRepeat:
                 print(f"Fight #{battle['battle']}.")
                 printed_battle = True
 
-            if next_turn_queue and self.auto_button_on:
-                self.bot.handle.check_if_chara_are_attacking()
-                self.bot.press.auto_attack()
-                self.auto_button_on = False
+            # if next_turn_queue and self.auto_button_on:
+            #     self.bot.handle.check_if_chara_are_attacking()
+            #     self.bot.press.auto_attack()
+            #     self.auto_button_on = False
 
             try:
                 # Press 'attack' and enable auto if it's not enabled already
