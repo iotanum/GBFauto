@@ -90,12 +90,12 @@ class GBFGame:
         if self.get_screen_resolution() == [1366, 768]:
             self.chrome_options.add_argument("--window-size=500,720")
 
-        # Disable occlusion; no throttling when the window is not on-top
-        state = {'browser.enabled_labs_experiments': ["calculate-native-win-occlusion@2"]}
-        self.chrome_options.add_experimental_option('localState', state)
-
-        # annoying information bar below ur url bar
         if UNDETECTED_CHROME_MODE != 1:
+            # Disable occlusion; no throttling when the window is not on-top
+            state = {'browser.enabled_labs_experiments': ["calculate-native-win-occlusion@2"]}
+            self.chrome_options.add_experimental_option('localState', state)
+
+            # annoying information bar below ur url bar
             self.chrome_options.add_experimental_option("excludeSwitches", ["enable-automation"])
 
         # make life easier
