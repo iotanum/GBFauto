@@ -95,7 +95,8 @@ class GBFGame:
         self.chrome_options.add_experimental_option('localState', state)
 
         # annoying information bar below ur url bar
-        self.chrome_options.add_experimental_option("excludeSwitches", ["enable-automation"])
+        if UNDETECTED_CHROME_MODE != 1:
+            self.chrome_options.add_experimental_option("excludeSwitches", ["enable-automation"])
 
         # make life easier
         self.chrome_options.add_argument("--mute-audio")
