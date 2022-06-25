@@ -35,12 +35,11 @@ class GBFGame:
     started = False
 
     def __init__(self):
-        self.chrome_options = self.set_webdriver()
+        self.chrome_options = self.set_selenium_provider()
         self.capabilities = DesiredCapabilities.CHROME
         self.capabilities["goog:loggingPrefs"] = {"performance": "ALL"}
         self.custom_chrome_options()
-        self.driver = webdriver.Chrome(executable_path='utils/chromedriver.exe', options=self.chrome_options,
-                                       desired_capabilities=self.capabilities)
+        self.driver = self.set_webdriver()
         self.login_page = "http://game.granbluefantasy.jp/#authentication"
         self._start_time = time.time()
         self.press = Press(self)
@@ -70,10 +69,21 @@ class GBFGame:
     def run_time(self):
         return time.time() - self._start_time
 
-    def set_webdriver(self):
+    def set_selenium_provider(self):
         if UNDETECTED_CHROME_MODE == 1:
             return uc.ChromeOptions()
         return Options()
+
+    def set_webdriver(self):
+        exe_path = 'utils/chromedriver.exe'
+        options = self.chrome_options
+        desired_capabilities = self.capabilities
+
+        if UNDETECTED_CHROME_MODE == 1:
+            return uc.Chrome(executable_path=exe_path, options=options,
+                             desired_capabilities=desired_capabilities)
+        return webdriver.Chrome(executable_path=exe_path, options=options,
+                                desired_capabilities=desired_capabilities)
 
     def custom_chrome_options(self):
         # Resize chrome window on smaller screens (otherwise chrome driver crashes?)
