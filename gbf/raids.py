@@ -1,4 +1,5 @@
 from selenium import common as selenium_err
+from selenium.webdriver.common.by import By
 
 from bs4 import BeautifulSoup as bs
 from bs4 import SoupStrainer as ss
@@ -43,7 +44,7 @@ class Raids:
                 break
 
             try:
-                self.driver.find_element_by_class_name('txt-auto-setting').click()
+                self.driver.find_element(By.CLASS_NAME, 'txt-auto-setting').click()
                 return True
 
             except:
@@ -209,7 +210,7 @@ class Raids:
         self.get_raid_id()
         self.bot.action.input_raid_id(self.raid_id)
         time.sleep(0.5)
-        self.driver.find_element_by_class_name("btn-post-key").click()
+        self.driver.find_element(By.CLASS_NAME, "btn-post-key").click()
 
     def handle_entering_raid(self):
         self.type_and_join_raid()
