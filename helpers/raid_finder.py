@@ -32,7 +32,7 @@ class RaidFinder:
         self.driver.get(self.raid_finder_url)
 
         try:
-            elem = self.driver.find_element_by_css_selector('.mdl-button--fab')
+            elem = self.driver.find_element(By.CSS_SELECTOR, '.mdl-button--fab')
             self.handle_clicks(elem)
         except selenium_err.exceptions.NoSuchElementException:
             sys.exit("It seems that 'Granblue Raid Finder' site is down, try again later.")
@@ -48,9 +48,9 @@ class RaidFinder:
     def click_on_raid(self):
         try:
             if self.window_already_closed is False:
-                elem = self.driver.find_element_by_xpath(f"// *[text()[contains(., '{self.raid_name}')]]")
+                elem = self.driver.find_element(By.XPATH, f"// *[text()[contains(., '{self.raid_name}')]]")
                 self.handle_clicks(elem)
-                close_elem = self.driver.find_element_by_css_selector('.js-close-dialog')
+                close_elem = self.driver.find_element(By.CSS_SELECTOR, '.js-close-dialog')
                 self.handle_clicks(close_elem)
                 self.window_already_closed = True
                 self.launched = False
@@ -70,7 +70,7 @@ class RaidFinder:
             # It likes to hang for some reason ?
             if time.time() - start_time >= 30:
                 # Ghetto refresh smh
-                self.driver.find_element_by_tag_name('body').send_keys(Keys.CONTROL + Keys.F5)
+                self.driver.find_element(By.TAG_NAME, 'body').send_keys(Keys.CONTROL + Keys.F5)
                 self.wait_for_element(By.XPATH, '//*[@id="gbfrf-dialog__follow"]/ul/li[1]/span/span[2]')
                 start_time = time.time()
 
