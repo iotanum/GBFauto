@@ -140,10 +140,10 @@ class Raids:
             else:
                 next_turn_queue = None
 
-            if next_turn_queue and self.auto_button_on:
+            if next_turn_queue and not self.auto_button_on:
                 self.bot.handle.check_if_chara_are_attacking()
                 self.bot.press.auto_attack()
-                self.auto_button_on = False
+                self.auto_button_on = True
 
             hp_timer, stale_hp_timer, old_raid_boss_hp, refreshed = \
                 self.check_for_stale_hp(hp_timer, stale_hp_timer, old_raid_boss_hp, battle)
