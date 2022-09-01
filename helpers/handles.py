@@ -5,7 +5,8 @@ import random
 import asyncio
 import json
 from datetime import datetime
-
+import traceback
+import sys
 from selenium import common as selenium_err
 from selenium.webdriver.common.keys import Keys
 from selenium.common.exceptions import WebDriverException
@@ -139,16 +140,20 @@ class Handle:
 
             if main_mask and kill is True and not popup and mc_lvl_elem and exp_popup is True:
                 # It's exact percentages
-                mc_lvl_xp_percentage = mc_lvl_elem.find('div', {'class': 'prt-exp-gauge-inner-new'})['style']
+                mc_lvl_xp_percentage = mc_lvl_elem.find('div', {'class': 'prt-exp-gauge-inner-new'}).get('style')
                 team_lvl_xp_percentages = team_lvl_elem.find_all('div', {'class': 'prt-exp-gauge-inner-new'})
 
                 # Also, since team gauges are a list (find_all func)
                 # it needs a list comp to get it's elements style
-                team_lvl_xp_percentages = [elem['style'] for elem in team_lvl_xp_percentages]
+                team_lvl_xp_percentages = [elem.get('style') for elem in team_lvl_xp_percentages]
 
                 # Now extract the percentage/s number from a string
-                mc_lvl_xp_percentage = self._convert_gain_to_int(mc_lvl_xp_percentage)
-                team_lvl_xp_percentages = [self._convert_gain_to_int(percentage) for percentage in team_lvl_xp_percentages]
+                if mc_lvl_xp_percentage:
+                    mc_lvl_xp_percentage = self._convert_gain_to_int(mc_lvl_xp_percentage)
+
+                # Check if any character in the lineup is lvling up
+                if team_lvl_xp_percentages.count(None) != 6:
+                    team_lvl_xp_percentages = [self._convert_gain_to_int(perc) for perc in team_lvl_xp_percentages if perc is not None]
 
                 # And now the actual check if it changed or not
                 if mc_lvl_xp_percentage != mc_gauge:
@@ -687,23 +692,16 @@ class Handle:
         return queues if queues_for_battle else None
 
     def parse_support_summon_list(self):
+        load_dotenv("config.env", override=True)
+        SUPPORT_ELEMENT = int(os.getenv('SUPPORT_ELEMENT'))
+        # In source code 'Misc.' summon list is type 0
+        if SUPPORT_ELEMENT == 7:
+            SUPPORT_ELEMENT = 0
+
         parser = bs(self._driver.page_source, features='lxml')
 
-        for element in parser.find_all('div', {'class': 'prt-supporter-attribute'}):
-            # In page source currently picked support element list
-            # contains only 1 attribute (usually)
-            if len(element['class']) == 1:
-                support_summon_list = element
-                break
-            # Also check if there's an attribute called "typeX" X being the
-            # number of an element in game
-            # If there's a 'type' attr in given element - it usually means
-            # current support summon page is within an event
-            elif len(element['class']) == 2 and 'type' in str(element['class'][1]):
-                support_summon_list = element
-                break
-
-        # Extract actual support summons from the above found element
+        # Get full div of the summon list and extract all support summons
+        support_summon_list = parser.find('div', {'class': f'prt-supporter-attribute type{SUPPORT_ELEMENT} selected'})
         support_summons = support_summon_list.find_all('div', class_='btn-supporter lis-supporter')
 
         support_summon_dict = {}
