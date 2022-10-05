@@ -31,7 +31,7 @@ class Handle:
         self.support_id = None
         self.support_num = None
         self.support_name = ""
-        self.consumables_url = 'http://game.granbluefantasy.jp/#item'
+        self.consumables_url = 'https://game.granbluefantasy.jp/#item'
         self.skippable_nightmare_battle = None
         self.battle = dict()
 
