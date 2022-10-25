@@ -313,7 +313,7 @@ class Raids:
         return
 
     def handle_to_raids(self):
-        # self.bot.wait.for_loading_screen()
+        self.bot.wait.for_loading_screen()
         # JS my way to 'raids' page
         self.driver.execute_script("window.location.href = '#quest/assist'")
         # And then press the 'Enter ID' tab
