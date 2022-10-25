@@ -134,7 +134,7 @@ class Raids:
                     break
 
             queues = self.bot.handle.find_all_queues()
-            queues = self.bot.handle.handle_queue(queues, battle)
+            queues = self.bot.handle.handle_queue(queues, battle, raids=True)
             print(queues, "finish_fight")
             if queues is not None:
                 next_turn_queue = battle['turn'] + 1 in queues[battle['battle']]

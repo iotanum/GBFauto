@@ -646,7 +646,7 @@ class Handle:
 
             time.sleep(0.1)
 
-    def handle_queue(self, queues, battle):
+    def handle_queue(self, queues, battle, raids=False):
         # Returns a list of queues as described in config for the current battle
         # there's raids/quests with multiple battle stages
         print(battle, 'handle_queue')
@@ -678,7 +678,7 @@ class Handle:
 
             if queue_for_turn and queue_for_turn is not True:
                 print(queue_for_turn, 'queue for this turn')
-                self._bot.queue.do_queue(queue_for_turn)
+                self._bot.queue.do_queue(queue_for_turn, raids=raids)
 
                 # Give 'True' to the queue which was just done
                 # this way I do checks later what queues were done
