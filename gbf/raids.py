@@ -1,3 +1,4 @@
+import selenium.common.exceptions
 from selenium import common as selenium_err
 from selenium.webdriver.common.by import By
 
@@ -317,7 +318,10 @@ class Raids:
         self.driver.execute_script("window.location.href = '#quest/assist'")
         # And then press the 'Enter ID' tab
         time.sleep(0.5)
-        self.bot.press.enter_raid_id()
+        try:
+            self.bot.press.enter_raid_id()
+        except selenium.common.exceptions.ElementClickInterceptedException:
+            self.handle_to_raids()
 
     def set_raid_name(self, raid_boss_name):
         self.raid_name = raid_boss_name
