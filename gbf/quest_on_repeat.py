@@ -98,6 +98,7 @@ class QuestOnRepeat:
                 print(battle['battle'] == battle['total_battles'], 'check for battle equal')
                 if (battle['battle'] == battle['total_battles']) \
                         or battle['total_battles'] == 1:
+                    self.auto_button_on = False
                     self.driver.refresh()
 
                 if boss_killed:
@@ -140,6 +141,9 @@ class QuestOnRepeat:
         return chapter_id
 
     def enable_auto_in_loading_screen(self):
+        load_dotenv('config.env', override=True)
+        auto_button_in_loading_screen = int(os.getenv("AUTO_IN_LOADING_SCREEN"))
+
         start = time.time()
 
         while True:
@@ -149,18 +153,32 @@ class QuestOnRepeat:
             if "result" in str(self.driver.current_url):
                 break
 
-            try:
-                parser = bs(self.driver.page_source, 'lxml')
+            if auto_button_in_loading_screen == 1:
+                try:
+                    parser = bs(self.driver.page_source, 'lxml')
 
-                auto_enabled_button = parser.find_all('div', {'class': ['btn-ready-auto', 'anim-simple-fadein']})
+                    auto_enabled_button = parser.find_all('div', {'class': ['btn-ready-auto', 'anim-simple-fadein']})
 
-                if not auto_enabled_button:
-                    self.driver.find_element(By.CLASS_NAME, 'txt-auto-setting').click()
+                    if not auto_enabled_button:
+                        self.driver.find_element(By.CLASS_NAME, 'txt-auto-setting').click()
+                    else:
+                        print("Since there's no queue - enabled auto attacks.")
+                        break
+                except:
+                    continue
+            else:
+                current_url = str(self.driver.current_url)
+
+                if 'raid_multi' in current_url:
+                    if self.auto_button_on is False:
+                        self.bot.press.auto_attack()
+                        self.auto_button_on = True
                 else:
-                    print("Since there's no queue - enabled auto attacks.")
-                    break
-            except:
-                continue
+                    if self.auto_button_on is False:
+                        self.bot.press.attack_button()
+                        self.bot.press.auto_attack()
+                        self.auto_button_on = True
+                break
 
     def handle_fight(self):
         load_dotenv('config.env', override=True)

@@ -2,6 +2,7 @@ import json
 import time
 import traceback
 
+import selenium.common.exceptions
 from selenium.common.exceptions import WebDriverException
 
 

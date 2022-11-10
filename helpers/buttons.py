@@ -153,7 +153,7 @@ class Press:
         strainer = ss('div', attrs={'id': 'cnt-raid-information'})
         try:
             while True:
-                if time.time() - start > 5:
+                if time.time() - start > 15:
                     break
 
                 parser = bs(self._driver.page_source, 'lxml', parse_only=strainer)
