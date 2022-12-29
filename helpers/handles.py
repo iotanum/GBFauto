@@ -711,9 +711,9 @@ class Handle:
             support_name = support_summon.find('div', {'class': 'prt-supporter-summon'}).text.strip()
             skill_level = support_summon.find('div', {'class': ['prt-summon-skill']})
             # Sk level class consists of 3 styles, thus the magic number.
-            # 3rd style is what I need, it consists of style used to display the skill level of
+            # 2nd style is what I need, it consists of style used to display the skill level of
             # the summon
-            skill_level = str(skill_level['class'][2] if len(skill_level['class']) == 3 else 0)
+            skill_level = str(skill_level['class'][1] if len(skill_level['class']) == 3 else 0)
             friend_summon = support_summon.find('div', {'class': 'ico-friend'})
 
             # Extract summon level, name, and if it is a friend summon
