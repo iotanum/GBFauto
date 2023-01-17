@@ -109,12 +109,13 @@ class Skills:
 
             main_characters_screen = parser.find_all('div', {'class': 'prt-command-top',
                                                              'style': re.compile('display: none;')})
-            back_button = parser.find('div', class_='btn-command-back display-on')
+            back_button_yatima = parser.find('div', class_=f'btn-command-back display-off display-on')
+            back_button_normal = parser.find('div', class_=f'btn-command-back display-on')
 
             if not main_characters_screen:
                 break
 
-            if back_button:
+            if back_button_normal or back_button_yatima:
                 return True
 
     def check_if_skill_is_disabled(self, chara_num, skill_num):
@@ -232,22 +233,22 @@ class Skills:
                     if step > 1:
                         self._bot.press.back()
                     # If MC is fked - no summon usage
-                    if not self.check_if_skill_is_disabled(1, 1):
-                        actions_for_summon = [self._bot.press.summon_card,
-                                              self._bot.press.summon_num,
-                                              self._bot.press.confirm_summon_fight,
-                                              self._bot.press.back]
-                        for idx, summ_action in enumerate(actions_for_summon, 1):
-                            # second step is choosing which summon
-                            if idx == 2:
-                                summ_action(ability_num, raids)
-                            elif idx == 4:
-                                if self.check_for_back_button():
-                                    summ_action()
-                            else:
-                                summ_action(raids)
-                            time.sleep(0.35)
-                        summon_was_used = True
+                    # if not self.check_if_skill_is_disabled(1, 1):
+                    actions_for_summon = [self._bot.press.summon_card,
+                                          self._bot.press.summon_num,
+                                          self._bot.press.confirm_summon_fight,
+                                          self._bot.press.back]
+                    for idx, summ_action in enumerate(actions_for_summon, 1):
+                        # second step is choosing which summon
+                        if idx == 2:
+                            summ_action(ability_num, raids)
+                        elif idx == 4:
+                            if self.check_for_back_button():
+                                summ_action()
+                        else:
+                            summ_action(raids)
+                        time.sleep(0.35)
+                    summon_was_used = True
             except (selenium_err.exceptions.ElementNotVisibleException, selenium_err.exceptions.WebDriverException) as e:
                 print(f"Broke on {step} step.")
                 print(action)
