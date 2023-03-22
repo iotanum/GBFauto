@@ -16,6 +16,7 @@ class QuestOnRepeat:
         self.repeat = False
         self.bot.raid_battle = False
         self.coop = False
+        self.sandbox = False
         self.quest_url = None
         # Some solo/raids that can be hosted are not always
         # repeatable, aka doesn't have "play again" button
@@ -37,6 +38,11 @@ class QuestOnRepeat:
                 print("Locked on this CO-OP quest.")
                 self.quest_url = url
                 self.coop = True
+                break
+            if '#replicard/supporter' in url:
+                print("Locked on this Sandbox quest.")
+                self.quest_url = url
+                self.sandbox = True
                 break
 
             time.sleep(0.2)
@@ -65,7 +71,7 @@ class QuestOnRepeat:
         printed_battle = False
         battle = initial_info
         while True:
-            final_battle = battle['battle'] == battle['total_battles']
+            # final_battle = battle['battle'] == battle['total_battles']
 
             queues = self.bot.handle.find_all_queues()
             queues = self.bot.handle.handle_queue(queues, battle)
@@ -107,6 +113,9 @@ class QuestOnRepeat:
 
                 # after refreshing get the status of a battle
                 battle = self.bot.battle.get_battle_start_info()
+
+                if battle is None:
+                    return
 
                 if not next_turn_queue and "result" not in str(self.driver.current_url):
                     self.enable_auto_in_loading_screen()
@@ -333,8 +342,10 @@ class QuestOnRepeat:
             self.do_repeatable_quest()
 
     def handle_pre_fight(self):
-        if self.coop is False:
+        if self.coop is False and self.sandbox is False:
             self.bot.handle.pre_fight_support_summons()
+        if self.sandbox is True:
+            self.bot.handle.sandbox_summon_pick()
         else:
             # Wait until player chooses it's COOP team.
             self.wait_for_coop_prep()

@@ -224,6 +224,9 @@ class Handle:
                     print(fate_ep_description)
                     self._bot.press.usual_ok()
 
+                elif 'pop-support-ability' in popup_name:
+                    self._bot.press.usual_ok()
+
                 elif 'hell-appearance' in popup_name:
                     night_boss_name = popup.find('div', {'class': "btn-usual-next"})
                     night_boss_name = night_boss_name['data-chapter-name']
@@ -457,7 +460,8 @@ class Handle:
 
         while True:
             # Execute the instruction
-            if self._bot.wait.for_support_summon():
+            success = self._bot.wait.for_support_summon()
+            if success:
                 if instruction_to_run == 'support_element':
                     instructions_to_run[instruction_to_run](SUPPORT_ELEMENT)
 
@@ -505,8 +509,18 @@ class Handle:
                         return False
                     break
             else:
-                return True
+                return success
             time.sleep(0.15)
+
+    def sandbox_summon_pick(self):
+        self._bot.wait.for_loading_screen()
+
+        self._bot.press.confirm_support_summon()
+
+        verification = self._wait_for_summon_confirmation()
+
+        if self._bot.option_repeatable is True and not verification:
+            self.track_ap_usage()
 
     def _wait_for_summon_confirmation(self):
         start = time.time()
