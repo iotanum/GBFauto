@@ -27,18 +27,26 @@ class QuestOnRepeat:
     def wait_for_repeatable_quest(self):
         if not self.quest_url:
             print('\nWaiting for you to enter a repeatable quest...')
+
+        # wait until you join a specific fight, set correct variables for given fight
         while True:
             url = str(self.driver.current_url)
+
+            # normal fights (GW, Events, Missions)
             if '#quest/supporter' in url:
                 if not self.quest_url:
                     self.quest_url = url
                     print("Locked in on this quest.")
                 break
+
+            # coop fights
             if '#coopraid/room/' in url:
                 print("Locked on this CO-OP quest.")
                 self.quest_url = url
                 self.coop = True
                 break
+
+            # arcanum sandbox fights
             if '#replicard/supporter' in url:
                 print("Locked on this Sandbox quest.")
                 self.quest_url = url
