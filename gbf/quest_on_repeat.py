@@ -317,7 +317,7 @@ class QuestOnRepeat:
             if nightmare_battle and temp_nightmare_state:
                 self.is_repeatable = True
 
-            if self.bot.need_ap:
+            if self.bot.need_ap and self.sandbox is False:
                 self.use_ap_for_non_repeatables()
 
             # Navigate back to original quest
@@ -354,6 +354,9 @@ class QuestOnRepeat:
             self.bot.handle.pre_fight_support_summons()
         if self.sandbox is True:
             self.bot.handle.sandbox_summon_pick()
+
+            if self.bot.need_ap is True:
+                self.bot.handle.not_enough_of_x(sandbox=self.sandbox, timeout=10)
         else:
             # Wait until player chooses it's COOP team.
             self.wait_for_coop_prep()

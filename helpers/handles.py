@@ -1012,25 +1012,32 @@ class Handle:
             # Eat less CPU
             time.sleep(0.5)
 
-    def not_enough_of_x(self, timeout=3):
+    def not_enough_of_x(self, sandbox=False, timeout=3):
         start = time.time()
+        ap_ep_class = "pop-usual pop-stamina pop-show"
+        if sandbox:
+            ap_ep_class = "pop-usual pop-recover-aap proceed pop-show"
+
+        summon_screen_urls = ["#quest/supporter", "#raid"]
 
         while True:
             current_url = self._driver.current_url
 
             # Exit loop if in 'Pick support summon' page
-            if time.time() - start > timeout or '#quest/supporter' in current_url or '#raid' in current_url:
+            if time.time() - start > timeout or any(url in current_url for url in summon_screen_urls):
                 break
 
             parser = bs(self._driver.page_source, 'lxml')
 
-            ap_ep_popup = parser.find('div', class_='pop-usual pop-stamina pop-show')
+            ap_ep_popup = parser.find('div', class_=ap_ep_class)
             ap_consumable_popup = parser.find('div', class_='pop-usual pop-normal pop-show')
             various_popup = parser.find('div', {'class': ['common-pop-error']})
 
             if ap_ep_popup or ap_consumable_popup:
                 ap_ep_amount = random.randint(1, 10)
-                self._bot.action.use_potions_or_pills(ap_ep_amount, consumable=True if ap_consumable_popup else False)
+                self._bot.action.use_potions_or_pills(ap_ep_amount,
+                                                      consumable=True if ap_consumable_popup else False,
+                                                      sandbox=sandbox)
                 self._bot.wait.for_loading_screen()
                 self._bot.press.usual_ok() if not ap_consumable_popup else None
                 self._bot.need_ap = False
