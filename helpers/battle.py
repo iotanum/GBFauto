@@ -24,7 +24,7 @@ class BattleInfo:
 
     def get_response_body(self, request_id, response=None):
         start_time_check = False
-        loading_time = 5
+        loading_time = 2
         start = None
 
         while True:

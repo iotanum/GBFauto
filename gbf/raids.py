@@ -122,7 +122,7 @@ class Raids:
             # battle['battle']
             # battle['boss_hps']
 
-            if not battle['boss_hps']:
+            if battle is None or not battle['boss_hps']:
                 # This occurs if after refreshing there's no element named "prt-targeting-area"
                 # aka bot is no longer in the fight screen
                 page = self.handle_return_page()
@@ -220,12 +220,12 @@ class Raids:
         # This handles everything related to summon picking before fight
         success = self.bot.handle.pre_fight_support_summons()
         print("success handle_entering_raid", success)
-        if success is False and '#quest/supporter' in self.driver.current_url:
+        if not success and '#quest/supporter' in self.driver.current_url:
             # If there was a popup in summon page - move bot to 'raids' page
             self.handle_to_raids()
             # And repeat whole function
             self.handle_entering_raid()
-        elif success is False and '#quest/assist' in self.driver.current_url:
+        elif not success and '#quest/assist' in self.driver.current_url:
             self.handle_entering_raid()
 
         print(f"Joined raid '{self.raid_id}'.")
