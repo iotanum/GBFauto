@@ -38,9 +38,9 @@ class Action:
             amount_in_list = f'//*[@id="pop"]/div/div[2]/div/div/div[4]/div[2]/select/option[{amount}]'
 
         if sandbox:
-            option_list = '//*[@id="pop"]/div/div[2]/div/div[3]/div[1]/div[4]/select'
-            amount_in_list = f'//*[@id="pop"]/div/div[2]/div/div[3]/div[1]/div[4]/select/option[{amount}]'
-            use_button = '//*[@id="pop"]/div/div[2]/div/div[3]/div[1]/div[5]/div'
+            option_list = '//*[@id="pop"]/div/div[2]/div/div[3]/div[2]/div[4]/select'
+            amount_in_list = f'//*[@id="pop"]/div/div[2]/div/div[3]/div[2]/div[4]/select/option[{amount}]'
+            use_button = '//*[@id="pop"]/div/div[2]/div/div[3]/div[2]/div[5]/div'
 
         # Click on the options button
         self._Timeout.wait_for_element(timeout, expected_behaviour, search_by, option_list)
