@@ -513,11 +513,11 @@ class Handle:
             time.sleep(0.15)
 
     def sandbox_summon_pick(self):
+        verification = self._wait_for_summon_confirmation()
+
         self._bot.wait.for_loading_screen()
 
         self._bot.press.confirm_support_summon()
-
-        verification = self._wait_for_summon_confirmation()
 
         if self._bot.option_repeatable is True and not verification:
             self.track_ap_usage()
