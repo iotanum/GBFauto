@@ -352,7 +352,7 @@ class QuestOnRepeat:
     def handle_pre_fight(self):
         if self.coop is False and self.sandbox is False:
             self.bot.handle.pre_fight_support_summons()
-        if self.sandbox is True:
+        elif self.sandbox is True:
             self.bot.handle.sandbox_summon_pick()
 
             if self.bot.need_ap is True:
