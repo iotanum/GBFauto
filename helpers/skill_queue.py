@@ -16,26 +16,24 @@ class Skills:
         self._queue_from_config = None
 
     def parse_queue(self, queue):
-        ability_to_num = {'a': 1, 'b': 2, 'c': 3, 'd': 4, 'e': 5, 'f': 6}
+        ability_to_num = {"a": 1, "b": 2, "c": 3, "d": 4, "e": 5, "f": 6}
 
         queue = queue.split(">")
-        queue = [step.strip(' ') for step in queue]
+        queue = [step.strip(" ") for step in queue]
 
         queue_final = {}
 
         for idx, step in enumerate(queue, 1):
             for character, ability, *rest in step.split():
-                queue_final[idx] = {'Character': None,
-                                    'Ability': None,
-                                    'Select': None}
+                queue_final[idx] = {"Character": None, "Ability": None, "Select": None}
 
-                queue_final[idx]['Character'] = int(character)
-                queue_final[idx]['Ability'] = ability_to_num[ability]
+                queue_final[idx]["Character"] = int(character)
+                queue_final[idx]["Ability"] = ability_to_num[ability]
 
                 if len(rest) == 1:
-                    queue_final[idx]['Select'] = int(rest[0])
+                    queue_final[idx]["Select"] = int(rest[0])
                 else:
-                    queue_final[idx]['Select'] = None
+                    queue_final[idx]["Select"] = None
 
         self.check_queue(queue_final)
 
@@ -45,26 +43,30 @@ class Skills:
         max_actions_per_turn = 17
 
         if len(queue) > max_actions_per_turn:
-            raise AttributeError('Too many steps, max is 17 in 1 turn.')
+            raise AttributeError("Too many steps, max is 17 in 1 turn.")
         for step, action in queue.items():
-            char_num = queue[step]['Character']
-            ability_num = queue[step]['Ability']
-            select_num = queue[step]['Select']
+            char_num = queue[step]["Character"]
+            ability_num = queue[step]["Ability"]
+            select_num = queue[step]["Select"]
 
             if char_num != 5 and ability_num > 4:
-                raise AttributeError('Character cannot have more than 4 abilities!')
+                raise AttributeError("Character cannot have more than 4 abilities!")
             elif select_num is not None and select_num > 6:
-                raise AttributeError("There cannot be more than 6 teammates in the 'Select Character' screen!")
+                raise AttributeError(
+                    "There cannot be more than 6 teammates in the 'Select Character' screen!"
+                )
             elif char_num == 5 and ability_num > 6:
-                raise AttributeError('There cannot be more than 6 support summons!')
+                raise AttributeError("There cannot be more than 6 support summons!")
             elif char_num > 5:
-                raise AttributeError('Please check your queue, number of playables cannot be more than 5')
+                raise AttributeError(
+                    "Please check your queue, number of playables cannot be more than 5"
+                )
 
     def handle_skill_press(self, char_num, ability_num, raids=False):
         self._bot.press.char_skill(char_num, ability_num, raids=raids)
 
     def handle_char_switching(self, direction=None):
-        if direction == 'next':
+        if direction == "next":
             self._bot.press.next_char()
         else:
             self._bot.press.previous_char()
@@ -77,24 +79,32 @@ class Skills:
 
     def remove_ability_log_element(self):
         try:
-            elem = self._driver.find_element(By.CLASS_NAME, 'prt-raid-log')
-            self._driver.execute_script("arguments[0].parentNode.removeChild(arguments[0]);", elem)
+            elem = self._driver.find_element(By.CLASS_NAME, "prt-raid-log")
+            self._driver.execute_script(
+                "arguments[0].parentNode.removeChild(arguments[0]);", elem
+            )
         except selenium_err.exceptions.NoSuchElementException:
             pass
 
     def remove_backup_request_element(self):
         try:
-            popup = self._driver.find_element(By.CLASS_NAME, 'txt-raid-assist')
-            popup_footer = self._driver.find_element(By.CLASS_NAME, 'prt-popup-footer')
-            self._driver.execute_script('arguments[0].parentNode.removeChild(arguments[0]);', popup)
-            self._driver.execute_script('arguments[0].parentNode.removeChild(arguments[0]);', popup_footer)
+            popup = self._driver.find_element(By.CLASS_NAME, "txt-raid-assist")
+            popup_footer = self._driver.find_element(By.CLASS_NAME, "prt-popup-footer")
+            self._driver.execute_script(
+                "arguments[0].parentNode.removeChild(arguments[0]);", popup
+            )
+            self._driver.execute_script(
+                "arguments[0].parentNode.removeChild(arguments[0]);", popup_footer
+            )
         except selenium_err.exceptions.NoSuchElementException:
             pass
 
     def remove_active_mask_element(self):
         try:
-            mask = self._driver.find_element(By.ID, 'main-mask')
-            self._driver.execute_script('arguments[0].parentNode.removeChild(arguments[0]);', mask)
+            mask = self._driver.find_element(By.ID, "main-mask")
+            self._driver.execute_script(
+                "arguments[0].parentNode.removeChild(arguments[0]);", mask
+            )
         except selenium_err.exceptions.NoSuchElementException:
             pass
 
@@ -105,12 +115,18 @@ class Skills:
             if time.time() - start > 5:
                 break
 
-            parser = bs(self._driver.page_source, features='lxml')
+            parser = bs(self._driver.page_source, features="lxml")
 
-            main_characters_screen = parser.find_all('div', {'class': 'prt-command-top',
-                                                             'style': re.compile('display: none;')})
-            back_button_yatima = parser.find('div', class_=f'btn-command-back display-off display-on')
-            back_button_normal = parser.find('div', class_=f'btn-command-back display-on')
+            main_characters_screen = parser.find_all(
+                "div",
+                {"class": "prt-command-top", "style": re.compile("display: none;")},
+            )
+            back_button_yatima = parser.find(
+                "div", class_=f"btn-command-back display-off display-on"
+            )
+            back_button_normal = parser.find(
+                "div", class_=f"btn-command-back display-on"
+            )
 
             if not main_characters_screen:
                 break
@@ -121,31 +137,38 @@ class Skills:
     def check_if_skill_is_disabled(self, chara_num, skill_num):
         start = time.time()
 
-        charas = ss('div', attrs={"class": 'prt-command'})
+        charas = ss("div", attrs={"class": "prt-command"})
 
         while True:
             if time.time() - start > 2:
                 break
 
-            parser = bs(self._driver.page_source, features='lxml', parse_only=charas)
-            chara = parser.find('div', attrs={"class": re.compile(f'prt-command-chara chara{chara_num}')})
+            parser = bs(self._driver.page_source, features="lxml", parse_only=charas)
+            chara = parser.find(
+                "div",
+                attrs={"class": re.compile(f"prt-command-chara chara{chara_num}")},
+            )
 
             if parser:
-                available_skill = parser.find_all('div', {'class': 'lis-ability btn-ability-available'})
+                available_skill = parser.find_all(
+                    "div", {"class": "lis-ability btn-ability-available"}
+                )
 
-                if 'turn-disable' in chara['class']:
-                    print('blocked chara')
+                if "turn-disable" in chara["class"]:
+                    print("blocked chara")
                     return True
 
-                abilities = chara.find('div', {'class': 'prt-ability-list'})
-                abilities = abilities.findAll('div', {'class': re.compile('lis-ability btn-ability')})
+                abilities = chara.find("div", {"class": "prt-ability-list"})
+                abilities = abilities.findAll(
+                    "div", {"class": re.compile("lis-ability btn-ability")}
+                )
                 for idx, ability in enumerate(abilities, 1):
-                    if skill_num == idx and 'ability-disable' in ability['class']:
-                        print('blocked skill')
+                    if skill_num == idx and "ability-disable" in ability["class"]:
+                        print("blocked skill")
                         return True
 
                 if available_skill:
-                    print('available skill, all good')
+                    print("available skill, all good")
                     return False
 
             time.sleep(0.1)
@@ -159,7 +182,7 @@ class Skills:
         try:
             self._queue = self.parse_queue(queue_from_config)
         except ValueError:
-            self._queue = {1: {'Character': 7, 'Ability': 8}}
+            self._queue = {1: {"Character": 7, "Ability": 8}}
             pass
         summon_was_used = False
         current_char_num = None
@@ -169,14 +192,19 @@ class Skills:
             print(step, action, "queue step action")
             # Try/Except in case of fight ending while queueing skills
             try:
-                char_num = self._queue[step]['Character']
-                ability_num = self._queue[step]['Ability']
-                select_party_member = self._queue[step]['Select']
+                char_num = self._queue[step]["Character"]
+                ability_num = self._queue[step]["Ability"]
+                select_party_member = self._queue[step]["Select"]
                 # Instantly break if queue in config is empty
                 if char_num == 7:
                     break
                 # Click on a first character in the queue to open up it's abilities 'menu'
-                if step == 1 and char_num != 5 or summon_was_used is True:
+                if (
+                    step == 1
+                    and char_num != 5
+                    or summon_was_used is True
+                    and char_num != 5
+                ):
                     print(1)
                     self._bot.press.char_to_start_queue(char_num)
                     if not self.check_if_skill_is_disabled(char_num, ability_num):
@@ -200,26 +228,31 @@ class Skills:
                         print(3)
                         num_of_actions_to_take = current_char_num - char_num
                         # Convert possible negative number to positive
-                        num_of_actions_to_take = max(num_of_actions_to_take, -num_of_actions_to_take)
-                        print(current_char_num, char_num, 'current, char')
+                        num_of_actions_to_take = max(
+                            num_of_actions_to_take, -num_of_actions_to_take
+                        )
+                        print(current_char_num, char_num, "current, char")
                         if current_char_num == 4 and char_num == 1:
                             print("moving forward")
-                            self.handle_char_switching(direction='next')
+                            self.handle_char_switching(direction="next")
                             time.sleep(0.15)
                         elif current_char_num == 1 and char_num == 4:
                             print("moving backward")
-                            self.handle_char_switching(direction='previous')
+                            self.handle_char_switching(direction="previous")
                             time.sleep(0.15)
                         elif current_char_num < char_num:
                             for _ in range(num_of_actions_to_take):
-                                self.handle_char_switching(direction='next')
+                                self.handle_char_switching(direction="next")
                                 time.sleep(0.15)
                         else:
                             for _ in range(num_of_actions_to_take):
-                                self.handle_char_switching(direction='previous')
+                                self.handle_char_switching(direction="previous")
                                 time.sleep(0.15)
                     current_char_num = char_num
-                    if not self.check_if_skill_is_disabled(char_num, ability_num) and [step, action] != executed_step:
+                    if (
+                        not self.check_if_skill_is_disabled(char_num, ability_num)
+                        and [step, action] != executed_step
+                    ):
                         print(4)
                         self.handle_skill_press(char_num, ability_num, raids)
                         # This is for 'Select party member' type of ability
@@ -230,14 +263,16 @@ class Skills:
                 else:
                     print(5)
                     # Exit character skill selection 'window'
-                    if step > 1:
+                    if step > 1 and self._queue[step - 1]["Character"] != 5:
                         self._bot.press.back()
                     # If MC is fked - no summon usage
                     # if not self.check_if_skill_is_disabled(1, 1):
-                    actions_for_summon = [self._bot.press.summon_card,
-                                          self._bot.press.summon_num,
-                                          self._bot.press.confirm_summon_fight,
-                                          self._bot.press.back]
+                    actions_for_summon = [
+                        self._bot.press.summon_card,
+                        self._bot.press.summon_num,
+                        self._bot.press.confirm_summon_fight,
+                        self._bot.press.back,
+                    ]
                     for idx, summ_action in enumerate(actions_for_summon, 1):
                         # second step is choosing which summon
                         if idx == 2:
@@ -249,7 +284,10 @@ class Skills:
                             summ_action(raids)
                         time.sleep(0.35)
                     summon_was_used = True
-            except (selenium_err.exceptions.ElementNotVisibleException, selenium_err.exceptions.WebDriverException) as e:
+            except (
+                selenium_err.exceptions.ElementNotVisibleException,
+                selenium_err.exceptions.WebDriverException,
+            ) as e:
                 print(f"Broke on {step} step.")
                 print(action)
                 print(e)

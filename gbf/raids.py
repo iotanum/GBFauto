@@ -24,10 +24,10 @@ class Raids:
 
     def get_raid_boss_hps(self):
         try:
-            strainer = ss('div', attrs={'class': 'prt-targeting-area main-tap-area'})
-            parser = bs(self.driver.page_source, 'lxml', parse_only=strainer)
+            strainer = ss("div", attrs={"class": "prt-targeting-area main-tap-area"})
+            parser = bs(self.driver.page_source, "lxml", parse_only=strainer)
 
-            raid_boss_hps = parser.find_all('span', 'txt-gauge-value')
+            raid_boss_hps = parser.find_all("span", "txt-gauge-value")
             raid_boss_hps = [int(hp.text) for hp in raid_boss_hps]
 
             return raid_boss_hps
@@ -45,7 +45,7 @@ class Raids:
                 break
 
             try:
-                self.driver.find_element(By.CLASS_NAME, 'txt-auto-setting').click()
+                self.driver.find_element(By.CLASS_NAME, "txt-auto-setting").click()
                 return True
 
             except:
@@ -55,8 +55,8 @@ class Raids:
         refreshed = False
 
         # monitor for how long raid boss hp/hps hasn't changed
-        if old_raid_boss_hp != battle['boss_hps']:
-            old_raid_boss_hp = battle['boss_hps']
+        if old_raid_boss_hp != battle["boss_hps"]:
+            old_raid_boss_hp = battle["boss_hps"]
             # If HP has changed - reset the timer
             # hp_timer = time, when HP has changed
             hp_timer = time.time()
@@ -81,7 +81,9 @@ class Raids:
         # stage.gGameStatus.auto_attack
         while True:
             try:
-                response = self.driver.execute_script("return stage.gGameStatus.auto_attack;")
+                response = self.driver.execute_script(
+                    "return stage.gGameStatus.auto_attack;"
+                )
                 print(response, type(response))
                 return
             except (TypeError, js_err) as e:
@@ -94,8 +96,8 @@ class Raids:
         # waits until it's dead
 
         # Monkey patch to load stuff config real time while bot is running
-        load_dotenv('config.env', override=True)
-        queue = os.getenv('QUEUE_FIRST_FIGHT')
+        load_dotenv("config.env", override=True)
+        queue = os.getenv("QUEUE_FIRST_FIGHT")
 
         # Wait for a start.json request from the game to get info
         # on the state of a battle when starting a battle
@@ -109,7 +111,9 @@ class Raids:
 
         # self.bot.handle.wait_before_fight(fight_start=True)
         print(5)
-        self.bot.handle.wait_before_fight(fight_start=True, gw=True if not queue else False)
+        self.bot.handle.wait_before_fight(
+            fight_start=True, gw=True if not queue else False
+        )
         print(6)
 
         old_raid_boss_hp = []
@@ -122,7 +126,7 @@ class Raids:
             # battle['battle']
             # battle['boss_hps']
 
-            if battle is None or not battle['boss_hps']:
+            if battle is None or not battle["boss_hps"]:
                 # This occurs if after refreshing there's no element named "prt-targeting-area"
                 # aka bot is no longer in the fight screen
                 page = self.handle_return_page()
@@ -137,7 +141,7 @@ class Raids:
             queues = self.bot.handle.handle_queue(queues, battle, raids=True)
             print(queues, "finish_fight")
             if queues is not None:
-                next_turn_queue = battle['turn'] + 1 in queues[battle['battle']]
+                next_turn_queue = battle["turn"] + 1 in queues[battle["battle"]]
             else:
                 next_turn_queue = None
 
@@ -146,15 +150,21 @@ class Raids:
                 self.bot.press.auto_attack()
                 self.auto_button_on = True
 
-            hp_timer, stale_hp_timer, old_raid_boss_hp, refreshed = \
-                self.check_for_stale_hp(hp_timer, stale_hp_timer, old_raid_boss_hp, battle)
+            (
+                hp_timer,
+                stale_hp_timer,
+                old_raid_boss_hp,
+                refreshed,
+            ) = self.check_for_stale_hp(
+                hp_timer, stale_hp_timer, old_raid_boss_hp, battle
+            )
 
             ###############
             try:
                 # Press 'attack' and enable auto if it's not enabled already
-                if not self.auto_button_on and pressed_on_turn != battle['turn']:
+                if not self.auto_button_on and pressed_on_turn != battle["turn"]:
                     self.bot.press.attack_button()
-                    pressed_on_turn = battle['turn']
+                    pressed_on_turn = battle["turn"]
 
                     if not next_turn_queue:
                         print("no next queue")
@@ -198,7 +208,10 @@ class Raids:
                     self.bot.handle.wait_before_fight(fight_start=True)
 
                     # Remove the element again since we refreshed the page
-            except (selenium_err.exceptions.NoSuchElementException, selenium_err.exceptions.WebDriverException):
+            except (
+                selenium_err.exceptions.NoSuchElementException,
+                selenium_err.exceptions.WebDriverException,
+            ):
                 pass
 
             time.sleep(0.3)
@@ -220,12 +233,12 @@ class Raids:
         # This handles everything related to summon picking before fight
         success = self.bot.handle.pre_fight_support_summons()
         print("success handle_entering_raid", success)
-        if not success and '#quest/supporter' in self.driver.current_url:
+        if not success and "#quest/supporter" in self.driver.current_url:
             # If there was a popup in summon page - move bot to 'raids' page
             self.handle_to_raids()
             # And repeat whole function
             self.handle_entering_raid()
-        elif not success and '#quest/assist' in self.driver.current_url:
+        elif not success and "#quest/assist" in self.driver.current_url:
             self.handle_entering_raid()
 
         print(f"Joined raid '{self.raid_id}'.")
@@ -239,31 +252,36 @@ class Raids:
         while True:
             current_page = str(self.driver.current_url)
 
-            if time.time() - start_time > change_time and current_page == before_joining_url:
-                print(f"URL didn't change in {change_time}s. Searching for another raid.")
+            if (
+                time.time() - start_time > change_time
+                and current_page == before_joining_url
+            ):
+                print(
+                    f"URL didn't change in {change_time}s. Searching for another raid."
+                )
                 return
 
             if current_page != before_joining_url or fight_end is True:
-                print('different url')
-                if '#raid_multi' in current_page:
+                print("different url")
+                if "#raid_multi" in current_page:
                     return True
 
-                if 'empty' in current_page:
+                if "empty" in current_page:
                     return
 
-                if '#result_multi' in current_page:
+                if "#result_multi" in current_page:
                     return
 
-                if '#quest' in current_page:
+                if "#quest" in current_page:
                     self.driver.refresh()
                     return
 
-                if '#supporter_raid' in current_page:
+                if "#supporter_raid" in current_page:
                     return
 
-                if '#mypage' in current_page:
+                if "#mypage" in current_page:
                     self.handle_to_raids()
-                    return ['enter_raid_func']
+                    return ["enter_raid_func"]
 
             time.sleep(0.1)
 
@@ -299,12 +317,14 @@ class Raids:
             self.bot.total_fights += 1
 
         avg_time_per_quest = round(self.bot.run_time() / self.bot.total_fights, 2)
-        print('-----------------------------------------------------------------------')
-        print(f"Total fights: {self.bot.total_fights}, EXP: {self.bot.total_exp}, Rank points: {self.bot.total_ranks}\n"
-              f"Pendants: {self.bot.total_pendants}\n"
-              f"Running for {hours}h:{minutes}min:{seconds}s, "
-              f"Average time per quest: {avg_time_per_quest}s")
-        print('-----------------------------------------------------------------------')
+        print("-----------------------------------------------------------------------")
+        print(
+            f"Total fights: {self.bot.total_fights}, EXP: {self.bot.total_exp}, Rank points: {self.bot.total_ranks}\n"
+            f"Pendants: {self.bot.total_pendants}\n"
+            f"Running for {hours}h:{minutes}min:{seconds}s, "
+            f"Average time per quest: {avg_time_per_quest}s"
+        )
+        print("-----------------------------------------------------------------------")
 
         page = self.handle_return_page(fight_end=True)
         if page is not None:

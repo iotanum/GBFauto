@@ -44,10 +44,10 @@ class SpecialQuests:
     def get_quest_ids(self):
         # wait until special quest sub diff popup appears
         self.bot.popup.special_quest_popup()
-        parser = bs(self.driver.page_source, 'lxml')
+        parser = bs(self.driver.page_source, "lxml")
 
-        elems = parser.find_all('div', {'data-chapter-id': True})
-        quest_ids = [elem['data-chapter-id'] for elem in elems]
+        elems = parser.find_all("div", {"data-chapter-id": True})
+        quest_ids = [elem["data-chapter-id"] for elem in elems]
 
         # return a list of ids in an order from top to bottom
         return quest_ids
@@ -58,8 +58,10 @@ class SpecialQuests:
 
     def remove_battle_scene_element(self):
         try:
-            elem = self.driver.find_element_by_class_name('btn-scene-next')
-            self.driver.execute_script("arguments[0].parentNode.removeChild(arguments[0]);", elem)
+            elem = self.driver.find_element_by_class_name("btn-scene-next")
+            self.driver.execute_script(
+                "arguments[0].parentNode.removeChild(arguments[0]);", elem
+            )
         except selenium_err.exceptions.NoSuchElementException:
             pass
 
@@ -69,17 +71,20 @@ class SpecialQuests:
         self.remove_battle_scene_element()
 
         while mobs_alive is True:
-            strainer = ss('div', attrs={'class': 'prt-targeting-area'})
-            parser = bs(self.driver.page_source, 'lxml', parse_only=strainer)
+            strainer = ss("div", attrs={"class": "prt-targeting-area"})
+            parser = bs(self.driver.page_source, "lxml", parse_only=strainer)
 
-            mob_hps = parser.find_all('span', 'txt-gauge-value')
+            mob_hps = parser.find_all("span", "txt-gauge-value")
             mob_hps = [int(hp.text) for hp in mob_hps]
 
             if not all(hp == 0 for hp in mob_hps):
                 try:
                     self.bot.press.attack_button()
                     self.bot.wait.for_fight_main_mask()
-                except (selenium_err.exceptions.NoSuchElementException, selenium_err.exceptions.WebDriverException):
+                except (
+                    selenium_err.exceptions.NoSuchElementException,
+                    selenium_err.exceptions.WebDriverException,
+                ):
                     pass
             else:
                 mobs_alive = False
@@ -97,8 +102,12 @@ class SpecialQuests:
         num_of_fights = self.count_quest_fight_parts()
         first_queue_from_config = os.getenv("QUEUE_FIRST_FIGHT")
         second_queue_from_config = os.getenv("QUEUE_SECOND_FIGHT")
-        third_queue_from_config = os.getenv('QUEUE_THIRD_FIGHT')
-        queues = [first_queue_from_config, second_queue_from_config, third_queue_from_config]
+        third_queue_from_config = os.getenv("QUEUE_THIRD_FIGHT")
+        queues = [
+            first_queue_from_config,
+            second_queue_from_config,
+            third_queue_from_config,
+        ]
         for fight_num, queue in enumerate(queues, 1):
             # Don't need to wait on first iteration since getting the number of fights already did that
             self.wait_before_fight(in_fight=True)
@@ -113,10 +122,10 @@ class SpecialQuests:
 
     def count_quest_fight_parts(self):
         self.bot.wait.for_quest_advencment_screen(start=True)
-        parser = bs(self.driver.page_source, 'lxml')
+        parser = bs(self.driver.page_source, "lxml")
 
-        progress_bar = parser.find('div', {'class': 'prt-position'})
-        quest_parts = progress_bar.find_all('div', {'class': ['lis-spot']})
+        progress_bar = parser.find("div", {"class": "prt-position"})
+        quest_parts = progress_bar.find_all("div", {"class": ["lis-spot"]})
 
         if quest_parts == 0:
             quest_parts = 1
@@ -143,9 +152,11 @@ class SpecialQuests:
         self.bot.handle.after_fight_popups()
 
         hours, minutes, seconds = self.convert_seconds_to_hms_format()
-        print(f"Total fights: {self.bot.total_fights}, EXP: {self.bot.total_exp}, Rank points: {self.bot.total_ranks}\n"
-              f"Running for {hours}h:{minutes}min:{seconds}s, "
-              f"Average time per quest: {round(self.bot.run_time() / self.bot.total_fights, 2)}s")
+        print(
+            f"Total fights: {self.bot.total_fights}, EXP: {self.bot.total_exp}, Rank points: {self.bot.total_ranks}\n"
+            f"Running for {hours}h:{minutes}min:{seconds}s, "
+            f"Average time per quest: {round(self.bot.run_time() / self.bot.total_fights, 2)}s"
+        )
 
         self.bot.wait.for_loot_screen()
         self.bot.press.play_again_quest()
@@ -163,7 +174,9 @@ class SpecialQuests:
             self.bot.wait.for_loading_screen()
             self.bot.press.usual_ok()
 
-    def special_quests(self, sub_option_num, sub_option, sub_option_diff_num, sub_option_diff):
+    def special_quests(
+        self, sub_option_num, sub_option, sub_option_diff_num, sub_option_diff
+    ):
         # Assign user input to class vars
         self.sub_option_num = sub_option_num
         self.sub_option = sub_option

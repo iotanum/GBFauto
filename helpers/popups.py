@@ -13,42 +13,78 @@ class Popup:
     def __init__(self, game_handler):
         self._driver = game_handler.driver
         self._Timeout = Timeout(self._driver)
-        self._resume_quest_xpath = "//div[@class='pop-usual popRestartQuest pop-show']" \
-                                   "[contains(@style,'display: block')]"
+        self._resume_quest_xpath = (
+            "//div[@class='pop-usual popRestartQuest pop-show']"
+            "[contains(@style,'display: block')]"
+        )
         self._stamina_class = "pop-stamina"
-        self._verification_xpath = "//*[@class='prt-popup-header' and contains(text(),'Access Verification')]"
-        self._backup_request_xpath = "//div[contains(@class, 'assist') and contains(@style, 'display: block')]"
-        self._after_fight_xp_xpath = "//div[@class='pop-usual pop-exp pop-show']" \
-                                     "[contains(@style,'display: block')]"
+        self._verification_xpath = (
+            "//*[@class='prt-popup-header' and contains(text(),'Access Verification')]"
+        )
+        self._backup_request_xpath = (
+            "//div[contains(@class, 'assist') and contains(@style, 'display: block')]"
+        )
+        self._after_fight_xp_xpath = (
+            "//div[@class='pop-usual pop-exp pop-show']"
+            "[contains(@style,'display: block')]"
+        )
         self._friend_request_class = "prt-friend-request"
         self._typical_popup = "pop-show"
         self._extended_mastery_id = "cjs-lp-rankup"
-        self._achievement_xpath = "//div[@class='pop-usual pop-notification-title pop-show']" \
-                                  "[contains(@style,'display: block')]"
+        self._achievement_xpath = (
+            "//div[@class='pop-usual pop-notification-title pop-show']"
+            "[contains(@style,'display: block')]"
+        )
         self._new_item_class = "img-newitem"
-        self._quest_submenu = "//div[@class='pop-usual pop-quest-detail pop-show']" \
-                              "[contains(@style,'display: block')]"
+        self._quest_submenu = (
+            "//div[@class='pop-usual pop-quest-detail pop-show']"
+            "[contains(@style,'display: block')]"
+        )
         self._fight_advice = "prt-advice"
-        self._log_ability_xpath = "//div[@class='prt-raid-log log-ability']" \
-                                  "[contains(@style,'display: block')]"
-        self._new_rank_xpath = "//div[@class='pop-usual pop-player-up pop-show']" \
-                               "[contains(@style,'display: block')]"
-        self._battle_concluded_xpath = "//div[@class='pop-usual pop-rematch-fail pop-show']" \
-                                       "[contains(@style,'display: block')]"
-        self._event_items_xpath = "//div[@class='pop-usual pop-event-item pop-show']" \
-                                  "[contains(@style,'display: block')]"
-        self._side_scroll_xpath = "//div[@class='pop-usual pop-skip-confirm pop-show']" \
-                                  "[contains(@style,'display: block')]"
-        self._side_scroll_results_xpath = "//div[@class='pop-usual pop-skip-result pop-show']" \
-                                          "[contains(@style,'display: block')]"
-        self._special_quest_popup_xpath = "//div[@class='pop-usual pop-bundled-quest pop-show']" \
-                                          "[contains(@style,'display: block')]"
-        self._angel_halo_nightmare_xpath = "//div[@class='pop-usual pop-hell-appearance angel-halo pop-show']" \
-                                           "[contains(@style,'display: block')]"
+        self._log_ability_xpath = (
+            "//div[@class='prt-raid-log log-ability']"
+            "[contains(@style,'display: block')]"
+        )
+        self._new_rank_xpath = (
+            "//div[@class='pop-usual pop-player-up pop-show']"
+            "[contains(@style,'display: block')]"
+        )
+        self._battle_concluded_xpath = (
+            "//div[@class='pop-usual pop-rematch-fail pop-show']"
+            "[contains(@style,'display: block')]"
+        )
+        self._event_items_xpath = (
+            "//div[@class='pop-usual pop-event-item pop-show']"
+            "[contains(@style,'display: block')]"
+        )
+        self._side_scroll_xpath = (
+            "//div[@class='pop-usual pop-skip-confirm pop-show']"
+            "[contains(@style,'display: block')]"
+        )
+        self._side_scroll_results_xpath = (
+            "//div[@class='pop-usual pop-skip-result pop-show']"
+            "[contains(@style,'display: block')]"
+        )
+        self._special_quest_popup_xpath = (
+            "//div[@class='pop-usual pop-bundled-quest pop-show']"
+            "[contains(@style,'display: block')]"
+        )
+        self._angel_halo_nightmare_xpath = (
+            "//div[@class='pop-usual pop-hell-appearance angel-halo pop-show']"
+            "[contains(@style,'display: block')]"
+        )
 
-    def _wait_for_popup(self, timeout, search_by, element_name, expected_behaviour=EC.visibility_of_element_located):
+    def _wait_for_popup(
+        self,
+        timeout,
+        search_by,
+        element_name,
+        expected_behaviour=EC.visibility_of_element_located,
+    ):
         expected_behaviour = expected_behaviour
-        popup = self._Timeout.wait_for_element(timeout, expected_behaviour, search_by, element_name)
+        popup = self._Timeout.wait_for_element(
+            timeout, expected_behaviour, search_by, element_name
+        )
 
         return popup
 
@@ -76,7 +112,7 @@ class Popup:
         #
         #     time.sleep(0.1)
         timeout = 2
-        print('bakcup vistiek ce esu')
+        print("bakcup vistiek ce esu")
         search_by = By.XPATH
 
         return self._wait_for_popup(timeout, search_by, self._backup_request_xpath)
@@ -188,4 +224,6 @@ class Popup:
         timeout = 2
         search_by = By.XPATH
 
-        return self._wait_for_popup(timeout, search_by, self._angel_halo_nightmare_xpath)
+        return self._wait_for_popup(
+            timeout, search_by, self._angel_halo_nightmare_xpath
+        )

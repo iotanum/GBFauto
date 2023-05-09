@@ -43,8 +43,8 @@ class GbfRequests:
                 logs = self.get_logs()
 
                 for log in filter(self.log_filter, logs):
-                    if log['method'] == "Network.loadingFinished":
-                        loaded_id = log['params']['requestId']
+                    if log["method"] == "Network.loadingFinished":
+                        loaded_id = log["params"]["requestId"]
                         print(loaded_id)
 
                         for request_id in request_ids:
@@ -63,13 +63,13 @@ class GbfRequests:
 
     # attack request, which request url has 'attack_results' or smth in it
     def find_attack_btn_response(self):
-        attack_request = 'normal_attack_result'
+        attack_request = "normal_attack_result"
         request_ids = self.find_request(attack_request)
         return request_ids
 
     # contains information of a battle start situation
     def find_battle_start_response(self):
-        battle_start = 'start.json'
+        battle_start = "start.json"
         request_ids = self.find_request(battle_start)
         # self.finish_loading_responses(request_ids)
         return request_ids

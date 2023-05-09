@@ -24,11 +24,11 @@ import undetected_chromedriver as uc
 
 from dotenv import load_dotenv
 
-load_dotenv('config.env')
+load_dotenv("config.env")
 
-HEADLESS_MODE = int(os.getenv('HEADLESS_MODE'))
-MANUAL_LOGIN = int(os.getenv('MANUAL_LOGIN'))
-UNDETECTED_CHROME_MODE = int(os.getenv('UC_MODE'))
+HEADLESS_MODE = int(os.getenv("HEADLESS_MODE"))
+MANUAL_LOGIN = int(os.getenv("MANUAL_LOGIN"))
+UNDETECTED_CHROME_MODE = int(os.getenv("UC_MODE"))
 
 
 class GBFGame:
@@ -64,7 +64,7 @@ class GBFGame:
         self.quest_cost = None
         self.need_ap = False
         self.refreshed = False
-        self.point_threshold = os.getenv('POINT_THRESHOLD')
+        self.point_threshold = os.getenv("POINT_THRESHOLD")
 
     def run_time(self):
         return time.time() - self._start_time
@@ -75,15 +75,21 @@ class GBFGame:
         return Options()
 
     def set_webdriver(self):
-        exe_path = 'utils/chromedriver.exe'
+        exe_path = "utils/chromedriver.exe"
         options = self.chrome_options
         desired_capabilities = self.capabilities
 
         if UNDETECTED_CHROME_MODE == 1:
-            return uc.Chrome(executable_path=exe_path, options=options,
-                             desired_capabilities=desired_capabilities)
-        return webdriver.Chrome(executable_path=exe_path, options=options,
-                                desired_capabilities=desired_capabilities)
+            return uc.Chrome(
+                executable_path=exe_path,
+                options=options,
+                desired_capabilities=desired_capabilities,
+            )
+        return webdriver.Chrome(
+            executable_path=exe_path,
+            options=options,
+            desired_capabilities=desired_capabilities,
+        )
 
     def custom_chrome_options(self):
         # Resize chrome window on smaller screens (otherwise chrome driver crashes?)
@@ -92,11 +98,15 @@ class GBFGame:
 
         if UNDETECTED_CHROME_MODE != 1:
             # Disable occlusion; no throttling when the window is not on-top
-            state = {'browser.enabled_labs_experiments': ["calculate-native-win-occlusion@2"]}
-            self.chrome_options.add_experimental_option('localState', state)
+            state = {
+                "browser.enabled_labs_experiments": ["calculate-native-win-occlusion@2"]
+            }
+            self.chrome_options.add_experimental_option("localState", state)
 
             # annoying information bar below ur url bar
-            self.chrome_options.add_experimental_option("excludeSwitches", ["enable-automation"])
+            self.chrome_options.add_experimental_option(
+                "excludeSwitches", ["enable-automation"]
+            )
 
         # make life easier
         self.chrome_options.add_argument("--mute-audio")
@@ -104,7 +114,10 @@ class GBFGame:
 
     def get_screen_resolution(self):
         user32 = ctypes.windll.user32
-        screen_resolution = [int(user32.GetSystemMetrics(0)), int(user32.GetSystemMetrics(1))]
+        screen_resolution = [
+            int(user32.GetSystemMetrics(0)),
+            int(user32.GetSystemMetrics(1)),
+        ]
 
         return screen_resolution
 
@@ -112,19 +125,19 @@ class GBFGame:
         if element.is_displayed():
             element.click()
         else:
-            print('?')
+            print("?")
 
     def wait_for_google_login(self):
         wait = WebDriverWait(self.driver, 10)
-        wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, '.btn-google.w-max')))
+        wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, ".btn-google.w-max")))
 
     def wait_for_gbf_login(self):
         wait = WebDriverWait(self.driver, 10)
-        wait.until(EC.element_to_be_clickable((By.CLASS_NAME, 'btn-auth-login')))
+        wait.until(EC.element_to_be_clickable((By.CLASS_NAME, "btn-auth-login")))
 
     def press_login(self):
         self.wait_for_gbf_login()
-        elem = self.driver.find_element(By.CLASS_NAME, 'btn-auth-login')
+        elem = self.driver.find_element(By.CLASS_NAME, "btn-auth-login")
         self.handle_click(elem)
 
     def wait_for_title_change(self):
@@ -138,11 +151,15 @@ class GBFGame:
     def switch_to_mobage_window(self):
         self.wait_for_window_switch()
         time.sleep(2)
-        while 'mobage' not in str(self.driver.current_url):
+        while "mobage" not in str(self.driver.current_url):
             try:
                 mobage_window = self.driver.window_handles[1]
                 self.driver.switch_to.window(mobage_window)
-            except (selenium_err.exceptions.NoSuchWindowException, IndexError, WebDriverException):
+            except (
+                selenium_err.exceptions.NoSuchWindowException,
+                IndexError,
+                WebDriverException,
+            ):
                 pass
         if str(self.driver.title) != "Mobage Connect":
             self.driver.refresh()
@@ -150,25 +167,31 @@ class GBFGame:
     def press_google_login(self):
         self.switch_to_mobage_window()
         self.wait_for_google_login()
-        elem = self.driver.find_element(By.CSS_SELECTOR, '.btn-google.w-max')
+        elem = self.driver.find_element(By.CSS_SELECTOR, ".btn-google.w-max")
         self.handle_click(elem)
 
     def wait_for_email(self):
         wait = WebDriverWait(self.driver, 3)
-        wait.until(EC.element_to_be_clickable((By.NAME, 'identifier')))
+        wait.until(EC.element_to_be_clickable((By.NAME, "identifier")))
 
     def wait_for_password(self):
         wait = WebDriverWait(self.driver, 6)
-        wait.until(EC.element_to_be_clickable((By.XPATH, '//*[@id="password"]/div[1]/div/div[1]/input')))
+        wait.until(
+            EC.element_to_be_clickable(
+                (By.XPATH, '//*[@id="password"]/div[1]/div/div[1]/input')
+            )
+        )
 
     def enter_login_email(self, login, password):
         self.wait_for_email()
-        form_email = self.driver.find_element(By.NAME, 'identifier')
+        form_email = self.driver.find_element(By.NAME, "identifier")
         form_email.send_keys(login)
         time.sleep(0.5)
         self.driver.find_element(By.XPATH, '//*[@id="identifierNext"]').click()
         self.wait_for_password()
-        form_password = self.driver.find_element(By.XPATH, '//*[@id="password"]/div[1]/div/div[1]/input')
+        form_password = self.driver.find_element(
+            By.XPATH, '//*[@id="password"]/div[1]/div/div[1]/input'
+        )
         form_password.send_keys(password)
         time.sleep(0.5)
         self.driver.find_element(By.XPATH, '//*[@id="passwordNext"]').click()
@@ -183,11 +206,13 @@ class GBFGame:
     def wait_for_main_menu_page(self):
         while True:
             url = str(self.driver.current_url)
-            if '#mypage' in url:
+            if "#mypage" in url:
                 break
 
     def run_additional_cdp_commands(self):
-        self.driver.execute_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})")
+        self.driver.execute_script(
+            "Object.defineProperty(navigator, 'webdriver', {get: () => undefined})"
+        )
 
     def login(self, login, password):
         if GBFGame.started is False:

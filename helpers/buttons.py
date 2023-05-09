@@ -20,40 +20,52 @@ class Press:
         self._raid_button_class = "prt-multi-button"
         self._enter_raid_id_id = "tab-id"
         self._join_raid_room_class = "btn-post-key"
-        self._support_summon_confirm_xpath = '//*[@id="wrapper"]/div[3]/div[3]/div[3]/div[2]'
-        self._attack_button_css = '.btn-attack-start.display-on'
+        self._support_summon_confirm_xpath = (
+            '//*[@id="wrapper"]/div[3]/div[3]/div[3]/div[2]'
+        )
+        self._attack_button_css = ".btn-attack-start.display-on"
         self._results_button_class = "btn-result"
         self._cancel_button_class = "btn-usual-cancel"
         self._ok_button_class = "btn-usual-ok"
-        self._close_button_class = 'btn-usual-close'
+        self._close_button_class = "btn-usual-close"
         self._approve_backup_request_css = ".btn-usual-text.with-potion"
-        self._quest_button_after_fight_no_loot_css = '.btn-control.location-href'
-        self._back_button_css = '.btn-command-back.display-on'
-        self._summons_button_css = '.prt-list-top.btn-command-summon.summon-on'
-        self._summon_card_xpath = '//*[@id="wrapper"]/div[3]/div[2]/div[9]/div[2]/div/div[1]'
+        self._quest_button_after_fight_no_loot_css = ".btn-control.location-href"
+        self._back_button_css = ".btn-command-back.display-on"
+        self._summons_button_css = ".prt-list-top.btn-command-summon.summon-on"
+        self._summon_card_xpath = (
+            '//*[@id="wrapper"]/div[3]/div[2]/div[9]/div[2]/div/div[1]'
+        )
         self._next_char_class = "ico-next"
         self._previous_char_class = "ico-pre"
-        self._special_quests_class = 'btn-extra-quest'
-        self._fight_advice_class = 'prt-advice'
+        self._special_quests_class = "btn-extra-quest"
+        self._fight_advice_class = "prt-advice"
         self._log_ability_css = ".prt-raid-log.log-ability"
         self._play_again_quest_css = ".btn-retry.cnt-quest"
-        self._confirm_summon_battle_xpath = '//*[@id="wrapper"]/div[3]/div[14]/div[3]/div[2]'
-        self._retreat_class = 'btn-withdraw'
-        self._skip_button_class = 'btn-command-skip'
-        self._next_button_class = 'btn-usual-next'
+        self._confirm_summon_battle_xpath = (
+            '//*[@id="wrapper"]/div[3]/div[14]/div[3]/div[2]'
+        )
+        self._retreat_class = "btn-withdraw"
+        self._skip_button_class = "btn-command-skip"
+        self._next_button_class = "btn-usual-next"
         self._auto_attack_xpath = '//*[@id="wrapper"]/div[3]/div[2]/div[8]'
-        self._consumables_xpath = '//*[@id="wrapper"]/div[3]/div[2]/div[2]/div[1]/div[1]/div[2]'
+        self._consumables_xpath = (
+            '//*[@id="wrapper"]/div[3]/div[2]/div[2]/div[1]/div[1]/div[2]'
+        )
         self._consumables_ap_xpath = '//*[@id="prt-target-list"]/div[2]/img'
         self._skippable_battle_xpath = '//*[@id="pop"]/div/div[2]/div/div[4]/label'
         self._approve_backup_request_gw_xpath = '//*[@id="pop"]/div/div[3]/a'
         # TODO
-        self._guild_wars_xpath = '//*[@id="wrapper"]/div[3]/div[2]/div[4]/div[2]/div/img'
+        self._guild_wars_xpath = (
+            '//*[@id="wrapper"]/div[3]/div[2]/div[4]/div[2]/div/img'
+        )
 
     def _wait_for_button(self, search_by, element_name, timeout=5):
         expected_behaviour = EC.element_to_be_clickable
         search_by = search_by
 
-        button = self._Timeout.wait_for_element(timeout, expected_behaviour, search_by, element_name)
+        button = self._Timeout.wait_for_element(
+            timeout, expected_behaviour, search_by, element_name
+        )
         return button
 
     def usual_cancel(self):
@@ -66,19 +78,25 @@ class Press:
         search_by = By.CLASS_NAME
 
         self._wait_for_button(search_by, self._quest_button_main_menu_class)
-        self._driver.find_element(By.CLASS_NAME, self._quest_button_main_menu_class).click()
+        self._driver.find_element(
+            By.CLASS_NAME, self._quest_button_main_menu_class
+        ).click()
 
     def usual_event_home(self):
         search_by = By.CLASS_NAME
 
         self._wait_for_button(search_by, self._quest_button_after_fight_class)
-        self._driver.find_element(By.CLASS_NAME, self._quest_button_after_fight_class).click()
+        self._driver.find_element(
+            By.CLASS_NAME, self._quest_button_after_fight_class
+        ).click()
 
     def quest_button_after_fight_no_loot(self):
         search_by = By.CSS_SELECTOR
 
         self._wait_for_button(search_by, self._quest_button_after_fight_no_loot_css)
-        self._driver.find_element(By.CSS_SELECTOR, self._quest_button_after_fight_no_loot_css).click()
+        self._driver.find_element(
+            By.CSS_SELECTOR, self._quest_button_after_fight_no_loot_css
+        ).click()
 
     def raid_button(self):
         search_by = By.CLASS_NAME
@@ -101,7 +119,9 @@ class Press:
         self._Actions.double_click(btn).perform()
         # self._driver.find_element(By.CLASS_NAME, self._join_raid_room_class).click()
 
-    def support_summon(self, support_dict=None, support_element_num=None, first_summon=False):
+    def support_summon(
+        self, support_dict=None, support_element_num=None, first_summon=False
+    ):
         # TODO
         # Bot should be able to pick a specific support summon
         # Also I'm testing double_click on how it performs in game
@@ -110,14 +130,18 @@ class Press:
 
             # Misc. support
             if support_element_num == 7:
-                first_support_summon_xpath = f'//*[@id="cnt-quest"]/div[2]/div[{3}]/div[1]/div[4]'
+                first_support_summon_xpath = (
+                    f'//*[@id="cnt-quest"]/div[2]/div[{3}]/div[1]/div[4]'
+                )
 
             search_by = By.XPATH
 
             self._wait_for_button(search_by, first_support_summon_xpath)
             self._driver.find_element(By.XPATH, first_support_summon_xpath).click()
         else:
-            element_tab_num = (support_element_num + 3) if support_element_num < 7 else 3
+            element_tab_num = (
+                (support_element_num + 3) if support_element_num < 7 else 3
+            )
             support_summon_xpath = f'//*[@id="cnt-quest"]/div[2]/div[{element_tab_num}]/div[{support_dict["Num"]}]'
             search_by = By.XPATH
             self._wait_for_button(search_by, support_summon_xpath)
@@ -150,18 +174,22 @@ class Press:
     def attack_button(self):
         start = time.time()
 
-        strainer = ss('div', attrs={'id': 'cnt-raid-information'})
+        strainer = ss("div", attrs={"id": "cnt-raid-information"})
         try:
             while True:
                 if time.time() - start > 15:
                     break
 
-                parser = bs(self._driver.page_source, 'lxml', parse_only=strainer)
+                parser = bs(self._driver.page_source, "lxml", parse_only=strainer)
 
-                attack_button_on = parser.find('div', class_='btn-attack-start display-on')
+                attack_button_on = parser.find(
+                    "div", class_="btn-attack-start display-on"
+                )
 
                 if attack_button_on:
-                    self._driver.find_element(By.CSS_SELECTOR, self._attack_button_css).click()
+                    self._driver.find_element(
+                        By.CSS_SELECTOR, self._attack_button_css
+                    ).click()
                     break
         except:
             pass
@@ -170,8 +198,10 @@ class Press:
         timeout = 10
         search_by = By.CLASS_NAME
 
-        if 'result' not in self._driver.current_url:
-            self._wait_for_button(search_by, self._results_button_class, timeout=timeout)
+        if "result" not in self._driver.current_url:
+            self._wait_for_button(
+                search_by, self._results_button_class, timeout=timeout
+            )
             self._driver.find_element(By.CLASS_NAME, self._results_button_class).click()
 
     def approve_backup_request(self):
@@ -180,12 +210,16 @@ class Press:
 
         css = self._wait_for_button(search_by, self._approve_backup_request_css)
         if css:
-            self._driver.find_element(By.CSS_SELECTOR, self._approve_backup_request_css).click()
+            self._driver.find_element(
+                By.CSS_SELECTOR, self._approve_backup_request_css
+            ).click()
             return
 
         gw = self._wait_for_button(search_by_gw, self._approve_backup_request_gw_xpath)
         if gw:
-            self._driver.find_element(By.XPATH, self._approve_backup_request_gw_xpath).click()
+            self._driver.find_element(
+                By.XPATH, self._approve_backup_request_gw_xpath
+            ).click()
 
     def usual_ok(self):
         search_by = By.CLASS_NAME
@@ -227,7 +261,9 @@ class Press:
         self._driver.find_element(By.XPATH, ability_xpath).click()
 
     def select_part_member(self, char_num):
-        party_member_xpath = f'//*[@id="wrapper"]/div[3]/div[10]/div[2]/div[2]/div[2]/div[{char_num}]'
+        party_member_xpath = (
+            f'//*[@id="wrapper"]/div[3]/div[10]/div[2]/div[2]/div[2]/div[{char_num}]'
+        )
         search_by = By.XPATH
 
         self._wait_for_button(search_by, party_member_xpath)
@@ -240,8 +276,10 @@ class Press:
         self._driver.find_element(By.CSS_SELECTOR, self._back_button_css).click()
 
     def summon_num(self, summon_num, raids=False):
-        div = 'div[10]' if raids else 'div[10]'
-        summon_xpath = f'//*[@id="wrapper"]/div[3]/div[2]/{div}/div[2]/div/div[{summon_num + 1}]'
+        div = "div[10]" if raids else "div[10]"
+        summon_xpath = (
+            f'//*[@id="wrapper"]/div[3]/div[2]/{div}/div[2]/div/div[{summon_num + 1}]'
+        )
         search_by = By.XPATH
 
         self._wait_for_button(search_by, summon_xpath)
@@ -265,7 +303,9 @@ class Press:
         # treasure_quest_num is in accordance to menu dict at when launching the bot
         search_by = By.XPATH
 
-        specific_treasure_quest_xpath = f'//*[@id="cnt-normal-quest"]/div/div/div[{treasure_quest_num}]/div/div[4]'
+        specific_treasure_quest_xpath = (
+            f'//*[@id="cnt-normal-quest"]/div/div/div[{treasure_quest_num}]/div/div[4]'
+        )
         self._wait_for_button(search_by, specific_treasure_quest_xpath)
         self._driver.find_element(By.XPATH, specific_treasure_quest_xpath).click()
 
@@ -285,9 +325,11 @@ class Press:
             if time.time() - start > 5:
                 break
 
-            parser = bs(self._driver.page_source, 'lxml')
+            parser = bs(self._driver.page_source, "lxml")
 
-            coop_room_button = parser.find_all('div', {'class': 'btn-control', 'style': 'display: block;'})
+            coop_room_button = parser.find_all(
+                "div", {"class": "btn-control", "style": "display: block;"}
+            )
 
             if coop_room_button:
                 self._driver.find_element(By.XPATH, coop_room_xpath).click()
@@ -312,7 +354,9 @@ class Press:
         search_by = By.CSS_SELECTOR
 
         elem = self._wait_for_button(search_by, self._play_again_quest_css, timeout=10)
-        self._driver.find_element(By.CSS_SELECTOR, self._play_again_quest_css).click() if elem else None
+        self._driver.find_element(
+            By.CSS_SELECTOR, self._play_again_quest_css
+        ).click() if elem else None
         return elem
 
     # raids arg is not needed here, but added to make it easier for the queue adaptation
@@ -349,7 +393,9 @@ class Press:
 
     def gw_ex_diff(self, diff_num):
         if diff_num != 3:
-            ex_diff_xpath = f'//*[@id="pop"]/div/div[2]/div/div[3]/div[1]/div/div[{diff_num}]'
+            ex_diff_xpath = (
+                f'//*[@id="pop"]/div/div[2]/div/div[3]/div[1]/div/div[{diff_num}]'
+            )
         else:
             ex_diff_xpath = '//*[@id="pop"]/div/div[2]/div/div[3]/div[2]/div/div'
 
@@ -382,15 +428,19 @@ class Press:
             if time.time() - start > 5:
                 break
 
-            parser = bs(self._driver.page_source, 'lxml')
+            parser = bs(self._driver.page_source, "lxml")
 
-            auto_button = parser.find_all('div', {'class': 'btn-auto', 'style': 'display: block;'})
+            auto_button = parser.find_all(
+                "div", {"class": "btn-auto", "style": "display: block;"}
+            )
 
             if auto_button:
                 # With "auto-guard" auto-attack xpath
                 # self._driver.find_element(By.XPATH, self._auto_attack_xpath).click()
                 # Without one
-                self._driver.find_element(By.XPATH, '//*[@id="wrapper"]/div[3]/div[2]/div[7]').click()
+                self._driver.find_element(
+                    By.XPATH, '//*[@id="wrapper"]/div[3]/div[2]/div[7]'
+                ).click()
                 break
 
             time.sleep(0.15)

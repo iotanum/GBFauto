@@ -16,9 +16,9 @@ from selenium import common as selenium_err
 
 from dotenv import load_dotenv
 
-load_dotenv('config.env')
-SUPPORT_ELEMENT = os.getenv('SUPPORT_ELEMENT')
-PICKING_YOURSELF = int(os.getenv('MANUAL_SUPPORT_PICKING'))
+load_dotenv("config.env")
+SUPPORT_ELEMENT = os.getenv("SUPPORT_ELEMENT")
+PICKING_YOURSELF = int(os.getenv("MANUAL_SUPPORT_PICKING"))
 
 
 class GW:
@@ -44,9 +44,9 @@ class GW:
         self.bot.driver.execute_script("window.location.href = '#event/teamraid044'")
         self.bot.wait.for_loading_screen()
         self.bot.press.gw_raid_type(self.gw_raid_type_num)
-        if self.gw_raid_type == 'Dimorphodon (Easiest)':
+        if self.gw_raid_type == "Dimorphodon (Easiest)":
             self.bot.press.gw_dimorphodon_diff(self.gw_raid_diff_num)
-        elif self.gw_raid_type == 'EX (Normal)':
+        elif self.gw_raid_type == "EX (Normal)":
             self.bot.press.gw_ex_diff(self.gw_raid_diff_num)
         else:
             # For Cybele, since she doesn't have any diffs
@@ -54,8 +54,10 @@ class GW:
 
     def remove_battle_scene_element(self):
         try:
-            elem = self.driver.find_element_by_class_name('btn-scene-next')
-            self.driver.execute_script("arguments[0].parentNode.removeChild(arguments[0]);", elem)
+            elem = self.driver.find_element_by_class_name("btn-scene-next")
+            self.driver.execute_script(
+                "arguments[0].parentNode.removeChild(arguments[0]);", elem
+            )
         except selenium_err.exceptions.NoSuchElementException:
             pass
 
@@ -66,17 +68,20 @@ class GW:
         self.remove_battle_scene_element()
 
         while mobs_alive is True:
-            strainer = ss('div', attrs={'class': 'prt-targeting-area'})
-            parser = bs(self.driver.page_source, 'lxml', parse_only=strainer)
+            strainer = ss("div", attrs={"class": "prt-targeting-area"})
+            parser = bs(self.driver.page_source, "lxml", parse_only=strainer)
 
-            mob_hps = parser.find_all('span', 'txt-gauge-value')
+            mob_hps = parser.find_all("span", "txt-gauge-value")
             mob_hps = [int(hp.text) for hp in mob_hps]
 
             if not all(hp == 0 for hp in mob_hps):
                 try:
                     self.bot.press.attack_button()
                     self.bot.wait.for_fight_main_mask()
-                except (selenium_err.exceptions.NoSuchElementException, selenium_err.exceptions.WebDriverException):
+                except (
+                    selenium_err.exceptions.NoSuchElementException,
+                    selenium_err.exceptions.WebDriverException,
+                ):
                     pass
             else:
                 mobs_alive = False
@@ -112,7 +117,7 @@ class GW:
             self.bot.press.confirm_support_summon()
 
     def convert_gain_to_int(self, gain):
-        regex_num_pattern = r'\d+'
+        regex_num_pattern = r"\d+"
         gains = re.findall(regex_num_pattern, gain)
         gain = [int(s) for s in gains]
         return sum(gain)
@@ -125,18 +130,18 @@ class GW:
         return int(round(hours, 2)), int(round(minutes, 2)), int(round(seconds, 2))
 
     def count_after_fight_exp(self):
-        print(self.bot.popup.after_fight_xp(), 'xp after fight')
+        print(self.bot.popup.after_fight_xp(), "xp after fight")
 
         parser = bs(self.driver.page_source, features="lxml")
-        gains = parser.find('div', {'class': 'prt-exp-gain'}).find_all('span')
+        gains = parser.find("div", {"class": "prt-exp-gain"}).find_all("span")
 
         for gain in gains:
             if gain is not None:
-                gain_name = str(gain['class'])
+                gain_name = str(gain["class"])
                 gain = self.convert_gain_to_int(gain.text)
-                if 'rank' in gain_name:
+                if "rank" in gain_name:
                     self.total_rank_points += gain
-                elif 'exp' in gain_name:
+                elif "exp" in gain_name:
                     self.total_exp += gain
 
         self.bot.press.usual_ok()
@@ -145,15 +150,15 @@ class GW:
         self.bot.popup.event_items()
 
         parser = bs(self.driver.page_source, features="lxml")
-        gains = parser.find_all('div', {'class': 'prt-event-point'})
+        gains = parser.find_all("div", {"class": "prt-event-point"})
 
         for gain in gains:
             if gain is not None:
                 gain_name = str(gain.text)
                 gain_num = self.convert_gain_to_int(gain_name)
-                if 'tokens' in gain_name:
+                if "tokens" in gain_name:
                     self.total_tokens += gain_num
-                elif 'honors' in gain_name:
+                elif "honors" in gain_name:
                     self.total_honors += gain_num
 
         self.bot.press.usual_ok()
@@ -166,10 +171,12 @@ class GW:
         self.total_fights += 1
         run_time = time.time() - self.start_time
         hours, minutes, seconds = self.convert_seconds_to_hms_format(run_time)
-        print(f"Total fights: {self.total_fights}, EXP: {self.total_exp}, Rank points: {self.total_rank_points},\n"
-              f"Honors: {self.total_honors}, Tokens: {self.total_tokens},\n"
-              f"Running for {hours}h:{minutes}min:{seconds}s, "
-              f"Average time per quest: {round(run_time / self.total_fights, 2)}s")
+        print(
+            f"Total fights: {self.total_fights}, EXP: {self.total_exp}, Rank points: {self.total_rank_points},\n"
+            f"Honors: {self.total_honors}, Tokens: {self.total_tokens},\n"
+            f"Running for {hours}h:{minutes}min:{seconds}s, "
+            f"Average time per quest: {round(run_time / self.total_fights, 2)}s"
+        )
 
         # TODO
         # If after pressing a button certain popup appears
@@ -183,14 +190,14 @@ class GW:
         if extended_mastery is True:
             print("New extended mastery!")
             time.sleep(5)
-            self.driver.find_element_by_id('cjs-lp-rankup').click()
+            self.driver.find_element_by_id("cjs-lp-rankup").click()
 
         self.bot.wait.for_loot_screen()
         self.bot.press.play_again_quest()
 
         achievement = self.bot.popup.achievement()
         if achievement is True:
-            print('New achievement!')
+            print("New achievement!")
             self.bot.press.usual_close()
 
         friend_request = self.bot.popup.friend_request()

@@ -26,28 +26,28 @@ class QuestOnRepeat:
 
     def wait_for_repeatable_quest(self):
         if not self.quest_url:
-            print('\nWaiting for you to enter a repeatable quest...')
+            print("\nWaiting for you to enter a repeatable quest...")
 
         # wait until you join a specific fight, set correct variables for given fight
         while True:
             url = str(self.driver.current_url)
 
             # normal fights (GW, Events, Missions)
-            if '#quest/supporter' in url:
+            if "#quest/supporter" in url:
                 if not self.quest_url:
                     self.quest_url = url
                     print("Locked in on this quest.")
                 break
 
             # coop fights
-            if '#coopraid/room/' in url:
+            if "#coopraid/room/" in url:
                 print("Locked on this CO-OP quest.")
                 self.quest_url = url
                 self.coop = True
                 break
 
             # arcanum sandbox fights
-            if '#replicard/supporter' in url:
+            if "#replicard/supporter" in url:
                 print("Locked on this Sandbox quest.")
                 self.quest_url = url
                 self.sandbox = True
@@ -57,16 +57,18 @@ class QuestOnRepeat:
 
     def remove_battle_scene_element(self):
         try:
-            elem = self.driver.find_element(By.CLASS_NAME, 'btn-scene-next')
-            self.driver.execute_script("arguments[0].parentNode.removeChild(arguments[0]);", elem)
+            elem = self.driver.find_element(By.CLASS_NAME, "btn-scene-next")
+            self.driver.execute_script(
+                "arguments[0].parentNode.removeChild(arguments[0]);", elem
+            )
         except selenium_err.exceptions.NoSuchElementException:
             pass
 
     def enemy_hps(self):
-        strainer = ss('div', attrs={'class': 'prt-targeting-area main-tap-area'})
-        parser = bs(self.driver.page_source, 'lxml', parse_only=strainer)
+        strainer = ss("div", attrs={"class": "prt-targeting-area main-tap-area"})
+        parser = bs(self.driver.page_source, "lxml", parse_only=strainer)
 
-        mob_hps = parser.find_all('span', 'txt-gauge-value')
+        mob_hps = parser.find_all("span", "txt-gauge-value")
         mob_hps = [int(hp.text) for hp in mob_hps]
 
         return mob_hps
@@ -85,8 +87,8 @@ class QuestOnRepeat:
             queues = self.bot.handle.handle_queue(queues, battle)
             print(queues, "finish_fight")
             if queues is not None:
-                next_turn_queue = battle['turn'] + 1 in queues[battle['battle']]
-                this_turn_queue = battle['turn'] in queues[battle['battle']]
+                next_turn_queue = battle["turn"] + 1 in queues[battle["battle"]]
+                this_turn_queue = battle["turn"] in queues[battle["battle"]]
             else:
                 next_turn_queue = None
                 this_turn_queue = None
@@ -109,9 +111,13 @@ class QuestOnRepeat:
 
                 # we only want to refresh if there's no more parts to the battle
                 # or wer are in the final battle
-                print(battle['battle'] == battle['total_battles'], 'check for battle equal')
-                if (battle['battle'] == battle['total_battles']) \
-                        or battle['total_battles'] == 1:
+                print(
+                    battle["battle"] == battle["total_battles"],
+                    "check for battle equal",
+                )
+                if (battle["battle"] == battle["total_battles"]) or battle[
+                    "total_battles"
+                ] == 1:
                     self.auto_button_on = False
                     self.driver.refresh()
 
@@ -134,14 +140,17 @@ class QuestOnRepeat:
 
                     # Remove the element again since we refreshed the page
                     self.remove_battle_scene_element()
-            except (selenium_err.exceptions.NoSuchElementException, selenium_err.exceptions.WebDriverException):
+            except (
+                selenium_err.exceptions.NoSuchElementException,
+                selenium_err.exceptions.WebDriverException,
+            ):
                 pass
 
     def count_quest_fight_parts(self):
-        parser = bs(self.driver.page_source, 'lxml')
+        parser = bs(self.driver.page_source, "lxml")
 
-        progress_bar = parser.find('div', {'class': 'prt-position'})
-        quest_parts = progress_bar.find_all('div', {'class': ['lis-spot']})
+        progress_bar = parser.find("div", {"class": "prt-position"})
+        quest_parts = progress_bar.find_all("div", {"class": ["lis-spot"]})
 
         # If list is empty - it's a one fight quest
         if not quest_parts:
@@ -150,15 +159,15 @@ class QuestOnRepeat:
         return len(quest_parts)
 
     def get_start_button_chapter_id(self):
-        parser = bs(self.driver.page_source, 'lxml')
+        parser = bs(self.driver.page_source, "lxml")
 
-        ready_btn = parser.find('div', class_='btn-quest-start multi se-quest-start')
-        chapter_id = ready_btn['data-chapter-id']
+        ready_btn = parser.find("div", class_="btn-quest-start multi se-quest-start")
+        chapter_id = ready_btn["data-chapter-id"]
 
         return chapter_id
 
     def enable_auto_in_loading_screen(self):
-        load_dotenv('config.env', override=True)
+        load_dotenv("config.env", override=True)
         auto_button_in_loading_screen = int(os.getenv("AUTO_IN_LOADING_SCREEN"))
 
         start = time.time()
@@ -172,12 +181,16 @@ class QuestOnRepeat:
 
             if auto_button_in_loading_screen == 1:
                 try:
-                    parser = bs(self.driver.page_source, 'lxml')
+                    parser = bs(self.driver.page_source, "lxml")
 
-                    auto_enabled_button = parser.find_all('div', {'class': ['btn-ready-auto', 'anim-simple-fadein']})
+                    auto_enabled_button = parser.find_all(
+                        "div", {"class": ["btn-ready-auto", "anim-simple-fadein"]}
+                    )
 
                     if not auto_enabled_button:
-                        self.driver.find_element(By.CLASS_NAME, 'txt-auto-setting').click()
+                        self.driver.find_element(
+                            By.CLASS_NAME, "txt-auto-setting"
+                        ).click()
                     else:
                         print("Since there's no queue - enabled auto attacks.")
                         break
@@ -186,7 +199,7 @@ class QuestOnRepeat:
             else:
                 current_url = str(self.driver.current_url)
 
-                if 'raid_multi' in current_url:
+                if "raid_multi" in current_url:
                     if self.auto_button_on is False:
                         self.bot.press.auto_attack()
                         self.auto_button_on = True
@@ -198,13 +211,13 @@ class QuestOnRepeat:
                 break
 
     def handle_fight(self):
-        load_dotenv('config.env', override=True)
+        load_dotenv("config.env", override=True)
         queue = os.getenv("QUEUE_1_1")
 
         # Wait for a start.json request from the game to get info
         # on the state of a battle when starting a battle
         initial_battle_info = self.bot.battle.get_battle_start_info()
-        print(initial_battle_info, 'handle_fight')
+        print(initial_battle_info, "handle_fight")
         if not initial_battle_info:
             return
 
@@ -213,21 +226,23 @@ class QuestOnRepeat:
             self.auto_button_on = True
 
         self.bot.handle.pre_fight_screens()
-        self.bot.handle.wait_before_fight(fight_start=True, gw=True if not queue else False)
+        self.bot.handle.wait_before_fight(
+            fight_start=True, gw=True if not queue else False
+        )
 
         fight_ended = self.finish_fight(initial_battle_info)
 
         # Reset quest_on_repeat states
         self.bot.refreshed = False
         # Reset only for raid-type of quests, not multi-battles ones
-        if not initial_battle_info['total_battles'] > 1:
+        if not initial_battle_info["total_battles"] > 1:
             self.auto_button_on = False
 
         # Skip animations after completing the quest
         if fight_ended:
             # Also check if after refreshing the page we're still in a fight
             # or quest contains more than 1 fight
-            if 'result' not in self.driver.current_url:
+            if "result" not in self.driver.current_url:
                 # if not self.num_of_fights > 1:
                 self.driver.refresh()
 
@@ -266,7 +281,7 @@ class QuestOnRepeat:
         self.bot.need_ap = False
 
     def check_if_gw(self):
-        load_dotenv('config.env', override=True)
+        load_dotenv("config.env", override=True)
         gw = os.getenv("GW")
 
         if gw == "1":
@@ -277,7 +292,7 @@ class QuestOnRepeat:
         # Used to optimize GW runs
         # if this is true it skips some popups/screens (just like bookmarking)
         gw = self.check_if_gw()
-        print(gw, 'gw')
+        print(gw, "gw")
 
         self.bot.wait.for_loading_screen()
 
@@ -288,9 +303,11 @@ class QuestOnRepeat:
             self.bot.total_fights += 1
 
         avg_time_per_quest = round(self.bot.run_time() / self.bot.total_fights, 2)
-        print(f"Total fights: {self.bot.total_fights}, EXP: {self.bot.total_exp}, Rank points: {self.bot.total_ranks}\n"
-              f"Running for {hours}h:{minutes}min:{seconds}s, "
-              f"Average time per quest: {avg_time_per_quest}s")
+        print(
+            f"Total fights: {self.bot.total_fights}, EXP: {self.bot.total_exp}, Rank points: {self.bot.total_ranks}\n"
+            f"Running for {hours}h:{minutes}min:{seconds}s, "
+            f"Average time per quest: {avg_time_per_quest}s"
+        )
 
         self.determine_type_of_quest(gw=gw)
         temp_nightmare_state = False
@@ -326,7 +343,7 @@ class QuestOnRepeat:
         self.bot.raid_battle = False
         self.auto_button_on = False
 
-        if '#quest/supporter' not in str(self.driver.current_url):
+        if "#quest/supporter" not in str(self.driver.current_url):
             self.bot.handle.not_enough_of_x()
 
     def go_to_quest(self):
@@ -373,26 +390,28 @@ class QuestOnRepeat:
         already_in_coop_party = False
 
         while True:
-            parser = bs(self.driver.page_source, 'lxml')
+            parser = bs(self.driver.page_source, "lxml")
 
             # First need to wait until the COOP room page has finished loading.
             if found_room is False:
                 try:
-                    coop_room_loaded = parser.find('div', {'class': 'txt-count-down'}).text
+                    coop_room_loaded = parser.find(
+                        "div", {"class": "txt-count-down"}
+                    ).text
                     found_room = True
                 except AttributeError:
-                    coop_room_loaded = ''
+                    coop_room_loaded = ""
 
-            if found_room is True or 'Closes' in coop_room_loaded:
+            if found_room is True or "Closes" in coop_room_loaded:
                 # Check if party is already picked.
-                party_ready = parser.find('div', {'class': 'txt-guide'}).text
+                party_ready = parser.find("div", {"class": "txt-guide"}).text
 
-                if 'Start' in party_ready:
-                    print('Starting CO-OP quest.')
+                if "Start" in party_ready:
+                    print("Starting CO-OP quest.")
                     break
                 else:
                     if already_in_coop_party is False:
-                        print('Waiting until you pick your team for CO-OP.')
+                        print("Waiting until you pick your team for CO-OP.")
                         already_in_coop_party = True
                         found_room = False
 
@@ -406,7 +425,7 @@ class QuestOnRepeat:
                             if current_url != previous_url:
                                 picked = True
 
-                            if '#coopraid/room' in current_url and picked is True:
+                            if "#coopraid/room" in current_url and picked is True:
                                 break
 
             time.sleep(0.2)
