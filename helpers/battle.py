@@ -43,7 +43,10 @@ class BattleInfo:
                 # TODO
                 # probably check if every funciton call here is being made inside a battle (stage)
                 if "supporter" not in str(self.driver.current_url):
-                    resp_body = self.get_resp_body(request_id)
+                    while True:
+                        resp_body = self.get_resp_body(request_id)
+                        if resp_body:
+                            break
                     return resp_body
             except WebDriverException:
                 print(f"'{response}' response didn't load, retrying.")
@@ -60,7 +63,7 @@ class BattleInfo:
 
     def parse_battle_start_info(self, resp):
         battle = dict()
-
+        print(resp, "parse_battle_start_info, battle.py")
         try:
             # battles/total battles are easy
             battle["battle"] = int(resp["battle"]["count"])

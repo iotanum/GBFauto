@@ -7,7 +7,10 @@ import re
 
 from selenium import common as selenium_err
 from selenium.webdriver.common.by import By
-from selenium.common.exceptions import ElementNotInteractableException
+from selenium.common.exceptions import (
+    ElementNotInteractableException,
+    ElementClickInterceptedException,
+)
 from dotenv import load_dotenv
 
 
@@ -179,16 +182,16 @@ class QuestOnRepeat:
 
                 start = time.time()
                 # after refreshing get the status of a battle
+                if not next_turn_queue and "result" not in str(self.driver.current_url):
+                    print("enabling auto in loading screen")
+                    self.enable_auto_in_loading_screen()
+                    self.auto_button_on = True
+
                 battle = self.bot.battle.get_battle_start_info()
                 print(time.time() - start, "battle_start_info timer")
 
                 if battle is None:
                     return
-
-                if not next_turn_queue and "result" not in str(self.driver.current_url):
-                    print("enabling auto in loading screen")
-                    self.enable_auto_in_loading_screen()
-                    self.auto_button_on = True
 
                 if next_turn_queue:
                     self.bot.handle.wait_before_fight(fight_start=True)
@@ -239,7 +242,10 @@ class QuestOnRepeat:
                     try:
                         self.bot.press.fa_in_loading_screen(fa_xpath)
                         break
-                    except ElementNotInteractableException:
+                    except (
+                        ElementNotInteractableException,
+                        ElementClickInterceptedException,
+                    ):
                         return
 
             else:
