@@ -459,6 +459,7 @@ class QuestOnRepeat:
 
             if raid_num:
                 self.pick_raid(raid_num)
+                self.bot.handle.not_enough_of_x(timeout=10)
                 self.bot.handle.pre_fight_support_summons()
 
                 action = self.check_pre_fight_popups()
