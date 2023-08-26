@@ -465,6 +465,7 @@ class QuestOnRepeat:
                 action = self.check_pre_fight_popups()
                 if not action:
                     break
+                self.go_to_quest()
             self.refresh_raid_filter()
 
             time.sleep(0.5)
