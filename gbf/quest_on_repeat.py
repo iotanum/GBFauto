@@ -433,6 +433,7 @@ class QuestOnRepeat:
         action = self.check_pre_fight_popups()
         if action:
             self.go_to_quest()
+            self.handle_pre_fight()
 
     def wait_for_coop_prep(self):
         found_room = False
