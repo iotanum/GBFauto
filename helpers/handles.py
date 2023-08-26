@@ -541,6 +541,7 @@ class Handle:
                 return in_summon_screen
 
         self.track_ap_usage()
+        return True
 
     def check_if_action_is_needed(self, popups):
         print(popups, "popups")

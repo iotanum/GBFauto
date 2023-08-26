@@ -406,8 +406,11 @@ class QuestOnRepeat:
             if raid_num:
                 self.pick_raid(raid_num)
                 self.bot.handle.not_enough_of_x(ep=self.new_raids)
-                self.bot.handle.pre_fight_support_summons()
-                break
+                success = self.bot.handle.pre_fight_support_summons()
+                if not success:
+                    self.go_to_quest()
+                    continue
+                return success
 
             self.refresh_raid_filter()
 
