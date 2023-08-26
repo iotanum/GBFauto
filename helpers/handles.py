@@ -637,7 +637,7 @@ class Handle:
         else:
             self._bot.need_ap = False
 
-        print(f"{self._bot.current_ap} current", f"{self._bot.quest_cost} quest cost")
+        # print(f"{self._bot.current_ap} current", f"{self._bot.quest_cost} quest cost")
 
     def navigate_to_consumables(self):
         attempts = 0
@@ -1642,16 +1642,6 @@ class Handle:
                         NoSuchElementException,
                     ):
                         continue
-                # if fa_xpath := self._bot.handle.find_fa_ele_in_loading_screen():
-                #     try:
-                #         self._bot.press.fa_in_loading_screen(fa_xpath)
-                #         self._bot.auto_button_on = True
-                #         break
-                #     except (
-                #         ElementNotInteractableException,
-                #         ElementClickInterceptedException,
-                #     ):
-                #         return
 
             else:
                 self.enable_auto_in_battle()

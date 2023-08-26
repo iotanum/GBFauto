@@ -408,6 +408,7 @@ class QuestOnRepeat:
             if raid_num:
                 self.pick_raid(raid_num)
                 self.bot.handle.pre_fight_support_summons()
+                break
 
             self.refresh_raid_filter()
 
