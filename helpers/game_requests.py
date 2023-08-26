@@ -30,19 +30,18 @@ class GbfRequests:
     def find_request(self, request_uri, return_uri=False):
         request_id = None
 
-        while True:
-            logs = self.get_logs()
-            for log in filter(self.log_filter, logs):
-                # currently only need to find responses
-                # even tho I have multiple filters
-                request_id = log["params"]["requestId"]
-                resp_url = log["params"]["response"]["url"]
-                if request_uri in resp_url:
-                    request_id = request_id
-                    if return_uri:
-                        return resp_url
+        logs = self.get_logs()
+        for log in filter(self.log_filter, logs):
+            # currently only need to find responses
+            # even tho I have multiple filters
+            request_id = log["params"]["requestId"]
+            resp_url = log["params"]["response"]["url"]
+            if request_uri in resp_url:
+                request_id = request_id
+                if return_uri:
+                    return resp_url
 
-                    return request_id
+                return request_id
 
     # attack request, which request url has 'attack_results' or smth in it
     def find_attack_btn_response(self):
@@ -57,7 +56,14 @@ class GbfRequests:
 
         return request_id
 
-    def find_generic_request(self, uri_contains: str, return_uri: bool = False):
-        request_id = self.find_request(uri_contains, return_uri=return_uri)
+    def find_generic_request(
+        self, uri_contains: str, return_uri: bool = False, summon_screen=False
+    ):
+        while True:
+            if summon_screen:
+                if "#quest/supporter" not in self.driver.current_url:
+                    break
 
-        return request_id
+            request_id = self.find_request(uri_contains, return_uri=return_uri)
+
+            return request_id
