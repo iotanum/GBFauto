@@ -6,6 +6,7 @@ from selenium.webdriver.common.by import By
 from .timeout import Timeout
 
 import time
+import re
 
 
 class Wait:
@@ -183,14 +184,14 @@ class Wait:
                 print("Where is quest support window?")
                 break
 
-            fire_sup_type_ele = parser.find(
-                "div", {"class": "icon-supporter-type-2 btn-type"}
-            )
+            regex = re.compile(".*icon-supporter-type.*")
+            sup_types_ele = parser.find_all("div", {"class": regex})
             in_summon_screen_uri = "#quest/supporter" in self._driver.current_url
             if in_summon_screen_uri:
-                if fire_sup_type_ele:
+                if sup_types_ele:
+                    first_sup_type_ele = sup_types_ele[0]
                     fire_sup_type_xpath = self._bot.handle.get_xpath_from_ele(
-                        fire_sup_type_ele
+                        first_sup_type_ele
                     )
                     self._bot.press._wait_for_button(By.XPATH, fire_sup_type_xpath)
                     return True

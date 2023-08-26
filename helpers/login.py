@@ -1,5 +1,6 @@
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.by import By
@@ -36,6 +37,7 @@ class GBFGame:
 
     def __init__(self):
         self.chrome_options = self.set_selenium_provider()
+        self.service = Service(executable_path="utils/chromedriver.exe")
         self.capabilities = DesiredCapabilities.CHROME
         self.capabilities["goog:loggingPrefs"] = {"performance": "ALL"}
         self.custom_chrome_options()
@@ -58,6 +60,7 @@ class GBFGame:
         self.total_pendants = 0
         self.total_fights = 0
         self.raid_battle = False
+        self.auto_button_on = False
         #############################################
         self.option_repeatable = False
         self.current_ap = None
@@ -77,6 +80,7 @@ class GBFGame:
     def set_webdriver(self):
         exe_path = "utils/chromedriver.exe"
         options = self.chrome_options
+        options.set_capability("goog:loggingPrefs", {"performance": "ALL"})
         desired_capabilities = self.capabilities
 
         if UNDETECTED_CHROME_MODE == 1:
@@ -85,11 +89,7 @@ class GBFGame:
                 options=options,
                 desired_capabilities=desired_capabilities,
             )
-        return webdriver.Chrome(
-            executable_path=exe_path,
-            options=options,
-            desired_capabilities=desired_capabilities,
-        )
+        return webdriver.Chrome(service=self.service, options=options)
 
     def custom_chrome_options(self):
         # Resize chrome window on smaller screens (otherwise chrome driver crashes?)

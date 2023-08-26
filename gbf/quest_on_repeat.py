@@ -7,10 +7,6 @@ import re
 
 from selenium import common as selenium_err
 from selenium.webdriver.common.by import By
-from selenium.common.exceptions import (
-    ElementNotInteractableException,
-    ElementClickInterceptedException,
-)
 from dotenv import load_dotenv
 
 
@@ -27,7 +23,6 @@ class QuestOnRepeat:
         # repeatable, aka doesn't have "play again" button
         self.is_repeatable = False
         # In a context of current quest
-        self.auto_button_on = False
         self.new_raids = None
 
     def wait_for_repeatable_quest(self):
@@ -97,16 +92,15 @@ class QuestOnRepeat:
 
     def get_raid_filter(self):
         filter_uri_contains = "quest/assist/search/assist_list"
-        request_uris = self.bot.game_requests.find_generic_request(
+        request_uri = self.bot.game_requests.find_generic_request(
             filter_uri_contains, return_uri=True
         )
 
-        if request_uris:
+        if request_uri:
             # let's take the last element of this list
             # since I just need the latest info from gathering requests
             # during the duration of the req/resp scan
-            raid_filter_uri = request_uris
-            raid_filter_num = raid_filter_uri.split("assist_list/")
+            raid_filter_num = request_uri.split("assist_list/")
             raid_filter_num = raid_filter_num[-1].split("/")[0]
 
             return raid_filter_num
@@ -133,12 +127,9 @@ class QuestOnRepeat:
         # remove the battle scene/advice element from the fight, less clutter
         self.remove_battle_scene_element()
 
-        pressed_on_turn = None
         printed_battle = False
         battle = initial_info
         while True:
-            # final_battle = battle['battle'] == battle['total_battles']
-
             queues = self.bot.handle.find_all_queues()
             queues = self.bot.handle.handle_queue(queues, battle)
             if queues is not None:
@@ -156,12 +147,10 @@ class QuestOnRepeat:
                 if queues and this_turn_queue:
                     self.bot.press.attack_button()
 
-                start = time.time()
-                # placeholder var if I plan on NOT doing refresh every turn
                 boss_killed = self.bot.handle.wait_for_next_turn(battle)
-                print(time.time() - start, "wait_for_next_turn timer")
 
-                if "result" in str(self.driver.current_url):
+                result_screen = "result" in str(self.driver.current_url)
+                if result_screen:
                     return True
 
                 # we only want to refresh if there's no more parts to the battle
@@ -173,22 +162,23 @@ class QuestOnRepeat:
                 if (battle["battle"] == battle["total_battles"]) or battle[
                     "total_battles"
                 ] == 1:
-                    self.auto_button_on = False
-                    self.driver.refresh()
+                    self.bot.handle.refresh_page()
 
                 if boss_killed:
                     print("Everyone died.")
                     return True
 
-                start = time.time()
                 # after refreshing get the status of a battle
-                if not next_turn_queue and "result" not in str(self.driver.current_url):
-                    print("enabling auto in loading screen")
-                    self.enable_auto_in_loading_screen()
-                    self.auto_button_on = True
+                if battle["total_battles"] > 1:
+                    if not next_turn_queue and "result" not in str(
+                        self.driver.current_url
+                    ):
+                        if not self.bot.auto_button_on:
+                            print("enabling auto in loading screen")
+                            self.bot.handle.enable_auto_in_loading_screen()
+                            self.bot.auto_button_on = True
 
                 battle = self.bot.battle.get_battle_start_info()
-                print(time.time() - start, "battle_start_info timer")
 
                 if battle is None:
                     return
@@ -224,60 +214,21 @@ class QuestOnRepeat:
 
         return chapter_id
 
-    def enable_auto_in_battle(self):
-        current_url = str(self.driver.current_url)
-
-        if "raid_multi" in current_url:
-            if self.auto_button_on is False:
-                self.bot.press.auto_attack()
-                self.auto_button_on = True
-        else:
-            if self.auto_button_on is False:
-                self.bot.press.attack_button()
-                self.bot.press.auto_attack()
-                self.auto_button_on = True
-
-    def enable_auto_in_loading_screen(self):
-        load_dotenv("config.env", override=True)
-        auto_button_in_loading_screen = int(os.getenv("AUTO_IN_LOADING_SCREEN"))
-
-        start = time.time()
-
-        while True:
-            if time.time() - start >= 10:
-                break
-
-            if "result" in str(self.driver.current_url):
-                break
-
-            if auto_button_in_loading_screen == 1:
-                if fa_xpath := self.bot.handle.find_fa_ele_in_loading_screen():
-                    try:
-                        self.bot.press.fa_in_loading_screen(fa_xpath)
-                        break
-                    except (
-                        ElementNotInteractableException,
-                        ElementClickInterceptedException,
-                    ):
-                        return
-
-            else:
-                self.enable_auto_in_battle()
-                break
-
     def handle_fight(self):
         load_dotenv("config.env", override=True)
         queue = os.getenv("QUEUE_1_1")
 
         if not queue:
-            self.enable_auto_in_loading_screen()
-            self.auto_button_on = True
+            self.bot.handle.enable_auto_in_loading_screen()
 
         # Wait for a start.json request from the game to get info
         # on the state of a battle when starting a battle
         initial_battle_info = self.bot.battle.get_battle_start_info()
         if not initial_battle_info:
             return
+
+        if not self.bot.auto_button_on:
+            self.bot.handle.enable_auto_in_battle()
 
         if queue:
             self.bot.handle.pre_fight_screens()
@@ -291,7 +242,7 @@ class QuestOnRepeat:
         self.bot.refreshed = False
         # Reset only for raid-type of quests, not multi-battles ones
         if not initial_battle_info["total_battles"] > 1:
-            self.auto_button_on = False
+            self.bot.auto_button_on = False
 
         # Skip animations after completing the quest
         if fight_ended:
@@ -299,7 +250,7 @@ class QuestOnRepeat:
             # or quest contains more than 1 fight
             if "result" not in self.driver.current_url:
                 # if not self.num_of_fights > 1:
-                self.driver.refresh()
+                self.bot.handle.refresh_page()
 
     def convert_seconds_to_hms_format(self):
         seconds = round(self.bot.run_time(), 2)
@@ -396,7 +347,7 @@ class QuestOnRepeat:
             self.go_to_quest()
 
         self.bot.raid_battle = False
-        self.auto_button_on = False
+        self.bot.auto_button_on = False
 
         if "#quest/supporter" not in str(self.driver.current_url):
             self.bot.handle.not_enough_of_x()
@@ -457,8 +408,7 @@ class QuestOnRepeat:
 
     def check_pre_fight_popups(self):
         popups = self.bot.handle.pre_fight_popups()
-        action = self.bot.handle.check_if_action_is_needed(popups)
-        if action:
+        if popups:
             return True
 
     def handle_new_raids_join(self):

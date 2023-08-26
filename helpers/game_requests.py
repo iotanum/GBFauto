@@ -1,5 +1,7 @@
 import json
 
+from selenium.common.exceptions import WebDriverException
+
 
 class GbfRequests:
     def __init__(self, game_handler):
@@ -12,72 +14,50 @@ class GbfRequests:
 
         return logs
 
-    # stinking 95+ chrome version changes
+    def get_resp_body(self, request_id):
+        try:
+            resp_body = self.driver.execute_cdp_cmd(
+                "Network.getResponseBody", {"requestId": request_id}
+            )
+            resp_body_dict = json.loads(resp_body["body"])
+            return resp_body_dict
+        except WebDriverException:
+            return None
+
     def log_filter(self, log):
-        return (
-            log["method"] == "Network.responseReceived"
-            or log["method"] == "Network.loadingFinished"
-        )
+        return log["method"] == "Network.responseReceived"
 
     def find_request(self, request_uri, return_uri=False):
-        logs = self.get_logs()
-        responses = []
-        for log in filter(self.log_filter, logs):
-            # currently only need to find responses
-            # even tho I have multiple filters
-            if log["method"] == "Network.responseReceived":
+        request_id = None
+
+        while True:
+            logs = self.get_logs()
+            for log in filter(self.log_filter, logs):
+                # currently only need to find responses
+                # even tho I have multiple filters
                 request_id = log["params"]["requestId"]
                 resp_url = log["params"]["response"]["url"]
                 if request_uri in resp_url:
-                    # print(resp_url)
+                    request_id = request_id
                     if return_uri:
                         return resp_url
 
-                    responses.append(request_id)
-                    break
-
-        return responses
-
-    def finish_loading_responses(self, request_ids):
-        finished_loading = []
-        while True:
-            print(f"Checking '{request_ids}' if it's loaded.")
-            try:
-                logs = self.get_logs()
-
-                for log in filter(self.log_filter, logs):
-                    if log["method"] == "Network.loadingFinished":
-                        loaded_id = log["params"]["requestId"]
-                        print(loaded_id)
-
-                        for request_id in request_ids:
-                            if request_id in finished_loading:
-                                continue
-
-                            if request_id == loaded_id:
-                                finished_loading.append(request_id)
-
-                if len(request_ids) == len(finished_loading):
-                    return
-
-            # TypeError occures when there's still no request being made
-            except TypeError:
-                return
+                    return request_id
 
     # attack request, which request url has 'attack_results' or smth in it
     def find_attack_btn_response(self):
         attack_request = "normal_attack_result"
-        request_ids = self.find_request(attack_request)
-        return request_ids
+        request_id = self.find_request(attack_request)
+        return request_id
 
     # contains information of a battle start situation
     def find_battle_start_response(self):
         battle_start = "start.json"
-        request_ids = self.find_request(battle_start)
+        request_id = self.find_request(battle_start)
 
-        return request_ids
+        return request_id
 
     def find_generic_request(self, uri_contains: str, return_uri: bool = False):
-        request_ids = self.find_request(uri_contains, return_uri=return_uri)
+        request_id = self.find_request(uri_contains, return_uri=return_uri)
 
-        return request_ids
+        return request_id

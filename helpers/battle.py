@@ -14,58 +14,36 @@ class BattleInfo:
 
     def retry(self, response):
         # refresh and try finding a new request of a battle start
-        self.driver.refresh()
+        self.bot.handle.refresh_page()
 
         while True:
             print(f"Trying to find another '{response}' request.")
-            request_ids = self.game_requests.find_battle_start_response()
-            if request_ids:
-                return request_ids[0]
-
-    def get_resp_body(self, request_id):
-        try:
-            resp_body = self.driver.execute_cdp_cmd(
-                "Network.getResponseBody", {"requestId": request_id}
-            )
-            resp_body = json.loads(resp_body["body"])
-            return resp_body
-        except selenium.common.exceptions.WebDriverException:
-            return None
+            request_id = self.game_requests.find_battle_start_response()
+            if request_id:
+                return request_id
 
     def handle_battle_start_resp(self, request_id, response=None):
-        start_time_check = False
-        loading_time = 2
-        start = None
-
         while True:
-            try:
-                # only try to find that when you're no longer in support summon page
-                # TODO
-                # probably check if every funciton call here is being made inside a battle (stage)
-                if "supporter" not in str(self.driver.current_url):
-                    while True:
-                        resp_body = self.get_resp_body(request_id)
-                        if resp_body:
-                            break
-                    return resp_body
-            except WebDriverException:
-                print(f"'{response}' response didn't load, retrying.")
-                # sometimes request never gets loaded? like 5% chance per battle or smth
-                # give 5s to load, if not - retry
-                if not start_time_check:
-                    start = time.time()
-                    start_time_check = True
-
-                if start and time.time() - start >= loading_time:
-                    request_id = self.retry(response)
-
-                continue
+            # only try to find that when you're no longer in support summon page
+            # TODO
+            # probably check if every funciton call here is being made inside a battle (stage)
+            if "supporter" not in str(self.driver.current_url):
+                while True:
+                    resp_body = self.bot.game_requests.get_resp_body(request_id)
+                    print(resp_body, request_id, "handle_battle_start_resp")
+                    if resp_body:
+                        break
+                    else:
+                        print(f"'{response}' response didn't load, retrying.")
+                        request_id = self.retry(response)
+                return resp_body
 
     def parse_battle_start_info(self, resp):
         battle = dict()
         print(resp, "parse_battle_start_info, battle.py")
         try:
-            # battles/total battles are easy
+            # battles/total/turn battles are easy
+            battle["turn"] = resp["turn"]
             battle["battle"] = int(resp["battle"]["count"])
             battle["total_battles"] = resp["battle"]["total"]
 
@@ -84,9 +62,6 @@ class BattleInfo:
                 ougies += 1
 
             battle["ougies"] = ougies
-
-            # turn is self explanatory
-            battle["turn"] = resp["turn"]
 
             # boss_hp is the same as player ougies above
             boss_hps = []
@@ -110,16 +85,17 @@ class BattleInfo:
 
     def get_battle_start_info(self):
         while True:
-            request_ids = self.game_requests.find_battle_start_response()
-            if request_ids:
+            request_id = self.game_requests.find_battle_start_response()
+            print(request_id, "request_ids, get_battle_start_info")
+            if request_id:
                 # everything returned from request searching is in a list
                 # and starting request of a battle will obviously
                 # happen only once
-                request_id = request_ids[0]
                 response = self.handle_battle_start_resp(
                     request_id, response="start.json"
                 )
                 battle = self.parse_battle_start_info(response)
+                print(battle, "battle, battle.py")
                 if battle is not None and len(battle.keys()) >= 2:
                     return battle
 
@@ -131,13 +107,17 @@ class BattleInfo:
                 return
 
     def get_summon_confirm_info(self):
-        filter_uri_contains = "raid_deck_data_create"
+        filter_uri_contains = ["raid_deck_data_create", "user_action_point"]
+        resp_body = None
 
         while True:
-            request_ids = self.game_requests.find_generic_request(filter_uri_contains)
-            if request_ids:
-                request_id = request_ids[0]
-                resp_body = self.get_resp_body(request_id)
+            for filter_uri in filter_uri_contains:
+                request_id = self.game_requests.find_generic_request(filter_uri)
+                if request_id:
+                    resp_body = self.bot.game_requests.get_resp_body(request_id)
+                    break
+
+            if resp_body:
                 break
 
         return resp_body

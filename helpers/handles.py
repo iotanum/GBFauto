@@ -3,13 +3,15 @@ import re
 import os
 import random
 import asyncio
-import json
 from datetime import datetime
-import traceback
-import sys
+
 from selenium import common as selenium_err
 from selenium.webdriver.common.keys import Keys
-from selenium.common.exceptions import WebDriverException
+from selenium.common.exceptions import (
+    ElementNotInteractableException,
+    ElementClickInterceptedException,
+    WebDriverException,
+)
 from selenium.webdriver.common.by import By
 
 from bs4 import BeautifulSoup as bs
@@ -448,9 +450,11 @@ class Handle:
 
     def pre_fight_popups(self):
         body = self._bot.battle.get_summon_confirm_info()
+        action = self._bot.handle.check_if_action_is_needed(body)
+
         print(body, "pre_fight_popups_body")
-        if body:
-            return body
+        if action:
+            return action
 
         return
 
@@ -541,11 +545,12 @@ class Handle:
                 return in_summon_screen
 
     def check_if_action_is_needed(self, popups):
+        print(popups, "popups")
         if not popups:
             return
 
         # no action is needed here
-        if "ap_usage" in popups:
+        if "action_point_limit" in popups:
             print("Using AP/EP.")
             self.track_ap_usage()
 
@@ -566,13 +571,10 @@ class Handle:
             time.sleep(360)
 
     def sandbox_summon_pick(self):
-        popups = self.pre_fight_popups()
-
         self._bot.wait.for_loading_screen()
-
         self._bot.press.confirm_support_summon()
 
-        self.check_if_action_is_needed(popups)
+        self.pre_fight_popups()
 
     def _wait_for_summon_confirmation(self):
         start = time.time()
@@ -1057,31 +1059,35 @@ class Handle:
     # by valid I mean it's fuckign AFTER I requested it
     # sadly I can't do this in battle.py, since it requires pressing atk and shit
     # have to handle stuff here
-    def attack_response_is_valid(self, request_ids, battle):
+    def attack_response_is_valid(self, request_id, battle):
         start_time_check = False
         loading_time = 5
         start = None
 
         while True:
             try:
-                print(request_ids, "valid_btn_stuff_2")
-                for request_id in request_ids:
-                    resp_body = self._driver.execute_cdp_cmd(
-                        "Network.getResponseBody", {"requestId": request_id}
-                    )
-                    resp_body = json.loads(resp_body["body"])
-                    resp_turn = resp_body["status"]["turn"]
-                    current_turn = battle["turn"]
+                resp_body = self._bot.game_requests.get_resp_body(request_id)
 
-                    # + turn from perceived turn, because response returns what happens
-                    # AFTER pressing ATK (ougies, turns, animations, hps, etc)
-                    print(resp_turn, current_turn, "turns")
-                    if resp_turn == current_turn + 1:
-                        print("Found the corresponding ATK BTN request.")
-                        return True, False
-                    if resp_turn == current_turn:
-                        print("Probably killed the boss.")
-                        return True, True
+                resp_turn = resp_body["status"]["turn"]
+
+                current_turn = battle["turn"]
+                current_battle = battle["battle"]
+                total_battles = battle["total_battles"]
+
+                # + turn from perceived turn, because response returns what happens
+                # AFTER pressing ATK (ougies, turns, animations, hps, etc)
+                print(resp_turn, current_turn, "turns")
+                if resp_turn == current_turn + 1:
+                    print("Found the corresponding ATK BTN request.")
+                    return True, False
+                if resp_turn == current_turn and current_battle != total_battles:
+                    print(
+                        "Found ATK BTN request, but multi-battle fight, not refreshing."
+                    )
+                    return True, False
+                if resp_turn == current_turn and current_battle == total_battles:
+                    print("Probably killed the boss.")
+                    return True, True
             except WebDriverException:
                 print("ATK BTN response didn't load, retrying.")
                 if not start_time_check:
@@ -1100,11 +1106,9 @@ class Handle:
 
         while True:
             # Find all 'needed' responses
-            request_ids = self._bot.game_requests.find_attack_btn_response()
-            if request_ids:
-                valid, needs_refresh = self.attack_response_is_valid(
-                    request_ids, battle
-                )
+            request_id = self._bot.game_requests.find_attack_btn_response()
+            if request_id:
+                valid, needs_refresh = self.attack_response_is_valid(request_id, battle)
                 if valid:
                     if needs_refresh:
                         return True
@@ -1567,8 +1571,54 @@ class Handle:
     def find_fa_ele_in_loading_screen(self):
         parser = bs(self._driver.page_source, "lxml")
 
-        ready_ele = parser.find("div", {"class": "prt-ready"})
+        ready_ele = parser.find("div", {"class": "txt-auto-setting"})
 
         if ready_ele:
             ready_ele_xpath = self.get_xpath_from_ele(ready_ele)
             return ready_ele_xpath
+
+    def refresh_page(self):
+        self._bot.auto_button_on = False
+        self._driver.refresh()
+
+    def enable_auto_in_battle(self):
+        current_url = str(self._driver.current_url)
+
+        if "raid_multi" in current_url:
+            if self._bot.auto_button_on is False:
+                self._bot.press.auto_attack()
+                self._bot.auto_button_on = True
+        else:
+            if self._bot.auto_button_on is False:
+                self._bot.press.attack_button()
+                self._bot.press.auto_attack()
+                self._bot.auto_button_on = True
+
+    def enable_auto_in_loading_screen(self):
+        load_dotenv("config.env", override=True)
+        auto_button_in_loading_screen = int(os.getenv("AUTO_IN_LOADING_SCREEN"))
+
+        start = time.time()
+
+        while True:
+            if time.time() - start >= 10:
+                break
+
+            if "result" in str(self._driver.current_url):
+                break
+
+            if auto_button_in_loading_screen == 1:
+                if fa_xpath := self._bot.handle.find_fa_ele_in_loading_screen():
+                    try:
+                        self._bot.press.fa_in_loading_screen(fa_xpath)
+                        self._bot.auto_button_on = True
+                        break
+                    except (
+                        ElementNotInteractableException,
+                        ElementClickInterceptedException,
+                    ):
+                        return
+
+            else:
+                self.enable_auto_in_battle()
+                break
