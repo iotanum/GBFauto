@@ -123,6 +123,9 @@ class QuestOnRepeat:
 
         return mob_hps
 
+    def results_screen(self):
+        return "result" in str(self.driver.current_url)
+
     def finish_fight(self, initial_info):
         # remove the battle scene/advice element from the fight, less clutter
         self.remove_battle_scene_element()
@@ -149,8 +152,7 @@ class QuestOnRepeat:
 
                 boss_killed = self.bot.handle.wait_for_next_turn(battle)
 
-                result_screen = "result" in str(self.driver.current_url)
-                if result_screen:
+                if self.results_screen():
                     return True
 
                 # we only want to refresh if there's no more parts to the battle
@@ -169,14 +171,10 @@ class QuestOnRepeat:
                     return True
 
                 # after refreshing get the status of a battle
-                if battle["total_battles"] > 1:
-                    if not next_turn_queue and "result" not in str(
-                        self.driver.current_url
-                    ):
-                        if not self.bot.auto_button_on:
-                            print("enabling auto in loading screen")
-                            self.bot.handle.enable_auto_in_loading_screen()
-                            self.bot.auto_button_on = True
+                if not next_turn_queue and not self.results_screen():
+                    if not self.bot.auto_button_on:
+                        print("enabling auto in loading screen")
+                        self.bot.handle.enable_auto_in_loading_screen()
 
                 battle = self.bot.battle.get_battle_start_info()
 
@@ -330,8 +328,8 @@ class QuestOnRepeat:
             if nightmare_battle and temp_nightmare_state:
                 self.is_repeatable = True
 
-            if self.bot.need_ap and self.sandbox is False:
-                self.bot.handle.use_ap_for_non_repeatables()
+            if self.bot.need_ap and self.sandbox is False and self.new_raids is False:
+                self.bot.handle.use_ap_for_non_repeatables(ep=self.new_raids)
 
             # Navigate back to original quest
             self.go_to_quest()
@@ -340,7 +338,7 @@ class QuestOnRepeat:
         self.bot.auto_button_on = False
 
         if "#quest/supporter" not in str(self.driver.current_url):
-            self.bot.handle.not_enough_of_x()
+            self.bot.handle.not_enough_of_x(ep=self.new_raids)
 
     def go_to_quest(self):
         attempts = 0

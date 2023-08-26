@@ -65,5 +65,5 @@ class GbfRequests:
                     break
 
             request_id = self.find_request(uri_contains, return_uri=return_uri)
-
-            return request_id
+            if request_id:
+                return request_id

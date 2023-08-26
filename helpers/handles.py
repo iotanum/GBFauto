@@ -574,13 +574,15 @@ class Handle:
 
         self.pre_fight_popups()
 
-    def use_ap_for_non_repeatables(self):
+    def use_ap_for_non_repeatables(self, ep=False):
         self.navigate_to_consumables()
         self._bot.wait.for_loading_screen()
         self._bot.press.consumables()
         self._bot.wait.for_loading_screen()
-        self._bot.press.consumables_ap()
-        self.not_enough_of_x()
+        if not ep:
+            self._bot.press.consumables_ap()
+        self._bot.press.consumables_ep()
+        self.not_enough_of_x(ep=ep)
         self._bot.need_ap = False
 
     def _wait_for_summon_confirmation(self):
@@ -1074,7 +1076,7 @@ class Handle:
         while True:
             try:
                 resp_body = self._bot.game_requests.get_resp_body(request_id)
-
+                print(resp_body, request_id, "blablablabla")
                 resp_turn = resp_body["status"]["turn"]
 
                 current_turn = battle["turn"]
@@ -1105,6 +1107,8 @@ class Handle:
                 # wait_for_next_turn will retry/handle it
                 if start and time.time() - start >= loading_time:
                     return False, False
+            except TypeError:
+                continue
 
             time.sleep(0.050)
 
@@ -1150,7 +1154,7 @@ class Handle:
             # Eat less CPU
             time.sleep(0.5)
 
-    def not_enough_of_x(self, sandbox=False, timeout=3):
+    def not_enough_of_x(self, sandbox=False, timeout=3, ep=False):
         start = time.time()
         ap_ep_class = "pop-usual pop-stamina pop-show"
         if sandbox:
@@ -1181,6 +1185,7 @@ class Handle:
                     ap_ep_amount,
                     consumable=True if ap_consumable_popup else False,
                     sandbox=sandbox,
+                    ep=ep,
                 )
                 self._bot.wait.for_loading_screen()
                 self._bot.press.usual_ok() if not ap_consumable_popup else None

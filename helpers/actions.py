@@ -29,7 +29,7 @@ class Action:
         time.sleep(1)
         elem.send_keys(raid_id)
 
-    def use_potions_or_pills(self, amount, consumable=False, sandbox=False):
+    def use_potions_or_pills(self, amount, consumable=False, sandbox=False, ep=False):
         timeout = 2
         expected_behaviour = EC.visibility_of_element_located
         search_by = By.XPATH
@@ -42,6 +42,11 @@ class Action:
             option_list = self._half_elixir_consumable_list_xpath
             use_button = self._half_elixir_consumable_use_xpath
             amount_in_list = f'//*[@id="pop"]/div/div[2]/div/div/div[4]/div[2]/select/option[{amount}]'
+
+        if ep is True:
+            option_list = '//*[@id="pop"]/div/div[2]/div/div/div[4]/div[2]/select'
+            amount_in_list = f'//*[@id="pop"]/div/div[2]/div/div/div[4]/div[2]/select/option[{amount}]'
+            use_button = '//*[@id="pop"]/div/div[3]/div[2]'
 
         if sandbox:
             option_list = '//*[@id="pop"]/div/div[2]/div/div[3]/div[2]/div[4]/select'
