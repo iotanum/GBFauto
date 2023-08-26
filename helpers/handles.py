@@ -7,11 +7,7 @@ from datetime import datetime
 
 from selenium import common as selenium_err
 from selenium.webdriver.common.keys import Keys
-from selenium.common.exceptions import (
-    ElementNotInteractableException,
-    ElementClickInterceptedException,
-    WebDriverException,
-)
+from selenium.common.exceptions import *
 from selenium.webdriver.common.by import By
 
 from bs4 import BeautifulSoup as bs
@@ -544,6 +540,8 @@ class Handle:
             else:
                 return in_summon_screen
 
+        self.track_ap_usage()
+
     def check_if_action_is_needed(self, popups):
         print(popups, "popups")
         if not popups:
@@ -552,7 +550,7 @@ class Handle:
         # no action is needed here
         if "action_point_limit" in popups:
             print("Using AP/EP.")
-            self.track_ap_usage()
+            self.use_ap_for_non_repeatables()
 
         # action is needed
         elif "verification" in popups:
@@ -575,6 +573,15 @@ class Handle:
         self._bot.press.confirm_support_summon()
 
         self.pre_fight_popups()
+
+    def use_ap_for_non_repeatables(self):
+        self.navigate_to_consumables()
+        self._bot.wait.for_loading_screen()
+        self._bot.press.consumables()
+        self._bot.wait.for_loading_screen()
+        self._bot.press.consumables_ap()
+        self.not_enough_of_x()
+        self._bot.need_ap = False
 
     def _wait_for_summon_confirmation(self):
         start = time.time()
@@ -1568,14 +1575,25 @@ class Handle:
         components.reverse()
         return "/%s" % "/".join(components)
 
-    def find_fa_ele_in_loading_screen(self):
+    def is_auto_in_loading_enabled(self):
         parser = bs(self._driver.page_source, "lxml")
 
-        ready_ele = parser.find("div", {"class": "txt-auto-setting"})
+        enabled = parser.find("div", {"class": "btn-ready-auto anim-simple-fadein"})
 
-        if ready_ele:
-            ready_ele_xpath = self.get_xpath_from_ele(ready_ele)
-            return ready_ele_xpath
+        if enabled:
+            return True
+
+    def find_fa_ele_in_loading_screen(self):
+        if not self._bot.fa_button_xpath:
+            parser = bs(self._driver.page_source, "lxml")
+
+            ready_ele = parser.find("div", {"class": "txt-auto-setting"})
+
+            if ready_ele:
+                ready_ele_xpath = self.get_xpath_from_ele(ready_ele)
+                self._bot.fa_button_xpath = ready_ele_xpath
+                return ready_ele_xpath
+        return self._bot.fa_button_xpath
 
     def refresh_page(self):
         self._bot.auto_button_on = False
@@ -1608,16 +1626,32 @@ class Handle:
                 break
 
             if auto_button_in_loading_screen == 1:
-                if fa_xpath := self._bot.handle.find_fa_ele_in_loading_screen():
+                while True:
                     try:
-                        self._bot.press.fa_in_loading_screen(fa_xpath)
-                        self._bot.auto_button_on = True
-                        break
+                        fa_xpath = self.find_fa_ele_in_loading_screen()
+                        self._driver.find_element(By.XPATH, fa_xpath).click()
+
+                        if self.is_auto_in_loading_enabled():
+                            self._bot.auto_button_on = True
+                            return
                     except (
-                        ElementNotInteractableException,
                         ElementClickInterceptedException,
+                        ElementClickInterceptedException,
+                        InvalidArgumentException,
+                        ElementNotInteractableException,
+                        NoSuchElementException,
                     ):
-                        return
+                        continue
+                # if fa_xpath := self._bot.handle.find_fa_ele_in_loading_screen():
+                #     try:
+                #         self._bot.press.fa_in_loading_screen(fa_xpath)
+                #         self._bot.auto_button_on = True
+                #         break
+                #     except (
+                #         ElementNotInteractableException,
+                #         ElementClickInterceptedException,
+                #     ):
+                #         return
 
             else:
                 self.enable_auto_in_battle()

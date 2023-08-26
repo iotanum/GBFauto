@@ -30,7 +30,6 @@ class BattleInfo:
             if "supporter" not in str(self.driver.current_url):
                 while True:
                     resp_body = self.bot.game_requests.get_resp_body(request_id)
-                    print(resp_body, request_id, "handle_battle_start_resp")
                     if resp_body:
                         break
                     else:
@@ -40,7 +39,6 @@ class BattleInfo:
 
     def parse_battle_start_info(self, resp):
         battle = dict()
-        print(resp, "parse_battle_start_info, battle.py")
         try:
             # battles/total/turn battles are easy
             battle["turn"] = resp["turn"]
@@ -86,7 +84,6 @@ class BattleInfo:
     def get_battle_start_info(self):
         while True:
             request_id = self.game_requests.find_battle_start_response()
-            print(request_id, "request_ids, get_battle_start_info")
             if request_id:
                 # everything returned from request searching is in a list
                 # and starting request of a battle will obviously
@@ -95,7 +92,6 @@ class BattleInfo:
                     request_id, response="start.json"
                 )
                 battle = self.parse_battle_start_info(response)
-                print(battle, "battle, battle.py")
                 if battle is not None and len(battle.keys()) >= 2:
                     return battle
 
@@ -110,14 +106,14 @@ class BattleInfo:
         filter_uri_contains = ["raid_deck_data_create", "user_action_point"]
         resp_body = None
 
-        while True:
-            for filter_uri in filter_uri_contains:
-                request_id = self.game_requests.find_generic_request(filter_uri)
-                if request_id:
-                    resp_body = self.bot.game_requests.get_resp_body(request_id)
-                    break
-
-            if resp_body:
-                break
+        for filter_uri in filter_uri_contains:
+            request_id = self.game_requests.find_generic_request(
+                filter_uri, summon_screen=True
+            )
+            print(request_id, "testetstestest")
+            if request_id:
+                resp_body = self.bot.game_requests.get_resp_body(request_id)
+                print(resp_body, "pleaseplaepslapelsae")
+                return resp_body
 
         return resp_body

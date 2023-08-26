@@ -275,16 +275,6 @@ class QuestOnRepeat:
                 self.bot.press.usual_event_home()
         else:
             return
-            # self.bot.press.coop_room()
-
-    def use_ap_for_non_repeatables(self):
-        self.bot.handle.navigate_to_consumables()
-        self.bot.wait.for_loading_screen()
-        self.bot.press.consumables()
-        self.bot.wait.for_loading_screen()
-        self.bot.press.consumables_ap()
-        self.bot.handle.not_enough_of_x()
-        self.bot.need_ap = False
 
     def check_if_gw(self):
         load_dotenv("config.env", override=True)
@@ -341,7 +331,7 @@ class QuestOnRepeat:
                 self.is_repeatable = True
 
             if self.bot.need_ap and self.sandbox is False:
-                self.use_ap_for_non_repeatables()
+                self.bot.handle.use_ap_for_non_repeatables()
 
             # Navigate back to original quest
             self.go_to_quest()
@@ -417,13 +407,8 @@ class QuestOnRepeat:
 
             if raid_num:
                 self.pick_raid(raid_num)
-                self.bot.handle.not_enough_of_x(timeout=10)
                 self.bot.handle.pre_fight_support_summons()
 
-                action = self.check_pre_fight_popups()
-                if not action:
-                    break
-                self.go_to_quest()
             self.refresh_raid_filter()
 
             time.sleep(0.5)
@@ -435,12 +420,8 @@ class QuestOnRepeat:
             self.bot.handle.pre_fight_support_summons()
         elif self.sandbox is True:
             self.bot.handle.sandbox_summon_pick()
-
-            if self.bot.need_ap is True:
-                self.bot.handle.not_enough_of_x(sandbox=self.sandbox, timeout=10)
         elif self.new_raids is True:
             self.handle_new_raids_join()
-
         else:
             # Wait until player chooses it's COOP team.
             self.wait_for_coop_prep()
@@ -449,9 +430,9 @@ class QuestOnRepeat:
             chapter_id = self.get_start_button_chapter_id()
             self.bot.press.by_chapter_id(chapter_id)
 
-            # Give it a bigger timer because CO-OP fights
-            # take a lot longer to start than your usual fights
-            self.bot.handle.not_enough_of_x(timeout=10)
+        action = self.check_pre_fight_popups()
+        if action:
+            self.go_to_quest()
 
     def wait_for_coop_prep(self):
         found_room = False

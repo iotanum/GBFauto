@@ -61,6 +61,7 @@ class GBFGame:
         self.total_fights = 0
         self.raid_battle = False
         self.auto_button_on = False
+        self.fa_button_xpath = None
         #############################################
         self.option_repeatable = False
         self.current_ap = None
