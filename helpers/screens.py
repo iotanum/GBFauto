@@ -1,3 +1,5 @@
+from bs4 import BeautifulSoup as bs
+
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.by import By
 
@@ -18,6 +20,7 @@ class Wait:
     """
 
     def __init__(self, game_handler):
+        self._bot = game_handler
         self._driver = game_handler.driver
         self._Timeout = Timeout(self._driver)
         self._loading_screen_xpath_end = "//div[@id='loading'][@style='display: none;']"
@@ -174,9 +177,20 @@ class Wait:
         start = time.time()
 
         while True:
+            parser = bs(self._driver.page_source, "lxml")
+
             if time.time() - start > 3:
                 print("Where is quest support window?")
                 break
 
-            if "#quest/supporter" in self._driver.current_url:
-                return True
+            fire_sup_type_ele = parser.find(
+                "div", {"class": "icon-supporter-type-2 btn-type"}
+            )
+            in_summon_screen_uri = "#quest/supporter" in self._driver.current_url
+            if in_summon_screen_uri:
+                if fire_sup_type_ele:
+                    fire_sup_type_xpath = self._bot.handle.get_xpath_from_ele(
+                        fire_sup_type_ele
+                    )
+                    self._bot.press._wait_for_button(By.XPATH, fire_sup_type_xpath)
+                    return True

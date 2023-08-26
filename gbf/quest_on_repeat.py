@@ -3,9 +3,11 @@ from bs4 import SoupStrainer as ss
 
 import os
 import time
+import re
 
 from selenium import common as selenium_err
 from selenium.webdriver.common.by import By
+from selenium.common.exceptions import ElementNotInteractableException
 from dotenv import load_dotenv
 
 
@@ -23,6 +25,7 @@ class QuestOnRepeat:
         self.is_repeatable = False
         # In a context of current quest
         self.auto_button_on = False
+        self.new_raids = None
 
     def wait_for_repeatable_quest(self):
         if not self.quest_url:
@@ -53,7 +56,57 @@ class QuestOnRepeat:
                 self.sandbox = True
                 break
 
+            # new raid thingy
+            if "#quest/assist" in url:
+                print("Locked to raids, please choose filter option.")
+                self.choose_raid_filter()
+                self.quest_url = url
+                self.new_raids = True
+                break
+
             time.sleep(0.2)
+
+    def choose_raid_filter(self):
+        while True:
+            raid_filter_num = self.get_raid_filter()
+            if raid_filter_num:
+                print(f"Is 'Filter {raid_filter_num}' correct?")
+                answer = input("Y/N: ")
+                validated = self.validate_raid_filter_input(answer)
+                if not validated:
+                    print("Please choose between Y or N.")
+                if validated and answer.lower() == "y":
+                    print(f"Locked to 'Filter {raid_filter_num}'.")
+                    break
+
+    def validate_raid_filter_input(self, answer: str):
+        possible_answers = ["y", "n"]
+        if not answer.isalpha():
+            return False
+
+        if len(answer) > 1:
+            return False
+
+        if answer.lower() not in possible_answers:
+            return False
+
+        return True
+
+    def get_raid_filter(self):
+        filter_uri_contains = "quest/assist/search/assist_list"
+        request_uris = self.bot.game_requests.find_generic_request(
+            filter_uri_contains, return_uri=True
+        )
+
+        if request_uris:
+            # let's take the last element of this list
+            # since I just need the latest info from gathering requests
+            # during the duration of the req/resp scan
+            raid_filter_uri = request_uris
+            raid_filter_num = raid_filter_uri.split("assist_list/")
+            raid_filter_num = raid_filter_num[-1].split("/")[0]
+
+            return raid_filter_num
 
     def remove_battle_scene_element(self):
         try:
@@ -85,7 +138,6 @@ class QuestOnRepeat:
 
             queues = self.bot.handle.find_all_queues()
             queues = self.bot.handle.handle_queue(queues, battle)
-            print(queues, "finish_fight")
             if queues is not None:
                 next_turn_queue = battle["turn"] + 1 in queues[battle["battle"]]
                 this_turn_queue = battle["turn"] in queues[battle["battle"]]
@@ -101,10 +153,10 @@ class QuestOnRepeat:
                 if queues and this_turn_queue:
                     self.bot.press.attack_button()
 
-                print(battle, "refresh boi")
-
+                start = time.time()
                 # placeholder var if I plan on NOT doing refresh every turn
                 boss_killed = self.bot.handle.wait_for_next_turn(battle)
+                print(time.time() - start, "wait_for_next_turn timer")
 
                 if "result" in str(self.driver.current_url):
                     return True
@@ -125,13 +177,16 @@ class QuestOnRepeat:
                     print("Everyone died.")
                     return True
 
+                start = time.time()
                 # after refreshing get the status of a battle
                 battle = self.bot.battle.get_battle_start_info()
+                print(time.time() - start, "battle_start_info timer")
 
                 if battle is None:
                     return
 
                 if not next_turn_queue and "result" not in str(self.driver.current_url):
+                    print("enabling auto in loading screen")
                     self.enable_auto_in_loading_screen()
                     self.auto_button_on = True
 
@@ -180,22 +235,13 @@ class QuestOnRepeat:
                 break
 
             if auto_button_in_loading_screen == 1:
-                try:
-                    parser = bs(self.driver.page_source, "lxml")
-
-                    auto_enabled_button = parser.find_all(
-                        "div", {"class": ["btn-ready-auto", "anim-simple-fadein"]}
-                    )
-
-                    if not auto_enabled_button:
-                        self.driver.find_element(
-                            By.CLASS_NAME, "txt-auto-setting"
-                        ).click()
-                    else:
-                        print("Since there's no queue - enabled auto attacks.")
+                if fa_xpath := self.bot.handle.find_fa_ele_in_loading_screen():
+                    try:
+                        self.bot.press.fa_in_loading_screen(fa_xpath)
                         break
-                except:
-                    continue
+                    except ElementNotInteractableException:
+                        return
+
             else:
                 current_url = str(self.driver.current_url)
 
@@ -225,10 +271,11 @@ class QuestOnRepeat:
             self.enable_auto_in_loading_screen()
             self.auto_button_on = True
 
-        self.bot.handle.pre_fight_screens()
-        self.bot.handle.wait_before_fight(
-            fight_start=True, gw=True if not queue else False
-        )
+        if queue:
+            self.bot.handle.pre_fight_screens()
+            self.bot.handle.wait_before_fight(
+                fight_start=True, gw=True if not queue else False
+            )
 
         fight_ended = self.finish_fight(initial_battle_info)
 
@@ -366,14 +413,74 @@ class QuestOnRepeat:
         while True:
             self.do_repeatable_quest()
 
+    def refresh_raid_filter(self):
+        if self.bot.handle.is_refresh_raid_filter_available():
+            self.bot.press.raid_filter_refresh()
+
+    def get_most_suitable_raid(self):
+        raids = self.bot.handle.get_raid_filter_raids()
+        # if raids come back empty -> just return
+        if not raids:
+            return
+
+        raids = raids.find_all("div", {"class": "prt-raid-info"})
+        suitable_raid_ele = raids[0]
+        suitable_raid_idx = None
+
+        for idx, raid in enumerate(raids, 1):
+            hp_bar = raid.find("div", {"class": "prt-raid-gauge-inner"})
+            hp_ele = str(hp_bar["style"])
+
+            suitable_raid_hp_bar = suitable_raid_ele.find(
+                "div", {"class": "prt-raid-gauge-inner"}
+            )
+            suitable_raid_hp = re.findall(r"\d+", str(suitable_raid_hp_bar["style"]))[0]
+            hp = re.findall(r"\d+", hp_ele)[0]
+
+            if suitable_raid_hp <= hp:
+                print(suitable_raid_hp, hp)
+                suitable_raid_ele = raid
+                suitable_raid_idx = idx
+
+        return suitable_raid_idx
+
+    def pick_raid(self, raid_num):
+        self.bot.press.pick_raid(raid_num)
+
+    def check_pre_fight_popups(self):
+        popups = self.bot.handle.pre_fight_popups()
+        action = self.bot.handle.check_if_action_is_needed(popups)
+        if action:
+            return True
+
+    def handle_new_raids_join(self):
+        while True:
+            raid_num = self.get_most_suitable_raid()
+
+            if raid_num:
+                self.pick_raid(raid_num)
+                self.bot.handle.pre_fight_support_summons()
+
+                action = self.check_pre_fight_popups()
+                if not action:
+                    break
+            self.refresh_raid_filter()
+
+            time.sleep(0.5)
+
     def handle_pre_fight(self):
-        if self.coop is False and self.sandbox is False:
+        modes = [self.coop, self.sandbox, self.new_raids]
+        simple_repeatable = not any(modes)
+        if simple_repeatable:
             self.bot.handle.pre_fight_support_summons()
         elif self.sandbox is True:
             self.bot.handle.sandbox_summon_pick()
 
             if self.bot.need_ap is True:
                 self.bot.handle.not_enough_of_x(sandbox=self.sandbox, timeout=10)
+        elif self.new_raids is True:
+            self.handle_new_raids_join()
+
         else:
             # Wait until player chooses it's COOP team.
             self.wait_for_coop_prep()
@@ -381,6 +488,7 @@ class QuestOnRepeat:
             # And now press 'Ready' to enter the fight.
             chapter_id = self.get_start_button_chapter_id()
             self.bot.press.by_chapter_id(chapter_id)
+
             # Give it a bigger timer because CO-OP fights
             # take a lot longer to start than your usual fights
             self.bot.handle.not_enough_of_x(timeout=10)

@@ -19,7 +19,7 @@ class GbfRequests:
             or log["method"] == "Network.loadingFinished"
         )
 
-    def find_request(self, request_uri):
+    def find_request(self, request_uri, return_uri=False):
         logs = self.get_logs()
         responses = []
         for log in filter(self.log_filter, logs):
@@ -29,7 +29,10 @@ class GbfRequests:
                 request_id = log["params"]["requestId"]
                 resp_url = log["params"]["response"]["url"]
                 if request_uri in resp_url:
-                    print(resp_url)
+                    # print(resp_url)
+                    if return_uri:
+                        return resp_url
+
                     responses.append(request_id)
                     break
 
@@ -71,5 +74,10 @@ class GbfRequests:
     def find_battle_start_response(self):
         battle_start = "start.json"
         request_ids = self.find_request(battle_start)
-        # self.finish_loading_responses(request_ids)
+
+        return request_ids
+
+    def find_generic_request(self, uri_contains: str, return_uri: bool = False):
+        request_ids = self.find_request(uri_contains, return_uri=return_uri)
+
         return request_ids

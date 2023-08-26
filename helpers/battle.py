@@ -22,7 +22,17 @@ class BattleInfo:
             if request_ids:
                 return request_ids[0]
 
-    def get_response_body(self, request_id, response=None):
+    def get_resp_body(self, request_id):
+        try:
+            resp_body = self.driver.execute_cdp_cmd(
+                "Network.getResponseBody", {"requestId": request_id}
+            )
+            resp_body = json.loads(resp_body["body"])
+            return resp_body
+        except selenium.common.exceptions.WebDriverException:
+            return None
+
+    def handle_battle_start_resp(self, request_id, response=None):
         start_time_check = False
         loading_time = 2
         start = None
@@ -33,10 +43,7 @@ class BattleInfo:
                 # TODO
                 # probably check if every funciton call here is being made inside a battle (stage)
                 if "supporter" not in str(self.driver.current_url):
-                    resp_body = self.driver.execute_cdp_cmd(
-                        "Network.getResponseBody", {"requestId": request_id}
-                    )
-                    resp_body = json.loads(resp_body["body"])
+                    resp_body = self.get_resp_body(request_id)
                     return resp_body
             except WebDriverException:
                 print(f"'{response}' response didn't load, retrying.")
@@ -106,7 +113,9 @@ class BattleInfo:
                 # and starting request of a battle will obviously
                 # happen only once
                 request_id = request_ids[0]
-                response = self.get_response_body(request_id, response="start.json")
+                response = self.handle_battle_start_resp(
+                    request_id, response="start.json"
+                )
                 battle = self.parse_battle_start_info(response)
                 if battle is not None and len(battle.keys()) >= 2:
                     return battle
@@ -117,3 +126,15 @@ class BattleInfo:
             if "result" in str(self.driver.current_url):
                 print("Battle finished, 'result' in URL.")
                 return
+
+    def get_summon_confirm_info(self):
+        filter_uri_contains = "raid_deck_data_create"
+
+        while True:
+            request_ids = self.game_requests.find_generic_request(filter_uri_contains)
+            if request_ids:
+                request_id = request_ids[0]
+                resp_body = self.get_resp_body(request_id)
+                break
+
+        return resp_body

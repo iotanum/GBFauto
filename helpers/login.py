@@ -214,6 +214,9 @@ class GBFGame:
             "Object.defineProperty(navigator, 'webdriver', {get: () => undefined})"
         )
 
+    def approve_mobage_thing(self):
+        self.press.approve_mobage_thing()
+
     def login(self, login, password):
         if GBFGame.started is False:
             self.run_additional_cdp_commands()
@@ -227,6 +230,7 @@ class GBFGame:
             else:
                 self.press_google_login()
                 self.enter_login_email(login, password)
+                self.approve_mobage_thing()
             self.switch_window_to_gbf()
             self.wait_for_main_menu_page()
             self.wait.for_loading_screen()

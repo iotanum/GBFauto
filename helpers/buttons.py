@@ -58,6 +58,8 @@ class Press:
         self._guild_wars_xpath = (
             '//*[@id="wrapper"]/div[3]/div[2]/div[4]/div[2]/div/img'
         )
+        self._mobage_thing_xpath = '//*[@id="notify-response-button"]/div'
+        self._raid_refresh_btn_xpath = '//*[@id="prt-assist-search"]/div[2]/div[2]'
 
     def _wait_for_button(self, search_by, element_name, timeout=5):
         expected_behaviour = EC.element_to_be_clickable
@@ -149,7 +151,9 @@ class Press:
             self._driver.execute_script("arguments[0].scrollIntoView(true);", element)
             element.click()
 
-    def support_element(self, element_num):
+    def support_element(
+        self, support_dict=None, support_element_num=None, first_summon=None
+    ):
         # Support element tabs in order:
         # 1 - Fire
         # 2 - Water
@@ -159,13 +163,15 @@ class Press:
         # 6 - Dark
         # 7 - Misc. - TODO
 
-        support_element_xpath = f'//*[@id="prt-type"]/div[{element_num}]'
+        support_element_xpath = f'//*[@id="prt-type"]/div[{support_element_num}]'
         search_by = By.XPATH
 
         self._wait_for_button(search_by, support_element_xpath)
         self._driver.find_element(By.XPATH, support_element_xpath).click()
 
-    def confirm_support_summon(self):
+    def confirm_support_summon(
+        self, support_dict=None, support_element_num=None, first_summon=None
+    ):
         search_by = By.XPATH
 
         self._wait_for_button(search_by, self._support_summon_confirm_xpath)
@@ -459,3 +465,31 @@ class Press:
         search_by = By.XPATH
         self._wait_for_button(search_by, self._skippable_battle_xpath)
         self._driver.find_element(By.XPATH, self._skippable_battle_xpath).click()
+
+    def approve_mobage_thing(self):
+        search_by = By.XPATH
+        self._wait_for_button(search_by, self._mobage_thing_xpath)
+        self._driver.find_element(search_by, self._mobage_thing_xpath).click()
+
+    def raid_filter_refresh(self):
+        search_by = By.XPATH
+        self._wait_for_button(search_by, self._raid_refresh_btn_xpath)
+        self._driver.find_element(search_by, self._raid_refresh_btn_xpath).click()
+
+    def pick_raid(self, raid_num):
+        raid_pick_xpath = f'//*[@id="prt-search-list"]/div[{raid_num}]'
+        search_by = By.XPATH
+
+        # i'm tired
+        element = self._driver.find_element(By.XPATH, raid_pick_xpath)
+        self._driver.execute_script("arguments[0].scrollIntoView(true);", element)
+
+        self._wait_for_button(search_by, raid_pick_xpath)
+        self._driver.find_element(search_by, raid_pick_xpath).click()
+
+    def fa_in_loading_screen(self, xpath):
+        search_by = By.XPATH
+        ready_btn_xpath = xpath
+
+        self._wait_for_button(search_by, ready_btn_xpath)
+        self._driver.find_element(search_by, ready_btn_xpath).click()

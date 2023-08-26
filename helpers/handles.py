@@ -446,6 +446,14 @@ class Handle:
                 elem.click()
                 time.sleep(1)
 
+    def pre_fight_popups(self):
+        body = self._bot.battle.get_summon_confirm_info()
+        print(body, "pre_fight_popups_body")
+        if body:
+            return body
+
+        return
+
     def pre_fight_screens(self):
         popup_search_start = time.time()
 
@@ -514,76 +522,57 @@ class Handle:
             "confirm_summon": self._bot.press.confirm_support_summon,
         }
 
-        instruction_to_run = "support_element"
-
-        while True:
-            # Execute the instruction
-            success = self._bot.wait.for_support_summon()
-            if success:
-                if instruction_to_run == "support_element":
-                    instructions_to_run[instruction_to_run](SUPPORT_ELEMENT)
-
-                if instruction_to_run == "pick_summon":
+        support_dict = None
+        for instr, func in instructions_to_run.items():
+            in_summon_screen = self._bot.wait.for_support_summon()
+            if in_summon_screen:
+                if not support_dict:
                     support_dict = self.get_best_support_summon()
-                    if support_dict:
-                        instructions_to_run[instruction_to_run](
-                            support_dict=support_dict,
-                            support_element_num=SUPPORT_ELEMENT,
-                        )
-                    else:
-                        instructions_to_run[instruction_to_run](
-                            support_element_num=SUPPORT_ELEMENT, first_summon=True
-                        )
 
-                if instruction_to_run == "confirm_summon":
-                    verification = self._wait_for_summon_confirmation()
-                    if verification:
-                        instruction_to_run = "pick_summon"
-                        continue
-
-                    if self._bot.option_repeatable is True and not verification:
-                        self.track_ap_usage()
-
-                    instructions_to_run[instruction_to_run]()
-
-                # Calculate next instruction to run
-                next_instruction_num = (
-                    list(instructions_to_run.keys()).index(instruction_to_run) + 1
+                func(
+                    support_dict=support_dict,
+                    support_element_num=SUPPORT_ELEMENT,
+                    first_summon=True if not support_dict else False,
                 )
-                try:
-                    next_instruction = list(instructions_to_run)[next_instruction_num]
-                    instruction_to_run = next_instruction
 
-                except IndexError:
-                    # Last check before exiting summon picking
-                    # needs rewrite
-                    # TODO
-                    if "#raid_multi" in str(self._driver.current_url):
-                        print("Got into raid, skipping popup search.")
-                        break
+                time.sleep(0.15)
 
-                    parser = bs(self._driver.page_source, "lxml")
-                    popup = parser.find("div", {"class": ["pop-usual"]})
-
-                    if popup:
-                        print("Popup detected during summon picking")
-
-                        # Just return if there was any type of a popup during this stage
-                        return False
-                    break
             else:
-                return success
-            time.sleep(0.15)
+                return in_summon_screen
+
+    def check_if_action_is_needed(self, popups):
+        if not popups:
+            return
+
+        # no action is needed here
+        if "ap_usage" in popups:
+            print("Using AP/EP.")
+            self.track_ap_usage()
+
+        # action is needed
+        elif "verification" in popups:
+            print("Verification is needed!")
+            self.human_verification()
+            return True
+
+        # action is needed
+        elif "result" in popups:
+            print("Raid is full, continuing on.")
+            return True
+
+        else:
+            print("Unhandled pre-fight popup!")
+            print(popups)
+            time.sleep(360)
 
     def sandbox_summon_pick(self):
-        verification = self._wait_for_summon_confirmation()
+        popups = self.pre_fight_popups()
 
         self._bot.wait.for_loading_screen()
 
         self._bot.press.confirm_support_summon()
 
-        if self._bot.option_repeatable is True and not verification:
-            self.track_ap_usage()
+        self.check_if_action_is_needed(popups)
 
     def _wait_for_summon_confirmation(self):
         start = time.time()
@@ -1537,3 +1526,49 @@ class Handle:
             return int(parsed_points[0])
         except:
             return 0
+
+    def is_refresh_raid_filter_available(self):
+        while True:
+            parser = bs(self._driver.page_source, "lxml")
+
+            refresh_btn = parser.find("div", {"class": "btn-search-refresh"})
+            if refresh_btn:
+                return True
+
+            # Eat less CPU
+            time.sleep(0.1)
+
+    def get_raid_filter_raids(self):
+        parser = bs(self._driver.page_source, "lxml")
+
+        try:
+            raids = parser.find("div", {"id": "prt-search-list"})
+            raid = raids.find("div", {"class", "txt-raid-name"})
+            if raid:
+                return raids
+        except AttributeError:
+            return
+
+    def get_xpath_from_ele(self, element):
+        components = []
+        child = element if element.name else element.parent
+        for parent in child.parents:
+            siblings = parent.find_all(child.name, recursive=False)
+            components.append(
+                child.name
+                if 1 == len(siblings)
+                else "%s[%d]"
+                % (child.name, next(i for i, s in enumerate(siblings, 1) if s is child))
+            )
+            child = parent
+        components.reverse()
+        return "/%s" % "/".join(components)
+
+    def find_fa_ele_in_loading_screen(self):
+        parser = bs(self._driver.page_source, "lxml")
+
+        ready_ele = parser.find("div", {"class": "prt-ready"})
+
+        if ready_ele:
+            ready_ele_xpath = self.get_xpath_from_ele(ready_ele)
+            return ready_ele_xpath
