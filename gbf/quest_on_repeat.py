@@ -224,6 +224,19 @@ class QuestOnRepeat:
 
         return chapter_id
 
+    def enable_auto_in_battle(self):
+        current_url = str(self.driver.current_url)
+
+        if "raid_multi" in current_url:
+            if self.auto_button_on is False:
+                self.bot.press.auto_attack()
+                self.auto_button_on = True
+        else:
+            if self.auto_button_on is False:
+                self.bot.press.attack_button()
+                self.bot.press.auto_attack()
+                self.auto_button_on = True
+
     def enable_auto_in_loading_screen(self):
         load_dotenv("config.env", override=True)
         auto_button_in_loading_screen = int(os.getenv("AUTO_IN_LOADING_SCREEN"))
@@ -249,33 +262,22 @@ class QuestOnRepeat:
                         return
 
             else:
-                current_url = str(self.driver.current_url)
-
-                if "raid_multi" in current_url:
-                    if self.auto_button_on is False:
-                        self.bot.press.auto_attack()
-                        self.auto_button_on = True
-                else:
-                    if self.auto_button_on is False:
-                        self.bot.press.attack_button()
-                        self.bot.press.auto_attack()
-                        self.auto_button_on = True
+                self.enable_auto_in_battle()
                 break
 
     def handle_fight(self):
         load_dotenv("config.env", override=True)
         queue = os.getenv("QUEUE_1_1")
 
-        # Wait for a start.json request from the game to get info
-        # on the state of a battle when starting a battle
-        initial_battle_info = self.bot.battle.get_battle_start_info()
-        print(initial_battle_info, "handle_fight")
-        if not initial_battle_info:
-            return
-
         if not queue:
             self.enable_auto_in_loading_screen()
             self.auto_button_on = True
+
+        # Wait for a start.json request from the game to get info
+        # on the state of a battle when starting a battle
+        initial_battle_info = self.bot.battle.get_battle_start_info()
+        if not initial_battle_info:
+            return
 
         if queue:
             self.bot.handle.pre_fight_screens()
