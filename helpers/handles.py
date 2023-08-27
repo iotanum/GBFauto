@@ -552,7 +552,7 @@ class Handle:
         # turns out you SOMETIMES get this request from the game
         # love their engineering team
         if "action_point_limit" in popups:
-            if popups["action_point"] < self._bot.current_ap:
+            if popups["action_point"] < self._bot.quest_cost:
                 print("Using AP/EP.")
                 self.not_enough_of_x()
 
