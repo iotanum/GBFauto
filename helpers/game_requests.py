@@ -57,13 +57,8 @@ class GbfRequests:
         return request_id
 
     def find_generic_request(
-        self, uri_contains: str, return_uri: bool = False, summon_screen=False
+        self, uri_contains: str, return_uri: bool = False
     ):
-        while True:
-            if summon_screen:
-                if "#quest/supporter" not in self.driver.current_url:
-                    break
-
-            request_id = self.find_request(uri_contains, return_uri=return_uri)
-            if request_id:
-                return request_id
+        request_id = self.find_request(uri_contains, return_uri=return_uri)
+        if request_id:
+            return request_id

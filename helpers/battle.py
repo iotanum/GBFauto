@@ -106,14 +106,18 @@ class BattleInfo:
         filter_uri_contains = ["raid_deck_data_create", "user_action_point"]
         resp_body = None
 
-        for filter_uri in filter_uri_contains:
-            request_id = self.game_requests.find_generic_request(
-                filter_uri, summon_screen=True
-            )
-            print(request_id, "testetstestest")
-            if request_id:
-                resp_body = self.bot.game_requests.get_resp_body(request_id)
-                print(resp_body, "pleaseplaepslapelsae")
-                return resp_body
+        while True:
+            if not self.bot.handle.supporter_screen():
+                break
+
+            for filter_uri in filter_uri_contains:
+                request_id = self.game_requests.find_generic_request(
+                    filter_uri
+                )
+                print(request_id, filter_uri, "testetstestest")
+                if request_id:
+                    resp_body = self.bot.game_requests.get_resp_body(request_id)
+                    print(resp_body, "pleaseplaepslapelsae")
+                    return resp_body
 
         return resp_body

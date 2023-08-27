@@ -22,8 +22,6 @@ class QuestOnRepeat:
         # Some solo/raids that can be hosted are not always
         # repeatable, aka doesn't have "play again" button
         self.is_repeatable = False
-        # In a context of current quest
-        self.new_raids = None
 
     def wait_for_repeatable_quest(self):
         if not self.quest_url:
@@ -59,7 +57,7 @@ class QuestOnRepeat:
                 print("Locked to raids, please choose filter option.")
                 self.choose_raid_filter()
                 self.quest_url = url
-                self.new_raids = True
+                self.bot.new_raids = True
                 break
 
             time.sleep(0.2)
@@ -152,12 +150,14 @@ class QuestOnRepeat:
                 if self.bot.handle.results_screen():
                     return True
 
+
+                # print(
+                #     battle["battle"] == battle["total_battles"],
+                #     "check for battle equal",
+                # )
+
                 # we only want to refresh if there's no more parts to the battle
                 # or wer are in the final battle
-                print(
-                    battle["battle"] == battle["total_battles"],
-                    "check for battle equal",
-                )
                 if (battle["battle"] == battle["total_battles"]) or battle[
                     "total_battles"
                 ] == 1:
@@ -223,7 +223,7 @@ class QuestOnRepeat:
             return
 
         if not self.bot.auto_button_on:
-            self.bot.handle.enable_auto_in_battle()
+            self.bot.handle.enable_auto_in_loading_screen()
 
         if queue:
             self.bot.handle.pre_fight_screens()
@@ -283,7 +283,6 @@ class QuestOnRepeat:
         # Used to optimize GW runs
         # if this is true it skips some popups/screens (just like bookmarking)
         gw = self.check_if_gw()
-        print(gw, "gw")
 
         self.bot.wait.for_loading_screen()
 
@@ -325,8 +324,8 @@ class QuestOnRepeat:
             if nightmare_battle and temp_nightmare_state:
                 self.is_repeatable = True
 
-            if self.bot.need_ap and self.sandbox is False and self.new_raids is False:
-                self.bot.handle.use_ap_for_non_repeatables(ep=self.new_raids)
+            if self.bot.need_ap and self.sandbox is False and self.bot.new_raids is False:
+                self.bot.handle.use_ap_for_non_repeatables(ep=self.bot.new_raids)
 
             # Navigate back to original quest
             self.go_to_quest()
@@ -335,7 +334,7 @@ class QuestOnRepeat:
         self.bot.auto_button_on = False
 
         if "#quest/supporter" not in str(self.driver.current_url):
-            self.bot.handle.not_enough_of_x(ep=self.new_raids)
+            self.bot.handle.not_enough_of_x(ep=self.bot.new_raids)
 
     def go_to_quest(self):
         attempts = 0
@@ -382,7 +381,6 @@ class QuestOnRepeat:
             hp = re.findall(r"\d+", hp_ele)[0]
 
             if suitable_raid_hp <= hp:
-                print(suitable_raid_hp, hp)
                 suitable_raid_ele = raid
                 suitable_raid_idx = idx
 
@@ -402,7 +400,7 @@ class QuestOnRepeat:
 
             if raid_num:
                 self.pick_raid(raid_num)
-                self.bot.handle.not_enough_of_x(ep=self.new_raids)
+                self.bot.handle.not_enough_of_x(ep=self.bot.new_raids)
                 success = self.bot.handle.pre_fight_support_summons()
                 if not success:
                     self.go_to_quest()
@@ -414,13 +412,13 @@ class QuestOnRepeat:
             time.sleep(0.5)
 
     def handle_pre_fight(self):
-        modes = [self.coop, self.sandbox, self.new_raids]
+        modes = [self.coop, self.sandbox, self.bot.new_raids]
         simple_repeatable = not any(modes)
         if simple_repeatable:
             self.bot.handle.pre_fight_support_summons()
         elif self.sandbox is True:
             self.bot.handle.sandbox_summon_pick()
-        elif self.new_raids is True:
+        elif self.bot.new_raids is True:
             self.handle_new_raids_join()
         else:
             # Wait until player chooses it's COOP team.

@@ -43,7 +43,7 @@ class Handle:
             while True:
                 current_url = self._driver.current_url
 
-                if "result" in current_url:
+                if self.results_screen():
                     if "empty" in current_url:
                         break
                     try:
@@ -110,7 +110,7 @@ class Handle:
             popup_search_time = time.time()
             if (
                 popup_search_time - popup_search_start > 3.5
-                or "result" not in current_url
+                or not self.results_screen()
             ):
                 # 'After fight popup' means that the bot finished a quest
                 if kill is True:
@@ -551,7 +551,7 @@ class Handle:
         # no action is needed here
         if "action_point_limit" in popups:
             print("Using AP/EP.")
-            self.use_ap_for_non_repeatables()
+            self.not_enough_of_x()
 
         # action is needed
         elif "verification" in popups:
@@ -582,7 +582,8 @@ class Handle:
         self._bot.wait.for_loading_screen()
         if not ep:
             self._bot.press.consumables_ap()
-        self._bot.press.consumables_ep()
+        else:
+            self._bot.press.consumables_ep()
         self.not_enough_of_x(ep=ep)
         self._bot.need_ap = False
 
@@ -956,7 +957,7 @@ class Handle:
                 print("couldnt wait until ready ended")
                 break
 
-            if "result" in self._driver.current_url:
+            if self.results_screen():
                 break
 
             # Check if quest position has changed (progress between multi-fight quests)
@@ -1077,7 +1078,7 @@ class Handle:
         while True:
             try:
                 resp_body = self._bot.game_requests.get_resp_body(request_id)
-                print(resp_body, request_id, "blablablabla")
+                # print(resp_body, request_id, "blablablabla")
                 resp_turn = resp_body["status"]["turn"]
 
                 current_turn = battle["turn"]
@@ -1131,7 +1132,7 @@ class Handle:
                 print("Didn't find a atk btn request?")
                 break
 
-            if "result" in str(self._driver.current_url):
+            if self.results_screen():
                 return True
 
             # doing my best here ok
@@ -1167,9 +1168,10 @@ class Handle:
             current_url = self._driver.current_url
 
             # Exit loop if in 'Pick support summon' page
-            if time.time() - start > timeout or any(
-                url in current_url for url in summon_screen_urls
-            ):
+            if time.time() - start > timeout:
+                break
+
+            if current_url in summon_screen_urls:
                 break
 
             parser = bs(self._driver.page_source, "lxml")
@@ -1661,3 +1663,6 @@ class Handle:
 
     def results_screen(self):
         return "result" in str(self._driver.current_url)
+
+    def supporter_screen(self):
+        return "#quest/supporter" in str(self._driver.current_url)
