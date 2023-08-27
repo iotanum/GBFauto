@@ -27,7 +27,10 @@ class BattleInfo:
             # only try to find that when you're no longer in support summon page
             # TODO
             # probably check if every funciton call here is being made inside a battle (stage)
-            if "supporter" not in str(self.driver.current_url) or not self.bot.handle.results_screen():
+            if (
+                "supporter" not in str(self.driver.current_url)
+                or not self.bot.handle.results_screen()
+            ):
                 while True:
                     resp_body = self.bot.game_requests.get_resp_body(request_id)
                     if resp_body:
@@ -111,9 +114,7 @@ class BattleInfo:
                 break
 
             for filter_uri in filter_uri_contains:
-                request_id = self.game_requests.find_generic_request(
-                    filter_uri
-                )
+                request_id = self.game_requests.find_generic_request(filter_uri)
                 print(request_id, filter_uri, "testetstestest")
                 if request_id:
                     resp_body = self.bot.game_requests.get_resp_body(request_id)

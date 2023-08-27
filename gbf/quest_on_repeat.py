@@ -150,7 +150,6 @@ class QuestOnRepeat:
                 if self.bot.handle.results_screen():
                     return True
 
-
                 # print(
                 #     battle["battle"] == battle["total_battles"],
                 #     "check for battle equal",
@@ -324,7 +323,11 @@ class QuestOnRepeat:
             if nightmare_battle and temp_nightmare_state:
                 self.is_repeatable = True
 
-            if self.bot.need_ap and self.sandbox is False and self.bot.new_raids is False:
+            if (
+                self.bot.need_ap
+                and self.sandbox is False
+                and self.bot.new_raids is False
+            ):
                 self.bot.handle.use_ap_for_non_repeatables(ep=self.bot.new_raids)
 
             # Navigate back to original quest
