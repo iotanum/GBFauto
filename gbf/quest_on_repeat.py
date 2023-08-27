@@ -123,9 +123,6 @@ class QuestOnRepeat:
 
         return mob_hps
 
-    def results_screen(self):
-        return "result" in str(self.driver.current_url)
-
     def finish_fight(self, initial_info):
         # remove the battle scene/advice element from the fight, less clutter
         self.remove_battle_scene_element()
@@ -152,7 +149,7 @@ class QuestOnRepeat:
 
                 boss_killed = self.bot.handle.wait_for_next_turn(battle)
 
-                if self.results_screen():
+                if self.bot.handle.results_screen():
                     return True
 
                 # we only want to refresh if there's no more parts to the battle
@@ -171,7 +168,7 @@ class QuestOnRepeat:
                     return True
 
                 # after refreshing get the status of a battle
-                if not next_turn_queue and not self.results_screen():
+                if not next_turn_queue and not self.bot.handle.results_screen():
                     if not self.bot.auto_button_on:
                         print("enabling auto in loading screen")
                         self.bot.handle.enable_auto_in_loading_screen()

@@ -1628,12 +1628,18 @@ class Handle:
             if time.time() - start >= 10:
                 break
 
-            if "result" in str(self._driver.current_url):
+            if self.results_screen():
                 break
 
             if auto_button_in_loading_screen == 1:
                 while True:
                     try:
+                        if time.time() - start >= 10:
+                            break
+
+                        if self.results_screen():
+                            return
+
                         fa_xpath = self.find_fa_ele_in_loading_screen()
                         self._driver.find_element(By.XPATH, fa_xpath).click()
 
@@ -1652,3 +1658,6 @@ class Handle:
             else:
                 self.enable_auto_in_battle()
                 break
+
+    def results_screen(self):
+        return "result" in str(self._driver.current_url)
