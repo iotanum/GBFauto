@@ -549,9 +549,12 @@ class Handle:
             return
 
         # no action is needed here
+        # turns out you SOMETIMES get this request from the game
+        # love their engineering team
         if "action_point_limit" in popups:
-            print("Using AP/EP.")
-            self.not_enough_of_x()
+            if popups["action_point"] < self._bot.current_ap:
+                print("Using AP/EP.")
+                self.not_enough_of_x()
 
         # action is needed
         elif "verification" in popups:
