@@ -40,12 +40,21 @@ class Handle:
         # Don't need to sleep if this is being called
         # for the second bunch of popups
         if kill is True:
+            time_start = time.time()
+
             while True:
                 current_url = self._driver.current_url
+
+                if "#quest" in current_url and time.time() - time_start > 5:
+                    print("Seems like someone was impatient, moving on.")
+                    self._bot.total_fights += 1
+                    return
 
                 if self.results_screen():
                     if "empty" in current_url:
                         break
+
+
                     try:
                         parser = bs(self._driver.page_source, "lxml")
 
@@ -1657,6 +1666,7 @@ class Handle:
                         InvalidArgumentException,
                         ElementNotInteractableException,
                         NoSuchElementException,
+                        StaleElementReferenceException
                     ):
                         continue
 

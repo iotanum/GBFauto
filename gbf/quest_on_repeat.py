@@ -285,7 +285,7 @@ class QuestOnRepeat:
 
         self.bot.wait.for_loading_screen()
 
-        self.bot.handle.after_fight_popups(kill=True, gw=gw if gw else False)
+        self.bot.handle.after_fight_popups(kill=True, gw=gw)
 
         hours, minutes, seconds = self.convert_seconds_to_hms_format()
         if self.bot.total_fights == 0:
