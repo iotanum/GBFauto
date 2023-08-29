@@ -535,14 +535,14 @@ class Handle:
         for instr, func in instructions_to_run.items():
             in_summon_screen = self._bot.wait.for_support_summon()
             if in_summon_screen:
-                if not support_dict:
-                    support_dict = self.get_best_support_summon()
-
                 func(
                     support_dict=support_dict,
                     support_element_num=SUPPORT_ELEMENT,
                     first_summon=True if not support_dict else False,
                 )
+
+                if not support_dict:
+                    support_dict = self.get_best_support_summon()
 
                 time.sleep(0.15)
 
