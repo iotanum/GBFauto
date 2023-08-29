@@ -173,10 +173,22 @@ class Press:
     def confirm_support_summon(
         self, support_dict=None, support_element_num=None, first_summon=None
     ):
-        search_by = By.XPATH
+        while True:
+            parser = bs(self._driver.page_source, "lxml")
+            confirm_btn = parser.find("div", {"class": "btn-usual-ok se-quest-start"})
 
-        self._wait_for_button(search_by, self._support_summon_confirm_xpath)
-        self._driver.find_element(By.XPATH, self._support_summon_confirm_xpath).click()
+            req_id = self._bot.game_requests.find_generic_request("quest/decks_info")
+
+            if req_id:
+                req_body = self._bot.game_requests.get_resp_body(req_id)
+                if "popup" in req_body:
+                    action = self._bot.handle.check_if_action_is_needed(req_body)
+                    if action:
+                        return True
+
+            if confirm_btn:
+                self._driver.find_element(By.XPATH, self._support_summon_confirm_xpath).click()
+                return False
 
     def attack_button(self):
         start = time.time()

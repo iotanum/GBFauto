@@ -557,6 +557,12 @@ class Handle:
         if not popups:
             return
 
+        if "popup" in popups:
+            for k, v in popups["popup"].items():
+                if "verification" in v.lower():
+                    self.human_verification()
+                    return True
+
         # no action is needed here
         # turns out you SOMETIMES get this request from the game
         # love their engineering team
