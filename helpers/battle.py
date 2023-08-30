@@ -12,35 +12,7 @@ class BattleInfo:
         self.driver = game_handler.driver
         self.game_requests = self.bot.game_requests
 
-    def retry(self, response):
-        # refresh and try finding a new request of a battle start
-        self.bot.handle.refresh_page()
-
-        while True:
-            print(f"Trying to find another '{response}' request.")
-            request_id = self.game_requests.find_battle_start_response()
-            if request_id:
-                return request_id
-
-    def handle_battle_start_resp(self, request_id, response=None):
-        while True:
-            # only try to find that when you're no longer in support summon page
-            # TODO
-            # probably check if every funciton call here is being made inside a battle (stage)
-            if (
-                "supporter" not in str(self.driver.current_url)
-                or not self.bot.handle.results_screen()
-            ):
-                while True:
-                    resp_body = self.bot.game_requests.get_resp_body(request_id)
-                    if resp_body:
-                        break
-                    else:
-                        print(f"'{response}' response didn't load, retrying.")
-                        request_id = self.retry(response)
-                return resp_body
-
-    def parse_battle_start_info(self, resp):
+    def parse_battle_start(self, resp):
         battle = dict()
         try:
             # battles/total/turn battles are easy
@@ -84,23 +56,38 @@ class BattleInfo:
             print(resp)
             return
 
+    def is_parsed_battle_info_valid(self, battle):
+        if not battle:
+            return False
+
+        if len(battle.keys()) < 2:
+            return False
+
+        return True
+
     def get_battle_start_info(self):
+        timeout = 10
+        start = time.time()
+
         while True:
-            request_id = self.game_requests.find_battle_start_response()
-            if request_id:
-                # everything returned from request searching is in a list
-                # and starting request of a battle will obviously
-                # happen only once
-                response = self.handle_battle_start_resp(
-                    request_id, response="start.json"
-                )
-                battle = self.parse_battle_start_info(response)
-                if battle is not None and len(battle.keys()) >= 2:
+            # Fail safe
+            if time.time() - start > timeout:
+                print("Battle start info not found. Retrying..")
+                self.bot.handle.refresh_page()
+                start = time.time()
+
+            # Don't search for battle start info if we're in supporter screen
+            if self.bot.handle.supporter_screen():
+                continue
+
+            # Find battle start response
+            if req_id := self.game_requests.find_battle_start_response():
+                resp = self.bot.game_requests.get_resp_body(req_id)
+                battle = self.parse_battle_start(resp)
+                if self.is_parsed_battle_info_valid(battle):
                     return battle
 
-                if battle is None:
-                    return
-
+            # If uri in URL has 'result' in it then battle is over
             if self.bot.handle.results_screen():
                 print("Battle finished, 'result' in URL.")
                 return

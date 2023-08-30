@@ -54,7 +54,6 @@ class Handle:
                     if "empty" in current_url:
                         break
 
-
                     try:
                         parser = bs(self._driver.page_source, "lxml")
 
@@ -1641,12 +1640,13 @@ class Handle:
     def enable_auto_in_loading_screen(self):
         load_dotenv("config.env", override=True)
         auto_button_in_loading_screen = int(os.getenv("AUTO_IN_LOADING_SCREEN"))
-
+        timout = 3
         start = time.time()
 
         while True:
-            if time.time() - start >= 10:
-                break
+            if time.time() - start >= timout:
+                self.refresh_page()
+                start = time.time()
 
             if self.results_screen():
                 break
@@ -1654,8 +1654,9 @@ class Handle:
             if auto_button_in_loading_screen == 1:
                 while True:
                     try:
-                        if time.time() - start >= 10:
-                            break
+                        if time.time() - start >= timout:
+                            self.refresh_page()
+                            start = time.time()
 
                         if self.results_screen():
                             return
@@ -1672,7 +1673,7 @@ class Handle:
                         InvalidArgumentException,
                         ElementNotInteractableException,
                         NoSuchElementException,
-                        StaleElementReferenceException
+                        StaleElementReferenceException,
                     ):
                         continue
 

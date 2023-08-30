@@ -187,7 +187,9 @@ class Press:
                         return True
 
             if confirm_btn:
-                self._driver.find_element(By.XPATH, self._support_summon_confirm_xpath).click()
+                self._driver.find_element(
+                    By.XPATH, self._support_summon_confirm_xpath
+                ).click()
                 return False
 
     def attack_button(self):
