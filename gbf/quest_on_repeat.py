@@ -20,7 +20,6 @@ class QuestOnRepeat:
         # Some solo/raids that can be hosted are not always
         # repeatable, aka doesn't have "play again" button
         self.is_repeatable = False
-        # main dict for battle info
 
     def wait_for_repeatable_quest(self):
         if not self.quest_url:
@@ -62,6 +61,7 @@ class QuestOnRepeat:
             time.sleep(0.2)
 
     def choose_raid_filter(self):
+        self.bot.handle.set_req_time()
         while True:
             raid_filter_num = self.get_raid_filter()
             if raid_filter_num:
@@ -90,6 +90,7 @@ class QuestOnRepeat:
     def get_raid_filter(self):
         req = self.bot.battle.find_raid_assist_response()
         if req:
+            req = req[0]
             # let's take the last element of this list
             # since I just need the latest info from gathering requests
             # during the duration of the req/resp scan
@@ -116,16 +117,16 @@ class QuestOnRepeat:
             queues = self.bot.handle.handle_queue(queues)
             if queues is not None:
                 next_turn_queue = (
-                    self.bot.battle["turn"] + 1 in queues[self.bot.battle["battle"]]
+                    self.bot.fight["turn"] + 1 in queues[self.bot.fight["battle"]]
                 )
                 this_turn_queue = (
-                    self.bot.battle["turn"] in queues[self.bot.battle["battle"]]
+                    self.bot.fight["turn"] in queues[self.bot.fight["battle"]]
                 )
             else:
                 next_turn_queue = None
                 this_turn_queue = None
 
-            print(f"Fight #{self.bot.battle['battle']}.")
+            print(f"Fight #{self.bot.fight['battle']}.")
 
             try:
                 if queues and this_turn_queue:
@@ -139,8 +140,8 @@ class QuestOnRepeat:
                 # we only want to refresh if there's no more parts to the battle
                 # or wer are in the final battle
                 if (
-                    self.bot.battle["battle"] == self.bot.battle["total_battles"]
-                ) or self.bot.battle["total_battles"] == 1:
+                    self.bot.fight["battle"] == self.bot.fight["total_battles"]
+                ) or self.bot.fight["total_battles"] == 1:
                     self.bot.handle.refresh_page()
 
                 if boss_killed:
@@ -153,9 +154,9 @@ class QuestOnRepeat:
                         print("enabling auto in loading screen")
                         self.bot.handle.enable_auto_in_loading_screen()
 
-                self.bot.battle = self.bot.battle.handle_battle_start_info()
+                self.bot.fight = self.bot.battle.handle_battle_start_info()
 
-                if self.bot.battle is None:
+                if self.bot.fight is None:
                     return
 
                 if next_turn_queue:
@@ -181,16 +182,10 @@ class QuestOnRepeat:
         load_dotenv("config.env", override=True)
         queue = os.getenv("QUEUE_1_1")
 
-        # Wait for a start.json request from the game to get info
-        # on the state of a battle when starting a battle
-        self.bot.battle = self.bot.battle.handle_battle_start_info()
-        if self.bot.battle:
+        if not self.bot.fight:
             return
 
         if not queue:
-            self.bot.handle.enable_auto_in_loading_screen()
-
-        if not self.bot.auto_button_on:
             self.bot.handle.enable_auto_in_loading_screen()
 
         if queue:
@@ -204,7 +199,7 @@ class QuestOnRepeat:
         # Reset quest_on_repeat states
         self.bot.refreshed = False
         # Reset only for raid-type of quests, not multi-battles ones
-        if not self.bot.battle["total_battles"] > 1:
+        if not self.bot.fight["total_battles"] > 1:
             self.bot.auto_button_on = False
 
         # Skip animations after completing the quest
@@ -361,21 +356,20 @@ class QuestOnRepeat:
         self.bot.press.pick_raid(raid_num)
 
     def post_summon_checks(self):
+        self.bot.handle.set_req_time()
         while True:
             reqs = self.bot.battle.find_after_confirm_response()
             if reqs:
                 for req in reqs:
-                    resp_body = self.bot.game_requests.get_resp_body(req["id"])
-
-                    # skip everything if battle has started
-                    # sadly have to check here as well, since a lot of
-                    # stuff is happening in the background after summons
                     if "start.json" in req["uri"]:
-                        self.bot.battle = self.bot.battle.check_battle_info()
-                        return
+                        self.bot.fight = self.bot.battle.check_battle_info(req)
+                        print(True if self.bot.fight else None, "self.bot.fight")
+                        if self.bot.fight:
+                            return
 
-                    action = self.bot.handle.check_if_action_is_needed(resp_body)
-                    if not action:
+                    action = self.bot.handle.check_if_action_is_needed(req)
+                    print(action, "action")
+                    if action:
                         return True
 
     def handle_new_raids_join(self):
@@ -397,15 +391,14 @@ class QuestOnRepeat:
 
     def handle_pre_fight(self):
         modes = [self.coop, self.sandbox, self.bot.new_raids]
-        simple_repeatable = not any(modes)
-        if simple_repeatable:
+        if not any(modes):
             self.bot.handle.pre_fight_support_summons()
         elif self.sandbox is True:
             self.bot.handle.sandbox_summon_pick()
         elif self.bot.new_raids is True:
             self.handle_new_raids_join()
         else:
-            # Wait until player chooses it's COOP team.
+            # Wait until player chooses its COOP team.
             self.wait_for_coop_prep()
 
             # And now press 'Ready' to enter the fight.

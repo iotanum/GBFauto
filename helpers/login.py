@@ -61,12 +61,14 @@ class GBFGame:
         self.auto_button_on = False
         self.fa_button_xpath = None
         self.new_raids = False
-        self.battle = None
+        self.fight = None
         #############################################
         self.current_ap = None
         self.quest_cost = None
         self.need_ap = False
         self.refreshed = False
+        #############################################
+        self.req_start_time = None
 
     def run_time(self):
         return time.time() - self._start_time

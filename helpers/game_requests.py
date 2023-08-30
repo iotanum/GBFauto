@@ -1,5 +1,6 @@
 import json
 
+from dateutil.parser import parse
 from selenium.common.exceptions import WebDriverException
 
 
@@ -8,16 +9,23 @@ class GbfRequests:
         self.bot = game_handler
         self.driver = game_handler.driver
 
+    def is_log_new(self, log):
+        try:
+            date = log["params"]["response"]["headers"]["Date"]
+            req_date_parsed = parse(date)
+            return req_date_parsed > self.bot.req_start_time
+        except KeyError:
+            return False
+
+    def log_filter(self, log):
+        return log["method"] == "Network.responseReceived" and self.is_log_new(log)
+
     def get_logs(self):
         logs_raw = self.driver.get_log("performance")
         logs = [json.loads(lr["message"])["message"] for lr in logs_raw]
-        filtered = filter(self.log_filter, logs)
-        return filtered
+        return filter(self.log_filter, logs)
 
-    def log_filter(self, log):
-        return log["method"] == "Network.responseReceived"
-
-    def find_request(self, request_uri):
+    def find_request(self, req_uris):
         logs = self.get_logs()
         reqs = []
 
@@ -25,17 +33,23 @@ class GbfRequests:
             request_id = log["params"]["requestId"]
             resp_url = log["params"]["response"]["url"]
 
-            if request_uri in resp_url:
-                reqs.append({"id": request_id, "uri": resp_url})
+            for req in req_uris:
+                if req in resp_url:
+                    print(resp_url, "resp_url, find_request")
+                    reqs.append({"id": request_id, "uri": resp_url})
 
-        return reqs if reqs else None
+        if reqs:
+            return reqs
 
-    def get_resp_body(self, request_id):
-        try:
-            resp_body = self.driver.execute_cdp_cmd(
-                "Network.getResponseBody", {"requestId": request_id}
-            )
-            resp_body_dict = json.loads(resp_body["body"])
-            return resp_body_dict
-        except WebDriverException:
-            return None
+    def get_resp_body(self, req):
+        req_id = req["id"]
+        while True:
+            try:
+                resp_json = self.driver.execute_cdp_cmd(
+                    "Network.getResponseBody", {"requestId": req_id}
+                )
+                return json.loads(resp_json["body"])
+            except WebDriverException:
+                uri = req["uri"].split("/")[-1]
+                print(f"Ups, didn't load '{uri}'. Retrying...")
+                pass

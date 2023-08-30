@@ -4,6 +4,7 @@ import os
 import random
 import asyncio
 from datetime import datetime
+from zoneinfo import ZoneInfo
 
 from selenium import common as selenium_err
 from selenium.webdriver.common.keys import Keys
@@ -540,34 +541,30 @@ class Handle:
         self.track_ap_usage()
         return True
 
-    def check_if_action_is_needed(self, req_body):
+    def check_if_action_is_needed(self, req):
+        req_body = self._bot.game_requests.get_resp_body(req)
         print(req_body, "popups")
         if not req_body:
             return
 
-        if "popup" in req_body:
-            for k, v in req_body["popup"].items():
-                if "verification" in v.lower():
+        req_uri = req['uri']
+        if "create" in req_uri:
+            if popup := req_body.get("popup"):
+                if "verification" in popup.lower():
                     self.human_verification()
                     return True
-
-        # no action is needed here
-        # turns out you SOMETIMES get this request from the game
-        # love their engineering team
-        if "action_point_limit" in req_body:
-            if req_body["action_point"] < self._bot.quest_cost:
-                print("Using AP/EP.")
-                self.not_enough_of_x()
-
-        # action is needed
-        elif "result" in req_body:
-            print("Raid is full, continuing on.")
-            return True
-
-        else:
-            print("Unhandled pre-fight popup!")
-            print(req_body)
-            time.sleep(360)
+            elif result := req_body.get("result"):
+                if result != "ok":
+                    print("Raid is full, continuing on.")
+                    return True
+            elif "action_point_limit" in req_body:
+                if req_body["action_point"] < self._bot.quest_cost:
+                    print("Using AP/EP.")
+                    self.not_enough_of_x()
+            else:
+                print("Unhandled pre-fight popup!")
+                print(req_body)
+                time.sleep(360)
 
     def sandbox_summon_pick(self):
         self._bot.wait.for_loading_screen()
@@ -627,7 +624,7 @@ class Handle:
     def handle_queue(self, queues, raids=False):
         # Returns a list of queues as described in config for the current battle
         # there's raids/quests with multiple battle stages
-        current_battle = self._bot.battle["battle"]
+        current_battle = self._bot.fight["battle"]
 
         try:
             queues_for_battle = queues[current_battle]
@@ -638,7 +635,7 @@ class Handle:
         # Check if there's a queue for the upcoming turn
         # to turn off auto btn
         try:
-            queue_for_next_turn = queues_for_battle[self._bot.battle["turn"] + 1]
+            queue_for_next_turn = queues_for_battle[self._bot.fight["turn"] + 1]
         except KeyError:
             queue_for_next_turn = None
 
@@ -649,7 +646,7 @@ class Handle:
 
             # Try mapping dict key to battle turn and see if we have a queue for it
             try:
-                queue_for_turn = queues_for_battle[self._bot.battle["turn"]]
+                queue_for_turn = queues_for_battle[self._bot.fight["turn"]]
             except KeyError:
                 queue_for_turn = None
 
@@ -659,11 +656,11 @@ class Handle:
 
                 # Give 'True' to the queue which was just done
                 # this way I do checks later what queues were done
-                queues[current_battle][self._bot.battle["turn"]] = True
+                queues[current_battle][self._bot.fight["turn"]] = True
 
             # Map done queues with "True" if queue turn is lower than the current turn in battle
             for turn, queue in queues_for_battle.items():
-                if turn < self._bot.battle["turn"]:
+                if turn < self._bot.fight["turn"]:
                     queues[current_battle][turn] = True
 
         return queues if queues_for_battle else None
@@ -939,71 +936,32 @@ class Handle:
 
         return queues
 
-    # by valid I mean it's fuckign AFTER I requested it
-    # sadly I can't do this in battle.py, since it requires pressing atk and shit
-    # have to handle stuff here
-    def attack_response_is_valid(self, req):
-        start_time_check = False
-        loading_time = 5
-        start = None
-
-        while True:
-            try:
-                resp_body = self._bot.game_requests.get_resp_body(req["id"])
-                # print(resp_body, request_id, "blablablabla")
-                resp_turn = resp_body["status"]["turn"]
-
-                current_turn = self._bot.battle["turn"]
-                current_battle = self._bot.battle["battle"]
-                total_battles = self._bot.battle["total_battles"]
-
-                # + turn from perceived turn, because response returns what happens
-                # AFTER pressing ATK (ougies, turns, animations, hps, etc)
-                # print(resp_turn, current_turn, "turns")
-                if resp_turn == current_turn + 1:
-                    print(f"Attacked. Battle '{current_battle}', Turn {current_turn}")
-                    return True, False
-                if resp_turn == current_turn and current_battle == total_battles:
-                    print("Probably killed the boss.")
-                    return True, True
-            except WebDriverException:
-                print("ATK BTN response didn't load, retrying.")
-                if not start_time_check:
-                    start = time.time()
-                    start_time_check = True
-
-                # just return if atk btn response is not loaded
-                # wait_for_next_turn will retry/handle it
-                if start and time.time() - start >= loading_time:
-                    return False, False
-            except TypeError:
-                continue
-
-            time.sleep(0.050)
-
     def wait_for_next_turn(self):
         start = time.time()
+        self._bot.handle.set_req_time()
 
         while True:
-            # Find all 'needed' responses
-            req = self._bot.battle.find_attack_btn_response()
-            if req:
-                valid, needs_refresh = self.attack_response_is_valid(req["id"])
-                if valid:
-                    if needs_refresh:
+            if req := self._bot.battle.find_attack_btn_response():
+                if resp := self._bot.game_requests.get_resp_body(req[0]):
+                    resp_turn = resp["status"]["turn"]
+
+                    current_turn = self._bot.fight["turn"]
+                    current_battle = self._bot.fight["battle"]
+                    total_battles = self._bot.fight["total_battles"]
+
+                    if resp_turn == self._bot.fight["turn"] + 1:
+                        print(f"Attacked. Battle '{current_battle}', Turn '{current_turn}'.")
+                        return False
+                    if resp_turn == current_turn and current_battle == total_battles:
+                        print("Probably killed the boss.")
                         return True
-                    else:
-                        break
 
             if time.time() - start > 60:
                 print("Didn't find a atk btn request?")
-                break
+                return
 
             if self.results_screen():
                 return True
-
-            # doing my best here ok
-            time.sleep(0.050)
 
     def not_enough_of_x(self, sandbox=False, timeout=3, ep=False):
         start = time.time()
@@ -1503,3 +1461,6 @@ class Handle:
 
     def supporter_screen(self):
         return "#quest/supporter" in str(self._driver.current_url)
+
+    def set_req_time(self):
+        self._bot.req_start_time = datetime.now(tz=ZoneInfo("GMT"))

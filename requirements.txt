@@ -6,4 +6,5 @@ soupsieve
 urllib3
 aiohttp
 undetected-chromedriver
-black
+dateutil
+tzdata

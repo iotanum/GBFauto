@@ -66,13 +66,14 @@ class BattleInfo:
         return True
 
     def check_battle_info(self, req):
-        body = self.bot.game_requests.get_resp_body(req["id"])
+        body = self.bot.game_requests.get_resp_body(req)
         if self.is_battle_resp_valid(body):
             return self.parse_battle_start(body)
 
     def handle_battle_start_info(self):
         timeout = 15
         start = time.time()
+        self.bot.handle.set_req_time()
 
         while True:
             # Fail safe
@@ -87,7 +88,7 @@ class BattleInfo:
 
             # Find battle start response
             if req := self.find_battle_start_response():
-                if battle := self.check_battle_info(req):
+                if battle := self.check_battle_info(req[0]):
                     return battle
 
             # If uri in URL has 'result' in it then battle is over
@@ -96,18 +97,19 @@ class BattleInfo:
                 return
 
     def find_after_confirm_response(self):
-        req_contains = ["create?", "start.json"]
+        # first one for raids, second one for quests, third one for battle start
+        req_contains = ["raid_deck_data_create", "create_quest", "start.json"]
         return self.game_requests.find_request(req_contains)
 
     def find_attack_btn_response(self):
         req_contains = ["normal_attack_result"]
-        return self.bot.game_requests.find_request(req_contains)[0]
+        return self.bot.game_requests.find_request(req_contains)
 
     # contains information of a battle start situation
     def find_battle_start_response(self):
         req_contains = ["start.json"]
-        return self.bot.game_requests.find_request(req_contains)[0]
+        return self.bot.game_requests.find_request(req_contains)
 
     def find_raid_assist_response(self):
         req_contains = ["quest/assist/search/assist_list"]
-        return self.bot.game_requests.find_request(req_contains)[0]
+        return self.bot.game_requests.find_request(req_contains)
