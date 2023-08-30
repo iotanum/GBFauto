@@ -21,13 +21,6 @@ class Action:
             '//*[@id="pop"]/div/div[2]/div/div/div[4]/div[2]/select'
         )
         self._half_elixir_consumable_use_xpath = '//*[@id="pop"]/div/div[3]/div[2]'
-        self._input_raid_id_class = "frm-battle-key"
-
-    def input_raid_id(self, raid_id):
-        elem = self._driver.find_element(By.CLASS_NAME, self._input_raid_id_class)
-        elem.clear()
-        time.sleep(1)
-        elem.send_keys(raid_id)
 
     def use_potions_or_pills(self, amount, consumable=False, sandbox=False, ep=False):
         timeout = 2

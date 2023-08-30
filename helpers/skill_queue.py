@@ -13,7 +13,6 @@ class Skills:
         self._bot = game_handler
         self._driver = game_handler.driver
         self._queue = None
-        self._queue_from_config = None
 
     def parse_queue(self, queue):
         ability_to_num = {"a": 1, "b": 2, "c": 3, "d": 4, "e": 5, "f": 6}
@@ -71,11 +70,6 @@ class Skills:
         else:
             self._bot.press.previous_char()
         time.sleep(0.5)
-
-    def handle_ability_log_popup(self):
-        popup = self._bot.popup.log_ability()
-        if popup is True:
-            self._bot.press.log_ability()
 
     def remove_ability_log_element(self):
         try:

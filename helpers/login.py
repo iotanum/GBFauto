@@ -27,7 +27,6 @@ from dotenv import load_dotenv
 
 load_dotenv("config.env")
 
-HEADLESS_MODE = int(os.getenv("HEADLESS_MODE"))
 MANUAL_LOGIN = int(os.getenv("MANUAL_LOGIN"))
 UNDETECTED_CHROME_MODE = int(os.getenv("UC_MODE"))
 
@@ -59,17 +58,15 @@ class GBFGame:
         self.total_honors = 0
         self.total_pendants = 0
         self.total_fights = 0
-        self.raid_battle = False
         self.auto_button_on = False
         self.fa_button_xpath = None
         self.new_raids = False
+        self.battle = None
         #############################################
-        self.option_repeatable = False
         self.current_ap = None
         self.quest_cost = None
         self.need_ap = False
         self.refreshed = False
-        self.point_threshold = os.getenv("POINT_THRESHOLD")
 
     def run_time(self):
         return time.time() - self._start_time
@@ -141,10 +138,6 @@ class GBFGame:
         self.wait_for_gbf_login()
         elem = self.driver.find_element(By.CLASS_NAME, "btn-auth-login")
         self.handle_click(elem)
-
-    def wait_for_title_change(self):
-        wait = WebDriverWait(self.driver, 3)
-        wait.until(EC.title_is("Mobage Connect"))
 
     def wait_for_window_switch(self):
         wait = WebDriverWait(self.driver, 3)

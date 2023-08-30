@@ -17,11 +17,8 @@ from subprocess import check_output
 logger = logging.getLogger()
 logger.propagate = False
 
-config = load_dotenv(dotenv_path="config.env")
 gbf_login = os.getenv("GBF_LOGIN")
 gbf_password = os.getenv("GBF_PASSWORD")
-raid_boss_name = os.getenv("RAID_BOSS_NAME")
-headless = os.getenv("HEADLESS_MODE")
 
 options = {1: "Repeatable Quest"}
 

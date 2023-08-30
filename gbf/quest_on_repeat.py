@@ -1,5 +1,4 @@
 from bs4 import BeautifulSoup as bs
-from bs4 import SoupStrainer as ss
 
 import os
 import time
@@ -15,13 +14,13 @@ class QuestOnRepeat:
         self.bot = game_handler
         self.driver = game_handler.driver
         self.repeat = False
-        self.bot.raid_battle = False
         self.coop = False
         self.sandbox = False
         self.quest_url = None
         # Some solo/raids that can be hosted are not always
         # repeatable, aka doesn't have "play again" button
         self.is_repeatable = False
+        # main dict for battle info
 
     def wait_for_repeatable_quest(self):
         if not self.quest_url:
@@ -89,16 +88,12 @@ class QuestOnRepeat:
         return True
 
     def get_raid_filter(self):
-        filter_uri_contains = "quest/assist/search/assist_list"
-        request_uri = self.bot.game_requests.find_generic_request(
-            filter_uri_contains, return_uri=True
-        )
-
-        if request_uri:
+        req = self.bot.battle.find_raid_assist_response()
+        if req:
             # let's take the last element of this list
             # since I just need the latest info from gathering requests
             # during the duration of the req/resp scan
-            raid_filter_num = request_uri.split("assist_list/")
+            raid_filter_num = req["uri"].split("assist_list/")
             raid_filter_num = raid_filter_num[-1].split("/")[0]
 
             return raid_filter_num
@@ -112,54 +107,40 @@ class QuestOnRepeat:
         except selenium_err.exceptions.NoSuchElementException:
             pass
 
-    def enemy_hps(self):
-        strainer = ss("div", attrs={"class": "prt-targeting-area main-tap-area"})
-        parser = bs(self.driver.page_source, "lxml", parse_only=strainer)
-
-        mob_hps = parser.find_all("span", "txt-gauge-value")
-        mob_hps = [int(hp.text) for hp in mob_hps]
-
-        return mob_hps
-
-    def finish_fight(self, initial_info):
+    def finish_fight(self):
         # remove the battle scene/advice element from the fight, less clutter
         self.remove_battle_scene_element()
 
-        printed_battle = False
-        battle = initial_info
         while True:
             queues = self.bot.handle.find_all_queues()
-            queues = self.bot.handle.handle_queue(queues, battle)
+            queues = self.bot.handle.handle_queue(queues)
             if queues is not None:
-                next_turn_queue = battle["turn"] + 1 in queues[battle["battle"]]
-                this_turn_queue = battle["turn"] in queues[battle["battle"]]
+                next_turn_queue = (
+                    self.bot.battle["turn"] + 1 in queues[self.bot.battle["battle"]]
+                )
+                this_turn_queue = (
+                    self.bot.battle["turn"] in queues[self.bot.battle["battle"]]
+                )
             else:
                 next_turn_queue = None
                 this_turn_queue = None
 
-            if not printed_battle:
-                print(f"Fight #{battle['battle']}.")
-                printed_battle = True
+            print(f"Fight #{self.bot.battle['battle']}.")
 
             try:
                 if queues and this_turn_queue:
                     self.bot.press.attack_button()
 
-                boss_killed = self.bot.handle.wait_for_next_turn(battle)
+                boss_killed = self.bot.handle.wait_for_next_turn()
 
                 if self.bot.handle.results_screen():
                     return True
 
-                # print(
-                #     battle["battle"] == battle["total_battles"],
-                #     "check for battle equal",
-                # )
-
                 # we only want to refresh if there's no more parts to the battle
                 # or wer are in the final battle
-                if (battle["battle"] == battle["total_battles"]) or battle[
-                    "total_battles"
-                ] == 1:
+                if (
+                    self.bot.battle["battle"] == self.bot.battle["total_battles"]
+                ) or self.bot.battle["total_battles"] == 1:
                     self.bot.handle.refresh_page()
 
                 if boss_killed:
@@ -172,9 +153,9 @@ class QuestOnRepeat:
                         print("enabling auto in loading screen")
                         self.bot.handle.enable_auto_in_loading_screen()
 
-                battle = self.bot.battle.get_battle_start_info()
+                self.bot.battle = self.bot.battle.handle_battle_start_info()
 
-                if battle is None:
+                if self.bot.battle is None:
                     return
 
                 if next_turn_queue:
@@ -187,18 +168,6 @@ class QuestOnRepeat:
                 selenium_err.exceptions.WebDriverException,
             ):
                 pass
-
-    def count_quest_fight_parts(self):
-        parser = bs(self.driver.page_source, "lxml")
-
-        progress_bar = parser.find("div", {"class": "prt-position"})
-        quest_parts = progress_bar.find_all("div", {"class": ["lis-spot"]})
-
-        # If list is empty - it's a one fight quest
-        if not quest_parts:
-            quest_parts = [1]
-
-        return len(quest_parts)
 
     def get_start_button_chapter_id(self):
         parser = bs(self.driver.page_source, "lxml")
@@ -214,8 +183,8 @@ class QuestOnRepeat:
 
         # Wait for a start.json request from the game to get info
         # on the state of a battle when starting a battle
-        initial_battle_info = self.bot.battle.get_battle_start_info()
-        if not initial_battle_info:
+        self.bot.battle = self.bot.battle.handle_battle_start_info()
+        if self.bot.battle:
             return
 
         if not queue:
@@ -230,12 +199,12 @@ class QuestOnRepeat:
                 fight_start=True, gw=True if not queue else False
             )
 
-        fight_ended = self.finish_fight(initial_battle_info)
+        fight_ended = self.finish_fight()
 
         # Reset quest_on_repeat states
         self.bot.refreshed = False
         # Reset only for raid-type of quests, not multi-battles ones
-        if not initial_battle_info["total_battles"] > 1:
+        if not self.bot.battle["total_battles"] > 1:
             self.bot.auto_button_on = False
 
         # Skip animations after completing the quest
@@ -333,7 +302,6 @@ class QuestOnRepeat:
             # Navigate back to original quest
             self.go_to_quest()
 
-        self.bot.raid_battle = False
         self.bot.auto_button_on = False
 
         if "#quest/supporter" not in str(self.driver.current_url):
@@ -392,10 +360,23 @@ class QuestOnRepeat:
     def pick_raid(self, raid_num):
         self.bot.press.pick_raid(raid_num)
 
-    def check_pre_fight_popups(self):
-        popups = self.bot.handle.pre_fight_popups()
-        if popups:
-            return True
+    def post_summon_checks(self):
+        while True:
+            reqs = self.bot.battle.find_after_confirm_response()
+            if reqs:
+                for req in reqs:
+                    resp_body = self.bot.game_requests.get_resp_body(req["id"])
+
+                    # skip everything if battle has started
+                    # sadly have to check here as well, since a lot of
+                    # stuff is happening in the background after summons
+                    if "start.json" in req["uri"]:
+                        self.bot.battle = self.bot.battle.check_battle_info()
+                        return
+
+                    action = self.bot.handle.check_if_action_is_needed(resp_body)
+                    if not action:
+                        return True
 
     def handle_new_raids_join(self):
         while True:
@@ -431,7 +412,7 @@ class QuestOnRepeat:
             chapter_id = self.get_start_button_chapter_id()
             self.bot.press.by_chapter_id(chapter_id)
 
-        action = self.check_pre_fight_popups()
+        action = self.post_summon_checks()
         if action:
             self.go_to_quest()
             self.handle_pre_fight()
@@ -483,8 +464,6 @@ class QuestOnRepeat:
 
     def do_repeatable_quest(self):
         # HANDLE PATH TO REPEATABLE QUEST
-        self.bot.option_repeatable = True
-
         if self.repeat is False:
             self.wait_for_repeatable_quest()
             self.repeat = True

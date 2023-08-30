@@ -56,7 +56,7 @@ class BattleInfo:
             print(resp)
             return
 
-    def is_parsed_battle_info_valid(self, battle):
+    def is_battle_resp_valid(self, battle):
         if not battle:
             return False
 
@@ -65,8 +65,13 @@ class BattleInfo:
 
         return True
 
-    def get_battle_start_info(self):
-        timeout = 10
+    def check_battle_info(self, req):
+        body = self.bot.game_requests.get_resp_body(req["id"])
+        if self.is_battle_resp_valid(body):
+            return self.parse_battle_start(body)
+
+    def handle_battle_start_info(self):
+        timeout = 15
         start = time.time()
 
         while True:
@@ -81,10 +86,8 @@ class BattleInfo:
                 continue
 
             # Find battle start response
-            if req_id := self.game_requests.find_battle_start_response():
-                resp = self.bot.game_requests.get_resp_body(req_id)
-                battle = self.parse_battle_start(resp)
-                if self.is_parsed_battle_info_valid(battle):
+            if req := self.find_battle_start_response():
+                if battle := self.check_battle_info(req):
                     return battle
 
             # If uri in URL has 'result' in it then battle is over
@@ -92,20 +95,19 @@ class BattleInfo:
                 print("Battle finished, 'result' in URL.")
                 return
 
-    def get_summon_confirm_info(self):
-        filter_uri_contains = ["raid_deck_data_create", "user_action_point"]
-        resp_body = None
+    def find_after_confirm_response(self):
+        req_contains = ["create?", "start.json"]
+        return self.game_requests.find_request(req_contains)
 
-        while True:
-            for filter_uri in filter_uri_contains:
-                request_id = self.game_requests.find_generic_request(filter_uri)
-                print(request_id, filter_uri, "testetstestest")
-                if request_id:
-                    resp_body = self.bot.game_requests.get_resp_body(request_id)
-                    print(resp_body, "pleaseplaepslapelsae")
-                    return resp_body
+    def find_attack_btn_response(self):
+        req_contains = ["normal_attack_result"]
+        return self.bot.game_requests.find_request(req_contains)[0]
 
-            if not self.bot.handle.supporter_screen():
-                break
+    # contains information of a battle start situation
+    def find_battle_start_response(self):
+        req_contains = ["start.json"]
+        return self.bot.game_requests.find_request(req_contains)[0]
 
-        return resp_body
+    def find_raid_assist_response(self):
+        req_contains = ["quest/assist/search/assist_list"]
+        return self.bot.game_requests.find_request(req_contains)[0]

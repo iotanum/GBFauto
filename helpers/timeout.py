@@ -14,11 +14,3 @@ class Timeout:
         except selenium_err.exceptions.TimeoutException:
             # except , selenium_err.exceptions.WebDriverException
             return False
-
-    def wait_for_element_no_search_by(self, timeout, expected_behaviour):
-        try:
-            wait = WebDriverWait(self.driver, timeout)
-            wait.until_not(expected_behaviour)
-            return True
-        except selenium_err.exceptions.TimeoutException:
-            return False

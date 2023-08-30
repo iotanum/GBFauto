@@ -27,7 +27,6 @@ class Handle:
         self._bot = game_handler
         self._driver = game_handler.driver
         self.support_id = None
-        self.support_num = None
         self.support_name = ""
         self.consumables_url = "https://game.granbluefantasy.jp/#item"
         self.skippable_nightmare_battle = None
@@ -452,16 +451,6 @@ class Handle:
                 elem.click()
                 time.sleep(1)
 
-    def pre_fight_popups(self):
-        body = self._bot.battle.get_summon_confirm_info()
-        action = self._bot.handle.check_if_action_is_needed(body)
-
-        print(body, "pre_fight_popups_body")
-        if action:
-            return action
-
-        return
-
     def pre_fight_screens(self):
         popup_search_start = time.time()
 
@@ -551,13 +540,13 @@ class Handle:
         self.track_ap_usage()
         return True
 
-    def check_if_action_is_needed(self, popups):
-        print(popups, "popups")
-        if not popups:
+    def check_if_action_is_needed(self, req_body):
+        print(req_body, "popups")
+        if not req_body:
             return
 
-        if "popup" in popups:
-            for k, v in popups["popup"].items():
+        if "popup" in req_body:
+            for k, v in req_body["popup"].items():
                 if "verification" in v.lower():
                     self.human_verification()
                     return True
@@ -565,32 +554,24 @@ class Handle:
         # no action is needed here
         # turns out you SOMETIMES get this request from the game
         # love their engineering team
-        if "action_point_limit" in popups:
-            if popups["action_point"] < self._bot.quest_cost:
+        if "action_point_limit" in req_body:
+            if req_body["action_point"] < self._bot.quest_cost:
                 print("Using AP/EP.")
                 self.not_enough_of_x()
 
         # action is needed
-        elif "verification" in popups:
-            print("Verification is needed!")
-            self.human_verification()
-            return True
-
-        # action is needed
-        elif "result" in popups:
+        elif "result" in req_body:
             print("Raid is full, continuing on.")
             return True
 
         else:
             print("Unhandled pre-fight popup!")
-            print(popups)
+            print(req_body)
             time.sleep(360)
 
     def sandbox_summon_pick(self):
         self._bot.wait.for_loading_screen()
         self._bot.press.confirm_support_summon()
-
-        self.pre_fight_popups()
 
     def use_ap_for_non_repeatables(self, ep=False):
         self.navigate_to_consumables()
@@ -603,41 +584,6 @@ class Handle:
             self._bot.press.consumables_ep()
         self.not_enough_of_x(ep=ep)
         self._bot.need_ap = False
-
-    def _wait_for_summon_confirmation(self):
-        start = time.time()
-
-        while True:
-            if time.time() - start > 5:
-                print("Something probably changed in confirmation popup source code?")
-                break
-
-            parser = bs(self._driver.page_source, "lxml")
-
-            verification = parser.find(
-                "div", class_="pop-usual common-pop-error pop-show"
-            )
-            confirmation_popup = parser.find_all(
-                "div",
-                {
-                    "class": re.compile("pop-deck supporter"),
-                    "style": re.compile("display: block;"),
-                },
-            )
-
-            if confirmation_popup:
-                break
-
-            if verification:
-                header = str(
-                    verification.find("div", {"class": "prt-popup-header"}).text
-                )
-
-                if "Access Verification" in header:
-                    self.human_verification()
-                    return True
-
-            time.sleep(0.2)
 
     def track_ap_usage(self):
         parser = bs(self._driver.page_source, "lxml")
@@ -678,101 +624,10 @@ class Handle:
                 if attempts > 1:
                     time.sleep(3)
 
-    def get_battle_info(self, total_battles=None):
-        parser = bs(self._driver.page_source, features="lxml")
-
-        try:
-            battle = dict()
-            turn_nums = parser.find("div", {"id": "js-turn-num-count"}).findChildren()
-            turn_num = ""
-
-            for turn_ele in turn_nums:
-                turn_ele = re.findall("\d+", turn_ele["class"][0])[0]
-                turn_num += turn_ele
-
-            turn_num = int(turn_num)
-
-            ready_ougies = 0
-            party = parser.find("div", {"class": "prt-party"})
-            for ougi_bar in party.findAll("span", {"class": "txt-gauge-value"}):
-                ougi_bar = int(ougi_bar.text)
-
-                if 200 >= ougi_bar >= 100:
-                    ready_ougies += 1
-
-                if ougi_bar == 200:
-                    ready_ougies += 2
-
-            if total_battles > 1:
-                wave = parser.find("div", {"id": "prt-wave-num"}).findChildren()
-
-                for wave_class in wave:
-                    if wave_class["class"] == ["txt-info-num"]:
-                        wave_nums = wave_class.find_all(
-                            "div", {"class": re.compile("num-info")}
-                        )
-                        current_wave = int(
-                            re.findall("\d+", wave_nums[0]["class"][0])[0]
-                        )
-                        total_waves = int(
-                            re.findall("\d+", wave_nums[1]["class"][0])[0]
-                        )
-
-            battle["turn"] = turn_num
-            battle["ougies"] = ready_ougies
-            battle["battle"] = (
-                current_wave if total_battles > 1 and current_wave is not None else 1
-            )
-            battle["total_battles"] = (
-                total_waves if total_battles > 1 and total_battles is not None else 1
-            )
-            self.battle = battle
-            return self.battle
-        except (ValueError, AttributeError):
-            print("get_battle_info exception block")
-            return self.battle
-
-    def check_if_chara_are_attacking(self, timeout=1):
-        start = time.time()
-
-        while True:
-            print("check if attack handle methd")
-
-            if time.time() - start > timeout:
-                return
-
-            parser = bs(self._driver.page_source, features="lxml")
-
-            party = parser.find("div", {"class": "prt-party"})
-
-            charas_to_attack = []
-            for chara_num in range(4, 1):
-                chara_atk = party.find(
-                    "div",
-                    {
-                        "class": f"list-character{chara_num} btn-command-character attack"
-                    },
-                )
-                charas_to_attack.append(chara_atk)
-
-            # first_chara_attack = party.find('div', {'class': f'list-character1 btn-command-character attack'})
-            # second_chara_attack = party.find('div', {'class': f'list-character2 btn-command-character attack'})
-            # second_to_last_chara_attack = party.find('div', {'class': f'list-character3 btn-command-character attack'})
-            # last_chara_attack = party.find('div', {'class': f'list-character4 btn-command-character attack'})
-
-            # charas_to_attack = [first_chara_attack, second_chara_attack, second_to_last_chara_attack, last_chara_attack]
-
-            if any([chara is True for chara in charas_to_attack]):
-                print("ATTACK???")
-                return True
-
-            time.sleep(0.1)
-
-    def handle_queue(self, queues, battle, raids=False):
+    def handle_queue(self, queues, raids=False):
         # Returns a list of queues as described in config for the current battle
         # there's raids/quests with multiple battle stages
-        print(battle, "handle_queue")
-        current_battle = battle["battle"]
+        current_battle = self._bot.battle["battle"]
 
         try:
             queues_for_battle = queues[current_battle]
@@ -783,7 +638,7 @@ class Handle:
         # Check if there's a queue for the upcoming turn
         # to turn off auto btn
         try:
-            queue_for_next_turn = queues_for_battle[battle["turn"] + 1]
+            queue_for_next_turn = queues_for_battle[self._bot.battle["turn"] + 1]
         except KeyError:
             queue_for_next_turn = None
 
@@ -794,7 +649,7 @@ class Handle:
 
             # Try mapping dict key to battle turn and see if we have a queue for it
             try:
-                queue_for_turn = queues_for_battle[battle["turn"]]
+                queue_for_turn = queues_for_battle[self._bot.battle["turn"]]
             except KeyError:
                 queue_for_turn = None
 
@@ -804,11 +659,11 @@ class Handle:
 
                 # Give 'True' to the queue which was just done
                 # this way I do checks later what queues were done
-                queues[current_battle][battle["turn"]] = True
+                queues[current_battle][self._bot.battle["turn"]] = True
 
             # Map done queues with "True" if queue turn is lower than the current turn in battle
             for turn, queue in queues_for_battle.items():
-                if turn < battle["turn"]:
+                if turn < self._bot.battle["turn"]:
                     queues[current_battle][turn] = True
 
         return queues if queues_for_battle else None
@@ -1087,31 +942,26 @@ class Handle:
     # by valid I mean it's fuckign AFTER I requested it
     # sadly I can't do this in battle.py, since it requires pressing atk and shit
     # have to handle stuff here
-    def attack_response_is_valid(self, request_id, battle):
+    def attack_response_is_valid(self, req):
         start_time_check = False
         loading_time = 5
         start = None
 
         while True:
             try:
-                resp_body = self._bot.game_requests.get_resp_body(request_id)
+                resp_body = self._bot.game_requests.get_resp_body(req["id"])
                 # print(resp_body, request_id, "blablablabla")
                 resp_turn = resp_body["status"]["turn"]
 
-                current_turn = battle["turn"]
-                current_battle = battle["battle"]
-                total_battles = battle["total_battles"]
+                current_turn = self._bot.battle["turn"]
+                current_battle = self._bot.battle["battle"]
+                total_battles = self._bot.battle["total_battles"]
 
                 # + turn from perceived turn, because response returns what happens
                 # AFTER pressing ATK (ougies, turns, animations, hps, etc)
-                print(resp_turn, current_turn, "turns")
+                # print(resp_turn, current_turn, "turns")
                 if resp_turn == current_turn + 1:
-                    print("Found the corresponding ATK BTN request.")
-                    return True, False
-                if resp_turn == current_turn and current_battle != total_battles:
-                    print(
-                        "Found ATK BTN request, but multi-battle fight, not refreshing."
-                    )
+                    print(f"Attacked. Battle '{current_battle}', Turn {current_turn}")
                     return True, False
                 if resp_turn == current_turn and current_battle == total_battles:
                     print("Probably killed the boss.")
@@ -1131,14 +981,14 @@ class Handle:
 
             time.sleep(0.050)
 
-    def wait_for_next_turn(self, battle):
+    def wait_for_next_turn(self):
         start = time.time()
 
         while True:
             # Find all 'needed' responses
-            request_id = self._bot.game_requests.find_attack_btn_response()
-            if request_id:
-                valid, needs_refresh = self.attack_response_is_valid(request_id, battle)
+            req = self._bot.battle.find_attack_btn_response()
+            if req:
+                valid, needs_refresh = self.attack_response_is_valid(req["id"])
                 if valid:
                     if needs_refresh:
                         return True
@@ -1154,24 +1004,6 @@ class Handle:
 
             # doing my best here ok
             time.sleep(0.050)
-
-    def wait_results_button(self):
-        start = time.time()
-
-        while True:
-            if time.time() - start > 15:
-                break
-
-            parser = bs(self._driver.page_source, "lxml")
-
-            results_button = parser.find(
-                "div", {"class": "prt-command-end", "style": "display: block;"}
-            )
-            if results_button:
-                break
-
-            # Eat less CPU
-            time.sleep(0.5)
 
     def not_enough_of_x(self, sandbox=False, timeout=3, ep=False):
         start = time.time()
@@ -1547,21 +1379,6 @@ class Handle:
                         break
 
             return True
-
-    def raid_points(self):
-        parser = bs(self._driver.page_source, "lxml")
-
-        try:
-            battle_menu = parser.find_all("div", {"class": "prt-mvp"})
-            if battle_menu:
-                main_char_battle_menu = battle_menu[0]
-                points = main_char_battle_menu.find("div", {"class": "txt-point"}).text
-                parsed_points = re.findall("\d+", points)
-            else:
-                parsed_points = [0]
-            return int(parsed_points[0])
-        except:
-            return 0
 
     def is_refresh_raid_filter_available(self):
         while True:
