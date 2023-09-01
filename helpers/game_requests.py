@@ -1,4 +1,5 @@
 import json
+import time
 
 from dateutil.parser import parse
 from selenium.common.exceptions import WebDriverException
@@ -42,6 +43,9 @@ class GbfRequests:
             return reqs
 
     def get_resp_body(self, req, can_be_empty=False):
+        start = time.time()
+        timeout = 5
+
         req_id = req["id"]
         while True:
             try:
@@ -50,10 +54,14 @@ class GbfRequests:
                 )
                 return json.loads(resp_json["body"])
             except WebDriverException:
-                uri = req["uri"].split("/")[-1]
-
                 if can_be_empty:
                     print("Empty response body, returning None.")
                     return
+
+                if time.time() - start > timeout:
+                    print("Timeout on getting response body.")
+                    return
+
+                uri = req["uri"].split("/")[-1]
                 print(f"Ups, didn't load '{uri}'. Retrying...")
                 pass

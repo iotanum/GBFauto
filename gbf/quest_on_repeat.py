@@ -181,19 +181,24 @@ class QuestOnRepeat:
         load_dotenv("config.env", override=True)
         queue = os.getenv("QUEUE_1_1")
 
+        print(1)
         if not self.bot.fight:
             return
+        print(2)
 
         if not queue:
             self.bot.handle.enable_auto_in_loading_screen()
+        print(3)
 
         if queue:
             self.bot.handle.pre_fight_screens()
             self.bot.handle.wait_before_fight(
                 fight_start=True, gw=True if not queue else False
             )
+        print(4)
 
         fight_ended = self.finish_fight()
+        print(5)
 
         # Reset quest_on_repeat states
         self.bot.refreshed = False
@@ -369,7 +374,14 @@ class QuestOnRepeat:
                         return True
 
     def handle_new_raids_join(self):
+        refresh_timeout = 60
+        start = time.time()
+
         while True:
+            if time.time() - start > refresh_timeout:
+                self.bot.handle.refresh_page()
+                start = time.time()
+
             raid_num = self.get_most_suitable_raid()
 
             if raid_num:

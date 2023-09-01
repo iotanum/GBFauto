@@ -37,6 +37,7 @@ class Press:
         # TODO
         self._mobage_thing_xpath = '//*[@id="notify-response-button"]/div'
         self._raid_refresh_btn_xpath = '//*[@id="prt-assist-search"]/div[2]/div[2]'
+        self._ok_button_class = "btn-usual-ok"
 
     def _wait_for_button(self, search_by, element_name, timeout=5):
         expected_behaviour = EC.element_to_be_clickable
@@ -313,9 +314,12 @@ class Press:
         self._driver.find_element(search_by, self._mobage_thing_xpath).click()
 
     def raid_filter_refresh(self):
-        search_by = By.XPATH
-        self._wait_for_button(search_by, self._raid_refresh_btn_xpath)
-        self._driver.find_element(search_by, self._raid_refresh_btn_xpath).click()
+        try:
+            search_by = By.XPATH
+            self._wait_for_button(search_by, self._raid_refresh_btn_xpath)
+            self._driver.find_element(search_by, self._raid_refresh_btn_xpath).click()
+        except:
+            pass
 
     def pick_raid(self, raid_num):
         raid_pick_xpath = f'//*[@id="prt-search-list"]/div[{raid_num}]'
