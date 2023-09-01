@@ -133,7 +133,6 @@ class QuestOnRepeat:
                     self.bot.press.attack_button()
 
                 boss_killed = self.bot.handle.wait_for_next_turn()
-
                 if self.bot.handle.results_screen():
                     return True
 
@@ -198,9 +197,7 @@ class QuestOnRepeat:
 
         # Reset quest_on_repeat states
         self.bot.refreshed = False
-        # Reset only for raid-type of quests, not multi-battles ones
-        if not self.bot.fight["total_battles"] > 1:
-            self.bot.auto_button_on = False
+        self.bot.auto_button_on = False
 
         # Skip animations after completing the quest
         if fight_ended:
@@ -363,7 +360,6 @@ class QuestOnRepeat:
                 for req in reqs:
                     if "start.json" in req["uri"]:
                         self.bot.fight = self.bot.battle.check_battle_info(req)
-                        print(True if self.bot.fight else None, "self.bot.fight")
                         if self.bot.fight:
                             return
 
@@ -383,11 +379,10 @@ class QuestOnRepeat:
                 if not success:
                     self.go_to_quest()
                     continue
+                print("handle_new_raids_join")
                 return success
 
             self.refresh_raid_filter()
-
-            time.sleep(0.5)
 
     def handle_pre_fight(self):
         modes = [self.coop, self.sandbox, self.bot.new_raids]

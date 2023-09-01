@@ -3,7 +3,8 @@ import re
 import os
 import random
 import asyncio
-from datetime import datetime
+import datetime
+from datetime import datetime as dt
 from zoneinfo import ZoneInfo
 
 from selenium import common as selenium_err
@@ -541,19 +542,25 @@ class Handle:
         self.track_ap_usage()
         return True
 
-    def check_if_action_is_needed(self, req):
-        req_body = self._bot.game_requests.get_resp_body(req)
+    def check_if_action_is_needed(self, req, can_be_empty=False):
+        if 'raid_deck_data_create' in req['uri']:
+            can_be_empty = True
+
+        req_body = self._bot.game_requests.get_resp_body(req, can_be_empty=can_be_empty)
         print(req_body, "popups")
         if not req_body:
             return
 
         req_uri = req['uri']
+        # Check if "create" is in the req uri
         if "create" in req_uri:
             if popup := req_body.get("popup"):
                 if "verification" in popup.lower():
                     self.human_verification()
                     return True
-            elif result := req_body.get("result"):
+            # usually if there's "result" in the req body raid is full/finished
+            elif "result" in req_body:
+                result = req_body["result"]
                 if result != "ok":
                     print("Raid is full, continuing on.")
                     return True
@@ -969,7 +976,7 @@ class Handle:
         if sandbox:
             ap_ep_class = "pop-usual pop-recover-aap proceed pop-show"
 
-        summon_screen_urls = ["#quest/supporter", "#raid"]
+        exit_urls = ["#quest/supporter", "#raid"]
 
         while True:
             current_url = self._driver.current_url
@@ -978,7 +985,7 @@ class Handle:
             if time.time() - start > timeout:
                 break
 
-            if current_url in summon_screen_urls:
+            if any(url in current_url for url in exit_urls):
                 break
 
             parser = bs(self._driver.page_source, "lxml")
@@ -1415,7 +1422,7 @@ class Handle:
     def enable_auto_in_loading_screen(self):
         load_dotenv("config.env", override=True)
         auto_button_in_loading_screen = int(os.getenv("AUTO_IN_LOADING_SCREEN"))
-        timout = 3
+        timout = 5
         start = time.time()
 
         while True:
@@ -1463,4 +1470,4 @@ class Handle:
         return "#quest/supporter" in str(self._driver.current_url)
 
     def set_req_time(self):
-        self._bot.req_start_time = datetime.now(tz=ZoneInfo("GMT"))
+        self._bot.req_start_time = dt.now(tz=ZoneInfo("GMT")) - datetime.timedelta(0, 5)

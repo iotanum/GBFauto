@@ -41,7 +41,7 @@ class GbfRequests:
         if reqs:
             return reqs
 
-    def get_resp_body(self, req):
+    def get_resp_body(self, req, can_be_empty=False):
         req_id = req["id"]
         while True:
             try:
@@ -51,5 +51,9 @@ class GbfRequests:
                 return json.loads(resp_json["body"])
             except WebDriverException:
                 uri = req["uri"].split("/")[-1]
+
+                if can_be_empty:
+                    print("Empty response body, returning None.")
+                    return
                 print(f"Ups, didn't load '{uri}'. Retrying...")
                 pass
