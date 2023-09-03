@@ -360,6 +360,9 @@ class QuestOnRepeat:
     def post_summon_checks(self):
         self.bot.handle.set_req_time()
         while True:
+            if self.bot.handle.results_screen():
+                return True
+
             reqs = self.bot.battle.find_after_confirm_response()
             if reqs:
                 for req in reqs:
