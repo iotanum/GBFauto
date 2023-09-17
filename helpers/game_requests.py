@@ -42,7 +42,7 @@ class GbfRequests:
         if reqs:
             return reqs
 
-    def get_resp_body(self, req, can_be_empty=False):
+    async def get_resp_body(self, req, can_be_empty=False):
         start = time.time()
         timeout = 5
 

@@ -115,7 +115,7 @@ class Press:
     ):
         while True:
             parser = bs(self._driver.page_source, "lxml")
-            confirm_btn = parser.find("div", {"class": "btn-usual-ok se-quest-start"})
+            confirm_btn = parser.find("div", {"class": "btn-usual-ok"})
 
             if confirm_btn:
                 self._driver.find_element(

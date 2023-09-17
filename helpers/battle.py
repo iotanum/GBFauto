@@ -1,9 +1,5 @@
-import json
 import time
 import traceback
-
-import selenium.common.exceptions
-from selenium.common.exceptions import WebDriverException
 
 
 class BattleInfo:
@@ -112,4 +108,8 @@ class BattleInfo:
 
     def find_raid_assist_response(self):
         req_contains = ["quest/assist/search/assist_list"]
+        return self.bot.game_requests.find_request(req_contains)
+
+    def find_ability_result_response(self):
+        req_contains = ["ability_result.json"]
         return self.bot.game_requests.find_request(req_contains)

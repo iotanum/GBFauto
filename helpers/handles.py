@@ -543,7 +543,7 @@ class Handle:
         return True
 
     def check_if_action_is_needed(self, req, can_be_empty=False):
-        if 'raid_deck_data_create' in req['uri']:
+        if "raid_deck_data_create" in req["uri"]:
             can_be_empty = True
 
         req_body = self._bot.game_requests.get_resp_body(req, can_be_empty=can_be_empty)
@@ -551,7 +551,7 @@ class Handle:
         if not req_body:
             return
 
-        req_uri = req['uri']
+        req_uri = req["uri"]
         # Check if "create" is in the req uri
         if "create" in req_uri:
             if popup := req_body.get("popup"):
@@ -943,6 +943,20 @@ class Handle:
 
         return queues
 
+    def check_attack_response(self, body):
+        resp_turn = body["status"]["turn"]
+
+        current_turn = self._bot.fight["turn"]
+        current_battle = self._bot.fight["battle"]
+        total_battles = self._bot.fight["total_battles"]
+
+        if resp_turn == self._bot.fight["turn"] + 1:
+            print(f"Attacked. Battle '{current_battle}', Turn '{current_turn}'.")
+            return False
+        if resp_turn == current_turn and current_battle == total_battles:
+            print("Probably killed the boss.")
+            return True
+
     def wait_for_next_turn(self):
         start = time.time()
         self._bot.handle.set_req_time()
@@ -950,18 +964,7 @@ class Handle:
         while True:
             if req := self._bot.battle.find_attack_btn_response():
                 if resp := self._bot.game_requests.get_resp_body(req[0]):
-                    resp_turn = resp["status"]["turn"]
-
-                    current_turn = self._bot.fight["turn"]
-                    current_battle = self._bot.fight["battle"]
-                    total_battles = self._bot.fight["total_battles"]
-
-                    if resp_turn == self._bot.fight["turn"] + 1:
-                        print(f"Attacked. Battle '{current_battle}', Turn '{current_turn}'.")
-                        return False
-                    if resp_turn == current_turn and current_battle == total_battles:
-                        print("Probably killed the boss.")
-                        return True
+                    return self.check_attack_response(resp)
 
             if time.time() - start > 60:
                 print("Didn't find a atk btn request?")

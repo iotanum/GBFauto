@@ -1,7 +1,6 @@
 from helpers.login import GBFGame
 from gbf.quest_on_repeat import QuestOnRepeat
 
-from dotenv import load_dotenv
 import selenium
 from selenium import common
 
