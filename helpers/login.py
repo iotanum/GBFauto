@@ -94,8 +94,7 @@ class GBFGame:
 
     def custom_chrome_options(self):
         # Resize chrome window on smaller screens (otherwise chrome driver crashes?)
-        if self.get_screen_resolution() == [1366, 768]:
-            self.chrome_options.add_argument("--window-size=500,720")
+        self.chrome_options.add_argument("--window-size=500,720")
 
         if UNDETECTED_CHROME_MODE != 1:
             # Disable occlusion; no throttling when the window is not on-top

@@ -1,8 +1,9 @@
 @echo off
 
-call python -m venv venv
+call py -m venv venv
 call .\\venv\\Scripts\\activate.bat
 call pip install --upgrade pip
-call pip install -r requirements.txt
-call python main.py
+call pip install -r requirements.txt --upgrade
+call pip install --force-reinstall -v "selenium==4.6.0"
+call py main.py
 pause
