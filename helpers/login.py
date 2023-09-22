@@ -85,11 +85,13 @@ class GBFGame:
         desired_capabilities = self.capabilities
 
         if UNDETECTED_CHROME_MODE == 1:
-            return uc.Chrome(
+            driver = uc.Chrome(
                 executable_path=exe_path,
                 options=options,
                 desired_capabilities=desired_capabilities,
             )
+            driver.set_window_size(500, 720)
+            return driver
         return webdriver.Chrome(service=self.service, options=options)
 
     def custom_chrome_options(self):
