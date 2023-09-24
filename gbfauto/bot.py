@@ -1,6 +1,7 @@
 import logging
 
 from playwright.async_api import async_playwright
+from playwright_stealth import stealth_async
 
 from gbfauto.events import Events
 from gbfauto.login import Login
@@ -38,6 +39,7 @@ class Bot:
         browser = await pw.chromium.launch(**BROWSER_OPTIONS)
         self.context = await browser.new_context(**CONTEXT_OPTIONS)
         self.bot = await self.context.new_page()
+        await stealth_async(self.bot)
         _log.debug("Engine launched!")
 
     async def initialize_login(self):

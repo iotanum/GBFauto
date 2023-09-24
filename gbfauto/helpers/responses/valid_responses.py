@@ -7,6 +7,7 @@ class ValidResponses:
     NORMAL_ITEM_LIST = "normal_item_list"
     USE_NORMAL_ITEM = "use_normal_item"
     QUEST_INFO = "quest/cleared_list"
+    SUMMON = "summon_result.json"
 
     @classmethod
     async def is_valid(cls, response):

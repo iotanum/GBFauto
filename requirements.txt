@@ -10,4 +10,5 @@ python-dateutil
 tzdata
 
 
-playwright
+playwright==1.38.0
+playwright-stealth=1.0.6

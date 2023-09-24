@@ -9,39 +9,55 @@ _log = logging.getLogger(__name__)
 class AbilityResultResponse:
     def __init__(self, responses):
         self.bot = responses.bot
-        self.utils = responses.utils
+        self.common = responses.common
         self.updator = responses.updator
         self.battle = self.bot.events.battle
 
     async def _update_win_conditions(self, win_event):
+        quest_done = False
         mob_killed = True if win_event else False
-        quest_done = (
-            self.battle["current_battle"] == self.battle["total_battles"] and mob_killed
-        )
 
-        self.battle["boss_killed"] = mob_killed
-        self.battle["quest_done"] = quest_done
-        _log.debug(
-            f"Updating win condition: Wave mob killed: '{mob_killed}', Quest done: '{quest_done}'..."
-        )
+        if self.battle["current_battle"] == self.battle["total_battles"]:
+            if mob_killed:
+                quest_done = True
 
-    async def _update_ability_result(self, r_body, resp):
-        # update boss hp and win condition from scenario
-        if scenarios := await keys_exists(r_body, "scenario", resp_url=resp.url):
-            boss_gauge_events = await self.utils.gather_gauge_change_events(scenarios)
+        await self.updator.update_win_conditions(mob_killed, quest_done)
+
+    async def _update_boss_hp(self, r_body, resp):
+        key = ["scenario"]
+        if scenarios := await keys_exists(r_body, *key, resp_url=resp.url):
+            boss_gauge_events = await self.common.gather_gauge_change_events(scenarios)
             await self.updator.update_boss_hp(boss_gauge_events)
 
-            win_event = await self.utils.gather_win_event(scenarios)
+            win_event = await self.common.gather_win_event(scenarios)
             await self._update_win_conditions(win_event)
 
-        # update turn from scenario
+    async def _update_turn(self, r_body, resp):
         nested_key = ["status", "turn"]
         if turn := await keys_exists(r_body, *nested_key, resp_url=resp.url):
             await self.updator.update_turn(turn, resp.url)
 
-        _log.debug(f"Battle info updated from {resp.url}")
-        _log.debug(f"Battle info: {self.battle}")
+    async def _update_summon_availability(self, r_body, resp):
+        nested_key = ["status", "summon_enable"]
+        summon_enable = await keys_exists(r_body, *nested_key, resp_url=resp.url)
+
+        # custom check because python evaluates 0 as false
+        if isinstance(summon_enable, int):
+            await self.updator.update_summon_availability(summon_enable)
+
+    async def _update_ability_result(self, r_body, resp):
+        # update boss hp and win condition from scenario
+        await self._update_boss_hp(r_body, resp)
+
+        # update turn from scenario
+        await self._update_turn(r_body, resp)
+
+        # update summon availability
+        await self._update_summon_availability(r_body, resp)
 
     async def ability_result_handler(self, resp):
         r_body = await get_response_body(resp)
         await self._update_ability_result(r_body, resp)
+
+        _log.debug(f"Battle info updated from {resp.url}")
+        _log.debug(f"Battle info: {self.battle}")

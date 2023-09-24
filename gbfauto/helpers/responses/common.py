@@ -6,26 +6,11 @@ from gbfauto.helpers.responses.valid_responses import ValidResponses
 _log = logging.getLogger(__name__)
 
 
-class Utils:
+class Common:
     def __init__(self, responses):
         self.bot = responses.bot
         self.p_status = self.bot.events.p_status
         self.battle = self.bot.events.battle
-
-    # Static methods --------------------------------------------------
-    @staticmethod
-    async def _filter(resp):
-        if valid := await ValidResponses.is_valid(resp):
-            _log.debug(f"[EVENT][RESPONSE]: {resp.url}")
-            return valid
-
-    @staticmethod
-    async def _fix_content_response_body(r_body):
-        # exclude data key from response body for this particular resp
-        exclude_keys = ["data"]
-        return {k: r_body[k] for k in set(list(r_body.keys())) - set(exclude_keys)}
-
-    # Static methods end ----------------------------------------------
 
     # Various checks  -------------------------------------------------
     async def is_gauge_change_event(self, event):
@@ -60,9 +45,9 @@ class Utils:
                 return event
 
     async def gather_gauge_change_events(self, scenario):
-        boss_gauge_events = dict()
+        boss_gauge_events = list()
         for event in scenario:
             if await self.is_gauge_change_event(event):
-                _log.debug(f"Boss gauge change event found for boss '{event['attr']}'")
-                boss_gauge_events[event["attr"]] = event
+                _log.debug(f"Boss gauge change event found for boss '{event['pos'] + 1}'")
+                boss_gauge_events.append(event)
         return boss_gauge_events

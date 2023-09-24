@@ -6,7 +6,7 @@ from gbfauto.misc.utils import get_response_body, keys_exists
 _log = logging.getLogger(__name__)
 
 
-class NormalAttackResponse:
+class SummonResponse:
     def __init__(self, responses):
         self.bot = responses.bot
         self.common = responses.common
@@ -23,11 +23,6 @@ class NormalAttackResponse:
 
         await self.updator.update_win_conditions(mob_killed, quest_done)
 
-    async def _update_turn(self, r_body, resp):
-        nested_key = ["status", "turn"]
-        if turn := await keys_exists(r_body, *nested_key, resp_url=resp.url):
-            await self.updator.update_turn(turn, resp.url)
-
     async def _update_boss_hp(self, r_body, resp):
         if scenarios := await keys_exists(r_body, "scenario", resp_url=resp.url):
             boss_gauge_events = await self.common.gather_gauge_change_events(scenarios)
@@ -35,6 +30,11 @@ class NormalAttackResponse:
 
             win_event = await self.common.gather_win_event(scenarios)
             await self._update_win_conditions(win_event)
+
+    async def _update_turn(self, r_body, resp):
+        nested_key = ["status", "turn"]
+        if turn := await keys_exists(r_body, *nested_key, resp_url=resp.url):
+            await self.updator.update_turn(turn, resp.url)
 
     async def _update_summon_availability(self, r_body, resp):
         nested_key = ["status", "summon_enable"]
@@ -54,9 +54,9 @@ class NormalAttackResponse:
         # update summon availability
         await self._update_summon_availability(r_body, resp)
 
-    async def normal_attack_resp_handler(self, resp):
-        r_body = await get_response_body(resp)
-        await self._update_battle(r_body, resp)
-
         _log.debug(f"Battle info updated from {resp.url}")
         _log.debug(f"Battle info: {self.battle}")
+
+    async def summon_response_handler(self, resp):
+        r_body = await get_response_body(resp)
+        await self._update_battle(r_body, resp)
