@@ -45,13 +45,8 @@ class SummonResponse:
             await self.updator.update_summon_availability(summon_enable)
 
     async def _update_battle(self, r_body, resp):
-        # update boss hp and win condition from scenario
         await self._update_boss_hp(r_body, resp)
-
-        # update turn from scenario
         await self._update_turn(r_body, resp)
-
-        # update summon availability
         await self._update_summon_availability(r_body, resp)
 
         _log.debug(f"Battle info updated from {resp.url}")

@@ -46,13 +46,8 @@ class AbilityResultResponse:
             await self.updator.update_summon_availability(summon_enable)
 
     async def _update_ability_result(self, r_body, resp):
-        # update boss hp and win condition from scenario
         await self._update_boss_hp(r_body, resp)
-
-        # update turn from scenario
         await self._update_turn(r_body, resp)
-
-        # update summon availability
         await self._update_summon_availability(r_body, resp)
 
     async def ability_result_handler(self, resp):
