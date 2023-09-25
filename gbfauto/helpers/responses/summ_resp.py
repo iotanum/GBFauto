@@ -49,9 +49,9 @@ class SummonResponse:
         await self._update_turn(r_body, resp)
         await self._update_summon_availability(r_body, resp)
 
-        _log.debug(f"Battle info updated from {resp.url}")
-        _log.debug(f"Battle info: {self.battle}")
-
     async def summon_response_handler(self, resp):
         r_body = await get_response_body(resp)
         await self._update_battle(r_body, resp)
+
+        _log.debug(f"Battle info updated from {resp.url}")
+        _log.debug(f"Battle info: {self.battle}")
