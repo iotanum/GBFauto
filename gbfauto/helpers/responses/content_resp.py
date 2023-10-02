@@ -1,6 +1,6 @@
 import logging
 
-from gbfauto.misc.utils import get_response_body, keys_exists
+from gbfauto.common.utils import get_response_body, multiple_keys_exists
 
 
 _log = logging.getLogger(__name__)
@@ -8,35 +8,96 @@ _log = logging.getLogger(__name__)
 
 class ContentResponse:
     def __init__(self, responses):
+        """
+        Initializes the ContentResponse object.
+
+        Args:
+            responses: The parent responses object.
+        """
         self.bot = responses.bot
         self.common = responses.common
-        self.p_status = self.bot.events.p_status
+        self.p_status = self.bot.p_status
 
     @staticmethod
     async def _fix_content_response_body(r_body):
-        # exclude data key from response body for this particular resp
+        """
+        Removes 'data' key from the response body.
+
+        Args:
+            r_body (dict): The response body.
+
+        Returns:
+            dict: The modified response body.
+        """
         exclude_keys = ["data"]
         return {k: r_body[k] for k in set(list(r_body.keys())) - set(exclude_keys)}
 
-    async def _parse_player_status(self, p_status, resp_url):
-        _log.debug(f"Updating player status from {resp_url}...")
+    async def _update_current_ep(self, p_status, resp):
+        """
+        Updates the current Event Points (EP) for the player.
 
-        if current_ep := await keys_exists(p_status, "now_battle_point"):
+        Args:
+            p_status (dict): The player's status.
+            resp: The response object.
+        """
+        nested_keys = [
+            ["option", "status", "status", "now_battle_point"],
+            ["option", "mydata_assets", "mydata", "status", "now_battle_point"],
+            ["option", "user_status", "now_battle_point"],
+        ]
+
+        current_ep = await multiple_keys_exists(
+            p_status, nested_keys, resp_url=resp.url
+        )
+
+        if current_ep is not None:
             _log.debug(f"Updating 'p_status' 'current_ep' with '{current_ep}'")
             self.p_status["current_ep"] = current_ep
             await self.common.need_ep()
 
-        if current_ap := await keys_exists(p_status, "now_action_point"):
+    async def _update_current_ap(self, p_status, resp):
+        """
+        Updates the current Action Points (AP) for the player.
+
+        Args:
+            p_status (dict): The player's status.
+            resp: The response object.
+        """
+        nested_keys = [
+            ["option", "status", "status", "now_action_point"],
+            ["option", "mydata_assets", "mydata", "status", "now_action_point"],
+            ["option", "user_status", "now_action_point"],
+        ]
+
+        current_ap = await multiple_keys_exists(
+            p_status, nested_keys, resp_url=resp.url
+        )
+
+        if current_ap is not None:
             _log.debug(f"Updating 'p_status' 'current_ap' with '{current_ap}'")
             self.p_status["current_ap"] = current_ap
             await self.common.need_ap()
 
     async def _update_player_status(self, r_body, resp):
-        u_status_key = ["option", "user_status"]
-        if u_status := await keys_exists(r_body, *u_status_key, resp_url=resp.url):
-            await self._parse_player_status(u_status, resp.url)
+        """
+        Updates the player's status based on the response.
+
+        Args:
+            r_body (dict): The response body.
+            resp: The response object.
+        """
+        _log.debug(f"Trying to update 'p_status' from '{resp.url}'")
+
+        await self._update_current_ap(r_body, resp)
+        await self._update_current_ep(r_body, resp)
 
     async def content_response_handler(self, resp):
+        """
+        Handles the content response.
+
+        Args:
+            resp: The response object.
+        """
         r_body = await get_response_body(resp)
         r_body = await self._fix_content_response_body(r_body)
 

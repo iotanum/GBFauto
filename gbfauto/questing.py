@@ -16,7 +16,7 @@ _log = logging.getLogger(__name__)
 
 class Questing:
     def __init__(self, bot):
-        self.bot = bot.bot
+        self.bot = bot
         self.repeat = False
         self.coop = False
         self.sandbox = False
@@ -27,32 +27,32 @@ class Questing:
             _log.info("Waiting for you to enter a quest...")
 
         while True:
-            url = self.bot.url
+            url = self.bot.page.url
 
             # normal fights (GW, Events, Missions)
-            if "#quest/supporter" in url:
-                if not self.quest_url:
-                    _log.info("Locked in on this quest.")
-                    break
-
-            # coop fights
-            if "#coopraid/room/" in url:
-                _log.info("Locked on this CO-OP quest.")
-                self.coop = True
-                break
-
-            # arcanum sandbox fights
-            if "#replicard/supporter" in url:
-                _log.info("Locked on this Sandbox quest.")
-                self.sandbox = True
-                break
-
-            # new raid thingy
-            if "#quest/assist" in url:
-                _log.info("Locked to raids, please choose filter option.")
-                # self.choose_raid_filter()
-                self.bot.new_raids = True
-                break
+            # if "#quest/supporter" in url:
+            #     if not self.quest_url:
+            #         _log.info("Locked in on this quest.")
+            #         break
+            #
+            # # coop fights
+            # if "#coopraid/room/" in url:
+            #     _log.info("Locked on this CO-OP quest.")
+            #     self.coop = True
+            #     break
+            #
+            # # arcanum sandbox fights
+            # if "#replicard/supporter" in url:
+            #     _log.info("Locked on this Sandbox quest.")
+            #     self.sandbox = True
+            #     break
+            #
+            # # new raid thingy
+            # if "#quest/assist" in url:
+            #     _log.info("Locked to raids, please choose filter option.")
+            #     # self.choose_raid_filter()
+            #     self.bot.new_raids = True
+            #     break
 
             await asyncio.sleep(0.2)
 

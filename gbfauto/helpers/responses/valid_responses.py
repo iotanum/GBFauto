@@ -11,7 +11,16 @@ class ValidResponses:
 
     @classmethod
     async def is_valid(cls, response):
-        for k, val in cls.__dict__.items():
-            if str(val) in response.url:
-                if response.request.resource_type == "xhr":
-                    return cls.__dict__[k]
+        """
+        Checks if the response is valid based on its URL.
+
+        Args:
+            response: The response object to check.
+
+        Returns:
+            str or None: The valid response type if valid, None otherwise.
+        """
+        for attr_name, val in cls.__dict__.items():
+            if str(val) in response.url and response.request.resource_type == "xhr":
+                return val
+        return None  # Not a valid response

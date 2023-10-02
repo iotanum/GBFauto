@@ -48,6 +48,13 @@ async def keys_exists(element, *keys, resp_url=None):
     return _element
 
 
+async def multiple_keys_exists(element, keys, resp_url=None):
+    _keys = keys
+    for key in _keys:
+        if res := await keys_exists(element, *key, resp_url=resp_url):
+            return res
+
+
 async def get_response_body(resp):
     _log.debug(f"Getting response body from {resp.url}..")
     return await resp.json()
