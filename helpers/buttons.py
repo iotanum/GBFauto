@@ -252,7 +252,7 @@ class Press:
         ).click() if elem else None
         return elem
 
-    # raids arg is not needed here, but added to make it easier for the queue adaptation
+    # raids arg is not needed here, but added to make it easier for the skills adaptation
     def confirm_summon_fight(self, raids=False):
         search_by = By.XPATH
 

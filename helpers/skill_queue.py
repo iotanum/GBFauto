@@ -58,7 +58,7 @@ class Skills:
                 raise AttributeError("There cannot be more than 6 support summons!")
             elif char_num > 5:
                 raise AttributeError(
-                    "Please check your queue, number of playables cannot be more than 5"
+                    "Please check your skills, number of playables cannot be more than 5"
                 )
 
     def handle_skill_press(self, char_num, ability_num, raids=False):
@@ -172,7 +172,7 @@ class Skills:
         self.remove_backup_request_element()
         self.remove_active_mask_element()
 
-        # Handle empty queue string in config
+        # Handle empty skills string in config
         try:
             self._queue = self.parse_queue(queue_from_config)
         except ValueError:
@@ -183,16 +183,16 @@ class Skills:
         executed_step = []
 
         for step, action in self._queue.items():
-            print(step, action, "queue step action")
+            print(step, action, "skills step action")
             # Try/Except in case of fight ending while queueing skills
             try:
                 char_num = self._queue[step]["Character"]
                 ability_num = self._queue[step]["Ability"]
                 select_party_member = self._queue[step]["Select"]
-                # Instantly break if queue in config is empty
+                # Instantly break if skills in config is empty
                 if char_num == 7:
                     break
-                # Click on a first character in the queue to open up it's abilities 'menu'
+                # Click on a first character in the skills to open up it's abilities 'menu'
                 if (
                     step == 1
                     and char_num != 5
@@ -215,7 +215,7 @@ class Skills:
                     # when summon was/is used
                     if summon_was_used is True:
                         summon_was_used = False
-                # Check if action to take in queue is for a character
+                # Check if action to take in skills is for a character
                 if char_num <= 4:
                     print(2)
                     if char_num != current_char_num:

@@ -178,7 +178,7 @@ class QuestOnRepeat:
         return chapter_id
 
     def handle_fight(self):
-        load_dotenv("config.env", override=True)
+        load_dotenv(".env", override=True)
         queue = os.getenv("QUEUE_1_1")
 
         if not self.bot.fight:
@@ -232,7 +232,7 @@ class QuestOnRepeat:
             return
 
     def check_if_gw(self):
-        load_dotenv("config.env", override=True)
+        load_dotenv(".env", override=True)
         gw = os.getenv("GW")
 
         if gw == "1":

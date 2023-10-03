@@ -18,7 +18,7 @@ from dotenv import load_dotenv
 import aiohttp
 from aiohttp import web
 
-load_dotenv("config.env")
+load_dotenv(".env")
 
 EXTREME_BATTLES = int(os.getenv("EXTREME_BATTLES"))
 REQUEST_BACKUP = int(os.getenv("REQUEST_BACKUP"))
@@ -510,7 +510,7 @@ class Handle:
 
     def pre_fight_support_summons(self):
         # Monkey patch to re-load config while the bot is running
-        load_dotenv("config.env", override=True)
+        load_dotenv(".env", override=True)
         SUPPORT_ELEMENT = int(os.getenv("SUPPORT_ELEMENT"))
 
         self._bot.wait.for_loading_screen()
@@ -639,7 +639,7 @@ class Handle:
         except (KeyError, TypeError):
             return None
 
-        # Check if there's a queue for the upcoming turn
+        # Check if there's a skills for the upcoming turn
         # to turn off auto btn
         try:
             queue_for_next_turn = queues_for_battle[self._bot.fight["turn"] + 1]
@@ -651,21 +651,21 @@ class Handle:
             # Queue for this current battle and this current turn
             # all_queues[current_battle][current_turn]
 
-            # Try mapping dict key to battle turn and see if we have a queue for it
+            # Try mapping dict key to battle turn and see if we have a skills for it
             try:
                 queue_for_turn = queues_for_battle[self._bot.fight["turn"]]
             except KeyError:
                 queue_for_turn = None
 
             if queue_for_turn and queue_for_turn is not True:
-                print(queue_for_turn, "queue for this turn")
+                print(queue_for_turn, "skills for this turn")
                 self._bot.queue.do_queue(queue_for_turn, raids=raids)
 
-                # Give 'True' to the queue which was just done
+                # Give 'True' to the skills which was just done
                 # this way I do checks later what queues were done
                 queues[current_battle][self._bot.fight["turn"]] = True
 
-            # Map done queues with "True" if queue turn is lower than the current turn in battle
+            # Map done queues with "True" if skills turn is lower than the current turn in battle
             for turn, queue in queues_for_battle.items():
                 if turn < self._bot.fight["turn"]:
                     queues[current_battle][turn] = True
@@ -673,7 +673,7 @@ class Handle:
         return queues if queues_for_battle else None
 
     def parse_support_summon_list(self):
-        load_dotenv("config.env", override=True)
+        load_dotenv(".env", override=True)
         SUPPORT_ELEMENT = int(os.getenv("SUPPORT_ELEMENT"))
         # In source code 'Misc.' summon list is type 0
         if SUPPORT_ELEMENT == 7:
@@ -726,7 +726,7 @@ class Handle:
 
     def parse_from_config_summons(self):
         # Monkey patch to re-load config while the bot is running
-        load_dotenv("config.env", override=True)
+        load_dotenv(".env", override=True)
         SUPPORT_SUMMONS = os.getenv("SUPPORT_SUMMONS_TO_PICK")
 
         support_summons_from_config = SUPPORT_SUMMONS.split(", ")
@@ -921,17 +921,17 @@ class Handle:
         max_turns = 101
         temp_queues = []
 
-        load_dotenv("config.env", override=True)
-        # Get all possible variations of queue strings
+        load_dotenv(".env", override=True)
+        # Get all possible variations of skills strings
         for max_battle in range(1, max_battles):
             for max_turn in range(1, max_turns):
                 temp_queues.append(f"QUEUE_{max_battle}_{max_turn}")
 
-        # remove all non-existent queue strings
+        # remove all non-existent skills strings
         temp_queues = [queue for queue in temp_queues if os.getenv(queue)]
 
         # format everything into a dictionary
-        # {'battle_number': {turn_number: queue, turn_number_2: queue}}
+        # {'battle_number': {turn_number: skills, turn_number_2: skills}}
         for queue in temp_queues:
             battle = int(queue.split("_")[1])
             turn = int(queue.split("_")[2])
@@ -1116,7 +1116,7 @@ class Handle:
         self.wait_before_fight(fight_start=True)
 
         # Monkey patch to load stuff config real time while bot is running
-        load_dotenv("config.env", override=True)
+        load_dotenv(".env", override=True)
         queue = os.getenv("QUEUE_EXTREME")
         self._bot.queue.do_queue(queue)
 
@@ -1423,7 +1423,7 @@ class Handle:
                 self._bot.auto_button_on = True
 
     def enable_auto_in_loading_screen(self):
-        load_dotenv("config.env", override=True)
+        load_dotenv(".env", override=True)
         auto_button_in_loading_screen = int(os.getenv("AUTO_IN_LOADING_SCREEN"))
         timout = 5
         start = time.time()

@@ -3,6 +3,8 @@ import logging
 from gbfauto.events import Events
 from gbfauto.login import Login
 from gbfauto.questing import Questing
+from gbfauto.skills import Skills
+from gbfauto.common.utils import Utils
 
 _log = logging.getLogger(__name__)
 
@@ -22,6 +24,8 @@ class Bot:
         self.page = engine
         self.context = self.page.context
         self.events = Events(self)
+        self.utils = Utils(self)
+        self.skills = Skills(self)
         self.login = Login(self)
         self.questing = Questing(self)
 

@@ -1,7 +1,46 @@
 import logging
+import asyncio
+import time
 
+from bs4 import BeautifulSoup as bs4
 
 _log = logging.getLogger(__name__)
+
+
+class Utils:
+    def __init__(self, bot):
+        self.bot = bot
+
+    async def wait_for_full_page_load(self):
+        await self.bot.page.wait_for_load_state("networkidle")
+
+    async def get_page_content(self):
+        return await self.bot.page.content()
+
+    async def go_to_locked_quest(self):
+        await self.bot.page.goto(self.bot.questing.quest_url)
+
+    async def bs(self, content=None, parser=None, find=(), find_all=()):
+        loop = asyncio.get_event_loop()
+
+        if parser is None:
+            if content is None:
+                content = await self.get_page_content()
+            parser = await loop.run_in_executor(None, bs4, content, "lxml")
+
+        if find:
+            return await loop.run_in_executor(None, parser.find, *find)
+
+        if find_all:
+            return await loop.run_in_executor(None, parser.find_all, *find_all)
+
+        return parser
+
+    async def get_current_url(self):
+        return self.bot.page.url
+
+    async def refresh(self):
+        await self.bot.page.reload()
 
 
 # Find ele ment with bs4 and get xpath with this function
@@ -58,3 +97,8 @@ async def multiple_keys_exists(element, keys, resp_url=None):
 async def get_response_body(resp):
     _log.debug(f"Getting response body from {resp.url}..")
     return await resp.json()
+
+
+async def is_timeout(start_time, timeout):
+    if time.time() - start_time > timeout:
+        return True

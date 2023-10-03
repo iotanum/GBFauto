@@ -26,7 +26,7 @@ import undetected_chromedriver as uc
 
 from dotenv import load_dotenv
 
-load_dotenv("config.env")
+load_dotenv(".env")
 
 MANUAL_LOGIN = int(os.getenv("MANUAL_LOGIN"))
 UNDETECTED_CHROME_MODE = int(os.getenv("UC_MODE"))

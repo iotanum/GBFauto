@@ -42,7 +42,7 @@ class BattleBackgroundTask:
                         msg = (
                             f"NPC @ Pos '{pos}' used an ability ({ability}) '{a_name}'"
                         )
-                        # self.queue.put(msg)
+                        # self.skills.put(msg)
                         print(msg)
         except AttributeError as e:
             print(e)

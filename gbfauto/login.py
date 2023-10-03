@@ -29,7 +29,7 @@ class Login:
         """
         Load credentials from environment variables.
         """
-        load_dotenv("config.env")
+        load_dotenv(".env")
         self.username = os.getenv("GBF_LOGIN")
         self.password = os.getenv("GBF_PASSWORD")
 
