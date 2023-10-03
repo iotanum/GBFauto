@@ -25,8 +25,8 @@ class Raids:
                 active_raid_slot_ele.get("data-slot") if active_raid_slot_ele else None
             )
         except (TypeError, AttributeError, RuntimeError) as e:
-            print("ERROR", e)
-            return
+            _log.error("An error occurred while getting raid filter: %s", str(e))
+            return None
 
     async def _confirm_raid_slot(self, raid_slot):
         while True:
@@ -34,7 +34,7 @@ class Raids:
             if confirm in ("y", "n"):
                 return confirm == "y"
             else:
-                print("Invalid input. Please enter 'y' for yes or 'n' for no.")
+                _log.error("Invalid input. Please enter 'y' for yes or 'n' for no.")
 
     async def _assign_raid_slot(self):
         while True:
@@ -55,34 +55,30 @@ class Raids:
             return
 
     async def _get_most_suitable_raid(self):
-        raids_ele = await self._get_raids()
-        if not raids_ele:
-            return
+        raids_info = await self._get_raids()
+
+        if not raids_info:
+            return None
 
         raids = await self.utils.bs(
-            parser=raids_ele, find_all=("div", {"class": "prt-raid-info"})
+            parser=raids_info, find_all=("div", {"class": "prt-raid-info"})
         )
-        suitable_raid_ele = raids[0]
-        suitable_raid_idx = None
+
+        most_suitable_raid_idx = None
+        max_hp = float("-inf")
 
         for idx, raid in enumerate(raids, 1):
             hp_bar = await self.utils.bs(
                 parser=raid, find=("div", {"class": "prt-raid-gauge-inner"})
             )
-            hp_ele = str(hp_bar["style"])
+            hp_style = hp_bar["style"]
+            raid_hp = int(re.search(r"\d+", hp_style).group())
 
-            suitable_raid_hp_bar = await self.utils.bs(
-                parser=suitable_raid_ele,
-                find=("div", {"class": "prt-raid-gauge-inner"}),
-            )
-            suitable_raid_hp = re.findall(r"\d+", str(suitable_raid_hp_bar["style"]))[0]
-            hp = re.findall(r"\d+", hp_ele)[0]
+            if raid_hp > max_hp:
+                max_hp = raid_hp
+                most_suitable_raid_idx = idx
 
-            if suitable_raid_hp <= hp:
-                suitable_raid_ele = raid
-                suitable_raid_idx = idx
-
-        return suitable_raid_idx
+        return most_suitable_raid_idx
 
     async def _refresh_raid_filter(self):
         pass
