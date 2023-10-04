@@ -4,8 +4,7 @@ from gbfauto.helpers.skills.queue import Queue
 class Skills:
     def __init__(self, bot):
         self.bot = bot
-        self.queue = Queue(bot)
-        self.queues = self.queue.queues
+        self.queue_module = Queue(self)
 
     async def do_queue(self):
         pass

@@ -1,14 +1,16 @@
 import logging
 
+from gbfauto.common.enums import BattleEnums
+
 _log = logging.getLogger(__name__)
 
 
 class Updator:
-    def __init__(self, response):
-        self.bot = response.bot
-        self.common = response.common
+    def __init__(self, responses):
+        self.bot = responses.bot
         self.p_status = self.bot.p_status
         self.battle = self.bot.battle
+        self.battle_common = self.bot.utils.battle_common
 
     @staticmethod
     async def _get_boss_id(hp_event):
@@ -52,10 +54,10 @@ class Updator:
 
             # Check if any boss has non-zero HP and update win conditions accordingly
             mob_killed = any(boss_hp > 0 for boss_hp in bosses.values())
-            quest_done = mob_killed and await self.common.is_final_battle()
+            quest_done = mob_killed and await self.battle_common.is_final_battle()
 
             await self.update_win_conditions(mob_killed, quest_done)
-            self.battle["bosses"] = bosses
+            self.battle[BattleEnums.BOSS_HPS] = bosses
 
         except Exception as e:
             _log.error(f"Error while updating boss HP: {e}")
@@ -67,7 +69,7 @@ class Updator:
         Args:
             q_ap_cost (int): The new quest AP cost.
         """
-        self.battle["q_ap_cost"] = q_ap_cost
+        self.battle[BattleEnums.QUEST_AP_COST] = q_ap_cost
         _log.debug(f"Updating quest AP cost with '{q_ap_cost}'...")
 
     async def update_turn(self, turn, resp_url):
@@ -78,7 +80,7 @@ class Updator:
             turn (int): The new current turn value.
             resp_url (str): The response URL for logging purposes.
         """
-        self.battle["current_turn"] = turn
+        self.battle[BattleEnums.CURRENT_TURN] = turn
         _log.debug(f"Updating turn with '{turn}' from {resp_url}...")
 
     async def update_summon_availability(self, summon_enable):
@@ -89,7 +91,7 @@ class Updator:
             summon_enable (int): The summon availability status (0 or 1).
         """
         summon_available = bool(int(summon_enable))
-        self.battle["summon_available"] = summon_available
+        self.battle[BattleEnums.SUMMON_AVAILABLE] = summon_available
         _log.debug(f"Updating summon availability with '{summon_available}'...")
 
     async def update_win_conditions(self, mob_killed, quest_done):
@@ -100,8 +102,8 @@ class Updator:
             mob_killed (bool): True if the mob is killed, False otherwise.
             quest_done (bool): True if the quest is done, False otherwise.
         """
-        self.battle["boss_killed"] = mob_killed
-        self.battle["quest_done"] = quest_done
+        self.battle[BattleEnums.BOSS_KILLED] = mob_killed
+        self.battle[BattleEnums.QUEST_DONE] = quest_done
         _log.debug(
             f"Updating win condition: Wave mob killed: '{mob_killed}', Quest done: '{quest_done}'..."
         )

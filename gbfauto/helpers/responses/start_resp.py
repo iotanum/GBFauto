@@ -1,6 +1,7 @@
 import logging
 
 from gbfauto.common.utils import get_response_body, keys_exists
+from gbfauto.common.enums import BattleEnums
 
 _log = logging.getLogger(__name__)
 
@@ -18,14 +19,16 @@ class StartResponse:
             responses: Response handler instance.
         """
         self.bot = responses.bot
-        self.common = responses.common
         self.updator = responses.updator
         self.battle = self.bot.battle
+        self.battle_common = self.bot.utils.battle_common
+        self.events_common = self.bot.utils.events_common
+
         self._b_info = [
-            {"total_battles": ["battle", "total"]},
-            {"current_battle": ["battle", "count"]},
-            {"current_turn": ["turn"]},
-            {"bosses": ["boss", "param"]},
+            {BattleEnums.TOTAL_BATTLES: ["battle", "total"]},
+            {BattleEnums.CURRENT_BATTLE: ["battle", "count"]},
+            {BattleEnums.CURRENT_TURN: ["turn"]},
+            {BattleEnums.BOSS_HPS: ["boss", "param"]},
         ]
 
     async def _update_battle_info(self, r_body, resp):
@@ -53,8 +56,8 @@ class StartResponse:
         """
         Updates win conditions based on battle status.
         """
-        mob_killed = not self.battle["bosses"]
-        quest_done = mob_killed and await self.common.is_final_battle()
+        mob_killed = not self.battle[BattleEnums.BOSS_HPS]
+        quest_done = mob_killed and await self.battle_common.is_final_battle()
         await self.updator.update_win_conditions(mob_killed, quest_done)
 
     async def _update_summon_availability(self, r_body, resp):
@@ -72,6 +75,12 @@ class StartResponse:
         if isinstance(summon_enable, int):
             await self.updator.update_summon_availability(summon_enable)
 
+    async def _update_event_time(self):
+        """
+        Updates event time based on the response.
+        """
+        await self.events_common.update_start_resp_event_time()
+
     async def _update_battle(self, r_body, resp):
         """
         Updates battle information, win conditions, and summon availability based on the response.
@@ -81,6 +90,7 @@ class StartResponse:
             resp: The response object.
         """
         _log.debug(f"Updating battle info from {resp.url}...")
+        await self._update_event_time()
         await self._update_battle_info(r_body, resp)
         await self._update_win_conditions()
         await self._update_summon_availability(r_body, resp)

@@ -14,16 +14,17 @@ class Queue:
     Class to manage and validate game queues.
     """
 
-    def __init__(self, bot):
+    def __init__(self, skills):
         """
         Initialize the Queue instance.
 
         Args:
-            bot: The bot instance associated with the skills.
+            skills: The skills instance associated with the skills.
         """
-        self.bot = bot
+        self.bot = skills.bot
+        self.queues = self.bot.queues
+
         self.validate_and_parse_queues.start()
-        self.queues = dict()
 
     async def _generate_queue_names(self):
         """
@@ -88,7 +89,8 @@ class Queue:
 
         This function will process and validate the queues from the configuration.
         """
-        self.queues = dict()
+        self.queues.clear()
+
         queues = await self._gather_queues_from_config()
         for battle, turns in queues.items():
             for turn, queues in turns.items():
@@ -107,4 +109,4 @@ class Queue:
                         }
                     )
 
-        # _log.debug(f"Finished validating and parsing queues: {self.queues}")
+        _log.debug(f"Finished validating and parsing queues: {self.queues}")

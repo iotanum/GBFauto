@@ -18,14 +18,15 @@ class Responses:
     Class for handling various responses in the game.
     """
 
-    def __init__(self, bot):
+    def __init__(self, events):
         """
         Initializes the Responses object.
 
         Args:
-            bot: The parent bot instance.
+            events: The parent events instance.
         """
-        self.bot = bot
+        self.bot = events.bot
+        self.events = events
         self.common = Common(self)
         self.updator = Updator(self)
         self.ability_result_resp = AbilityResultResponse(self)

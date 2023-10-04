@@ -79,8 +79,8 @@ class Login:
         """
         Press the Mobage "allow" button.
         """
+        await self.login_tab.wait_for_load_state()
         await self.login_tab.locator('//*[@id="notify-response-button"]/div').click()
-        await self.bot.page.wait_for_load_state()
 
     async def login(self):
         """

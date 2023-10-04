@@ -4,15 +4,22 @@ import time
 
 from bs4 import BeautifulSoup as bs4
 
+from gbfauto.common.battle.common import BattleCommon
+from gbfauto.common.events.common import EventsCommon
+
 _log = logging.getLogger(__name__)
 
 
 class Utils:
     def __init__(self, bot):
         self.bot = bot
+        self.events = self.bot.events
+        self.queues = self.bot.queues
+        self.battle_common = BattleCommon(self)
+        self.events_common = EventsCommon(self)
 
     async def wait_for_full_page_load(self):
-        await self.bot.page.wait_for_load_state("networkidle")
+        await self.bot.page.wait_for_load_state()
 
     async def get_page_content(self):
         return await self.bot.page.content()

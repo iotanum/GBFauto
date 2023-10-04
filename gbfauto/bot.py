@@ -5,6 +5,7 @@ from gbfauto.login import Login
 from gbfauto.questing import Questing
 from gbfauto.skills import Skills
 from gbfauto.common.utils import Utils
+from gbfauto.helpers.battle.tasks import BattleTasks
 
 _log = logging.getLogger(__name__)
 
@@ -23,11 +24,20 @@ class Bot:
         """
         self.page = engine
         self.context = self.page.context
-        self.events = Events(self)
+
+        # Sub-attributes
+        self.events = dict()
+        self.p_status = dict()
+        self.battle = dict()
+        self.queues = dict()
+
+        # Main attributes
         self.utils = Utils(self)
+        self.events_module = Events(self)
         self.skills = Skills(self)
         self.login = Login(self)
         self.questing = Questing(self)
+        self.battle_tasks = BattleTasks(self)
 
     async def initialize_questing(self):
         """
@@ -40,6 +50,6 @@ class Bot:
         """
         Runs the automation for the bot.
         """
-        await self.events.initialize_events()
+        await self.events_module.initialize_events()
         await self.login.login()
         await self.questing.wait_for_repeatable_quest()

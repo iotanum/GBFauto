@@ -17,6 +17,7 @@ class ContentResponse:
         self.bot = responses.bot
         self.common = responses.common
         self.p_status = self.bot.p_status
+        self.battle_common = self.bot.utils.battle_common
 
     @staticmethod
     async def _fix_content_response_body(r_body):
@@ -53,7 +54,7 @@ class ContentResponse:
         if current_ep is not None:
             _log.debug(f"Updating 'p_status' 'current_ep' with '{current_ep}'")
             self.p_status["current_ep"] = current_ep
-            await self.common.need_ep()
+            await self.battle_common.need_ep()
 
     async def _update_current_ap(self, p_status, resp):
         """
@@ -76,7 +77,7 @@ class ContentResponse:
         if current_ap is not None:
             _log.debug(f"Updating 'p_status' 'current_ap' with '{current_ap}'")
             self.p_status["current_ap"] = current_ap
-            await self.common.need_ap()
+            await self.battle_common.need_ap()
 
     async def _update_player_status(self, r_body, resp):
         """

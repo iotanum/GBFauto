@@ -1,4 +1,5 @@
 import logging
+
 from gbfauto.helpers.responses.responses import Responses
 from gbfauto.helpers.requests.requests import ValidRequests
 
@@ -18,9 +19,6 @@ class Events:
             bot: The bot instance.
         """
         self.bot = bot
-        self.events = dict()
-        self.p_status = dict()
-        self.battle = dict()
         self.responses = Responses(self)
 
     async def on_dialog(self, dialog):

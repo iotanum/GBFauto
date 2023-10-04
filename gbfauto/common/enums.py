@@ -1,0 +1,19 @@
+class BattleEnums:
+    CURRENT_TURN = "current_turn"
+    CURRENT_BATTLE = "current_battle"
+    TOTAL_BATTLES = "total_battles"
+    IN_BATTLE = "in_battle"
+    BOSS_KILLED = "boss_killed"
+    QUEST_DONE = "quest_done"
+    SUMMON_AVAILABLE = "summon_available"
+    BOSS_HPS = "boss_hps"
+    QUEST_AP_COST = "q_ap_cost"
+    FULL_AUTO = "full_auto"
+
+
+class EventEnums:
+    START_EVENT = "start_event"
+    ABILITY_EVENT = "ability_event"
+    SUMMON_EVENT = "summon_event"
+    NORMAL_ATTACK_EVENT = "normal_attack_event"
+    LATEST_EVENT = "latest_event"
