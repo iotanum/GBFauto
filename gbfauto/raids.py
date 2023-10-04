@@ -13,6 +13,8 @@ class Raids:
         self.bot = questing.bot
         self.utils = questing.bot.utils
 
+        self.keyboard_interrupted = False
+
     async def _get_raid_filter(self):
         try:
             raid_slot_ele = await self.utils.bs(
@@ -48,7 +50,7 @@ class Raids:
     async def _get_raids(self):
         try:
             raids = await self.utils.bs(find=("div", {"id": "prt-search-list"}))
-            raid = self.utils.bs(parser=raids, find=("div", {"class": "txt-raid-name"}))
+            raid = await self.utils.bs(parser=raids, find=("div", {"class": "txt-raid-name"}))
             if raid:
                 return raids
         except AttributeError:
@@ -108,6 +110,18 @@ class Raids:
             await asyncio.sleep(0.2)
 
     async def do_raids(self):
-        await self.bot.utils.wait_for_full_page_load()
-        await self._assign_raid_slot()
-        await self._get_best_raid()
+        while True:
+            try:
+                await self.bot.utils.wait_for_full_page_load()
+                await self._assign_raid_slot()
+                await self._get_best_raid()
+
+                if self.keyboard_interrupted:
+                    _log.info("Done! Exiting raids...")
+                    self.bot.utils.go_to_main()
+                    break
+
+            except KeyboardInterrupt:
+                _log.info("Keyboard interrupt detected!")
+                _log.info("Gracefully finishing up current raid and exiting.")
+                self.keyboard_interrupted = True

@@ -25,7 +25,7 @@ async def _map_action(action):
     return ACTION_MAPPING.get(action)
 
 
-async def validate_and_parse(sequence):
+async def validate_and_parse(sequence) -> tuple:
     """
     Validate the input sequence according to the specified rules.
 

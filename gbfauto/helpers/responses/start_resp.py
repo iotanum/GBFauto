@@ -1,7 +1,7 @@
 import logging
 
 from gbfauto.common.utils import get_response_body, keys_exists
-from gbfauto.common.enums import BattleEnums
+from gbfauto.common.enums import BattleEnums, EventEnums
 
 _log = logging.getLogger(__name__)
 
@@ -79,7 +79,7 @@ class StartResponse:
         """
         Updates event time based on the response.
         """
-        await self.events_common.update_start_resp_event_time()
+        await self.events_common.update_event_time(EventEnums.START_EVENT)
 
     async def _update_battle(self, r_body, resp):
         """

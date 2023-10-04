@@ -17,19 +17,23 @@ class EventsCommon:
         self.bot = utils.bot
         self.events = self.bot.events
 
-    async def _update_latest_event_time(self):
+    async def _update_latest_event_time(self) -> None:
         """
         Updates the latest event time.
         """
         self.events[EventEnums.LATEST_EVENT] = time.time()
         _log.debug("Updating latest event time with current time.")
 
-    async def update_start_resp_event_time(self):
+    async def update_event_time(self, event: EventEnums) -> None:
         """
-        Updates the 'start.json' response event time.
+        Updates given response event time.
+
+        Args:
+            event (EventEnums): The event to update the time for.
+
         """
-        self.events[EventEnums.START_EVENT] = time.time()
-        _log.debug("Updating 'start.json' event time with current time.")
+        self.events[event] = time.time()
+        _log.debug(f"Updating '{event}' event time with current time.")
         await self._update_latest_event_time()
 
     async def _get_event_time(self, event: EventEnums) -> typing.Optional[float]:

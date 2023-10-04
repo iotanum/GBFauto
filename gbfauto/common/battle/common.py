@@ -97,4 +97,4 @@ class BattleCommon:
                 },
             )
         )
-        return hp_ele
+        return bool(hp_ele)

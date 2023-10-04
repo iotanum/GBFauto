@@ -8,31 +8,47 @@ _log = logging.getLogger(__name__)
 
 class Questing:
     def __init__(self, bot):
+        """
+        Initializes the Questing instance.
+
+        Args:
+            bot: Bot instance.
+        """
         self.bot = bot
         self.utils = self.bot.utils
         self.quest_url = None
         self.raids = Raids(self)
+        self.url_action_mapping = {
+            "#quest/assist": self.handle_raids,
+            "#quest/supporter": self.handle_generic_quest,
+        }
 
-    async def wait_for_repeatable_quest(self):
+    async def wait_for_repeatable_quest(self) -> None:
+        """
+        Waits for the player to enter a quest and continuously checks for actions based on the current URL.
+        """
         if not self.quest_url:
             _log.info("Waiting for you to enter a quest...")
 
         while True:
             current_url = await self.utils.get_current_url()
-            action_map = {
-                # "#quest/supporter": self.handle_generic_quest,
-                # "#coopraid/room/": self.handle_coop_quest,
-                # "#replicard/supporter": self.handle_sandbox_quest,
-                "#quest/assist": self.handle_raids,
-            }
 
-            for url in action_map:
+            for url, action_function in self.url_action_mapping.items():
                 if url in current_url:
-                    action_function = action_map[url]
                     await action_function()
 
             await asyncio.sleep(1)
 
-    async def handle_raids(self):
+    async def handle_raids(self) -> None:
+        """
+        Handles raids action.
+        """
         _log.info("Locked on to raids.")
         await self.raids.do_raids()
+
+    async def handle_generic_quest(self) -> None:
+        """
+        Handles generic quest action.
+        """
+        _log.info("Locked on to generic quest.")
+        pass

@@ -11,7 +11,7 @@ _log = logging.getLogger(__name__)
 
 class Queue:
     """
-    Class to manage and validate game queues.
+    Class to manage and validate from config queues.
     """
 
     def __init__(self, skills):
@@ -19,51 +19,34 @@ class Queue:
         Initialize the Queue instance.
 
         Args:
-            skills: The skills instance associated with the skills.
+            skills: The skills instance associated with the bot.
         """
         self.bot = skills.bot
         self.queues = self.bot.queues
+        self.temp_queues = [
+            f"QUEUE_{battle}_{turn}"
+            for battle in range(1, 101)
+            for turn in range(1, 101)
+        ]
 
         self.validate_and_parse_queues.start()
 
-    async def _generate_queue_names(self):
+    async def _unset_queues(self) -> None:
         """
-        Generate skills names based on battle and turn numbers.
-
-        Returns:
-            list: List of generated skills names.
+        Unset existing queues from the environment.
         """
-        max_battles = 101
-        max_turns = 101
-
-        temp_queues = [
-            f"QUEUE_{battle}_{turn}"
-            for battle in range(1, max_battles)
-            for turn in range(1, max_turns)
-        ]
-
-        return temp_queues
-
-    async def _unset_queues(self, temp_queues):
-        """
-        Unset existing skills names from the environment.
-
-        Args:
-            temp_queues (list): List of skills names to unset.
-        """
-        for queue in temp_queues:
+        for queue in self.temp_queues:
             if os.getenv(queue):
                 del os.environ[queue]
 
-    async def _gather_queues_from_config(self):
+    async def _gather_queues_from_config(self) -> dict:
         """
         Find and organize existing queues from the environment.
 
         Returns:
             dict: A dictionary representing the queues organized by battle and turn numbers.
         """
-        temp_queues = await self._generate_queue_names()
-        await self._unset_queues(temp_queues)
+        await self._unset_queues()
 
         load_dotenv(override=True)
 
@@ -71,7 +54,7 @@ class Queue:
         found_queues = 0
 
         # Filter out non-existent queues and organize them into a dictionary
-        for queue_name in temp_queues:
+        for queue_name in self.temp_queues:
             if os.getenv(queue_name):
                 battle, turn = map(int, queue_name.split("_")[1:])
                 queue_value = os.getenv(queue_name)
@@ -83,7 +66,7 @@ class Queue:
         return queues
 
     @background_task(interval=2)
-    async def validate_and_parse_queues(self):
+    async def validate_and_parse_queues(self) -> None:
         """
         Validate and parse the queues.
 
@@ -109,4 +92,4 @@ class Queue:
                         }
                     )
 
-        _log.debug(f"Finished validating and parsing queues: {self.queues}")
+        # _log.debug(f"Finished validating and parsing queues: {self.queues}")

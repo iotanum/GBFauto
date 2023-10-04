@@ -49,6 +49,10 @@ class Utils:
     async def refresh(self):
         await self.bot.page.reload()
 
+    async def go_to_main(self):
+        await self.bot.page.goto("http://game.granbluefantasy.jp/#mypage")
+        await self.wait_for_full_page_load()
+
 
 # Find ele ment with bs4 and get xpath with this function
 async def get_xpath_from_ele(element):
