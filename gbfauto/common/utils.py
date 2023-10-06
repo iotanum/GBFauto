@@ -57,24 +57,29 @@ class Utils:
             await self.wait_for_full_page_load()
 
 
+def find_siblings_in_executor(parent, child_name):
+    return parent.find_all(child_name, recursive=False)
+
+
 # Find ele ment with bs4 and get xpath with this function
 async def get_xpath_from_ele(element, debug=True):
     components = []
     child = element if element.name else element.parent
     for parent in child.parents:
-        siblings = parent.find_all(child.name, recursive=False)
+        siblings = await asyncio.to_thread(
+            find_siblings_in_executor, parent, child.name
+        )
         components.append(
             child.name
-            if 1 == len(siblings)
-            else "%s[%d]"
-            % (child.name, next(i for i, s in enumerate(siblings, 1) if s is child))
+            if len(siblings) == 1
+            else f"{child.name}[{siblings.index(child) + 1}]"
         )
         child = parent
     components.reverse()
 
     if debug:
         _log.debug(f"Xpath parsed from BS4 element: /{'/'.join(components)}")
-    return "//%s" % "/".join(components)
+    return f"//{'/'.join(components)}"
 
 
 async def keys_exists(element, *keys, resp_url=None):
