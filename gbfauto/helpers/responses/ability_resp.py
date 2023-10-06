@@ -1,6 +1,7 @@
 import logging
 
 from gbfauto.common.utils import get_response_body, keys_exists
+from gbfauto.common.enums import BattleEnums
 
 _log = logging.getLogger(__name__)
 
@@ -21,7 +22,6 @@ class AbilityResultResponse:
         self.common = responses.common
         self.updator = responses.updator
         self.battle = self.bot.battle
-        self.battle_common = self.bot.utils.battle_common
 
     async def _update_win_conditions(self, win_event):
         """
@@ -31,7 +31,7 @@ class AbilityResultResponse:
             win_event: Event indicating win condition.
         """
         mob_killed = bool(win_event)
-        quest_done = mob_killed and self.battle_common.is_final_battle()
+        quest_done = mob_killed and self.battle[BattleEnums.FINAL_BATTLE]
 
         await self.updator.update_win_conditions(mob_killed, quest_done)
 

@@ -7,14 +7,14 @@ _log = logging.getLogger(__name__)
 
 
 class EventsCommon:
-    def __init__(self, utils):
+    def __init__(self, bot):
         """
         Initializes the EventsCommon instance.
 
         Args:
             utils: Utility functions instance.
         """
-        self.bot = utils.bot
+        self.bot = bot
         self.events = self.bot.events
 
     async def _update_latest_event_time(self) -> None:

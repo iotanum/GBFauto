@@ -17,7 +17,7 @@ class ContentResponse:
         self.bot = responses.bot
         self.common = responses.common
         self.p_status = self.bot.p_status
-        self.battle_common = self.bot.utils.battle_common
+        self.battle_common = self.bot.battle_common
 
     @staticmethod
     async def _fix_content_response_body(r_body):

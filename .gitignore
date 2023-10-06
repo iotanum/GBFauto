@@ -5,11 +5,9 @@ venv/*
 utils/*
 errors/*
 verification/*
-!utils/.keep
-!errors/.keep
-!verification/.keep
 *.pyc
 *.log
 .idea
 test.py
 test.html
+browser_user_data

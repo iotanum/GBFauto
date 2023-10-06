@@ -1,6 +1,7 @@
 import logging
 
 from gbfauto.common.utils import get_response_body, keys_exists
+from gbfauto.common.enums import BattleEnums
 
 _log = logging.getLogger(__name__)
 
@@ -29,12 +30,8 @@ class SummonResponse:
         Args:
             win_event: The win event information.
         """
-        quest_done = False
-        mob_killed = True if win_event else False
-
-        if self.battle["current_battle"] == self.battle["total_battles"]:
-            if mob_killed:
-                quest_done = True
+        mob_killed = bool(win_event)
+        quest_done = mob_killed and self.battle[BattleEnums.FINAL_BATTLE]
 
         await self.updator.update_win_conditions(mob_killed, quest_done)
 

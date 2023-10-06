@@ -1,9 +1,7 @@
 import logging
 import asyncio
 import re
-import time
 
-from gbfauto.common.utils import is_timeout
 
 _log = logging.getLogger(__name__)
 
@@ -13,7 +11,11 @@ class Raids:
         self.bot = questing.bot
         self.utils = questing.bot.utils
 
-        self.keyboard_interrupted = False
+        # For Signal Handling
+        self.keyboard_interrupted = self.bot.keyboard_interrupted
+
+        # Common
+        self.raid_filter_assigned = False
 
     async def _get_raid_filter(self):
         try:
@@ -32,11 +34,11 @@ class Raids:
 
     async def _confirm_raid_slot(self, raid_slot):
         while True:
-            confirm = input(f"Confirm raid slot '{raid_slot}'? (y/n): ").lower()
+            confirm = input(f"\nConfirm raid slot '{raid_slot}'? (y/n): ").lower()
             if confirm in ("y", "n"):
                 return confirm == "y"
             else:
-                _log.error("Invalid input. Please enter 'y' for yes or 'n' for no.")
+                _log.error("\nInvalid input. Please enter 'y' for yes or 'n' for no.")
 
     async def _assign_raid_slot(self):
         while True:
@@ -44,84 +46,59 @@ class Raids:
             if raid_slot:
                 _log.debug(f"Found raid slot '{raid_slot}'.")
                 if await self._confirm_raid_slot(raid_slot):
+                    self.raid_filter_assigned = True
                     return
             await asyncio.sleep(1)
 
     async def _get_raids(self):
-        try:
-            raids = await self.utils.bs(find=("div", {"id": "prt-search-list"}))
-            raid = await self.utils.bs(parser=raids, find=("div", {"class": "txt-raid-name"}))
-            if raid:
-                return raids
-        except AttributeError:
-            return
-
-    async def _get_most_suitable_raid(self):
-        raids_info = await self._get_raids()
-
-        if not raids_info:
-            return None
-
-        raids = await self.utils.bs(
-            parser=raids_info, find_all=("div", {"class": "prt-raid-info"})
+        return await self.utils.bs(
+            find_all=("div", {"class": "btn-multi-raid lis-raid search"})
         )
 
-        most_suitable_raid_idx = None
-        max_hp = float("-inf")
+    async def _get_most_suitable_raid(self):
+        raids = await self._get_raids()
 
-        for idx, raid in enumerate(raids, 1):
+        if not raids:
+            return None
+
+        best_raid = None
+        best_hp = float("-inf")
+
+        for idx, raid in enumerate(raids, 0):
             hp_bar = await self.utils.bs(
                 parser=raid, find=("div", {"class": "prt-raid-gauge-inner"})
             )
-            hp_style = hp_bar["style"]
-            raid_hp = int(re.search(r"\d+", hp_style).group())
 
-            if raid_hp > max_hp:
-                max_hp = raid_hp
-                most_suitable_raid_idx = idx
+            raid_hp = int(re.search(r"\d+", hp_bar["style"]).group())
 
-        return most_suitable_raid_idx
+            if raid_hp > best_hp:
+                best_hp = raid_hp
+                best_raid = raids[idx]
 
-    async def _refresh_raid_filter(self):
-        pass
-        # rfrsh_btn_class = "btn-search-refresh"
-        # rfrsh_btn_ele = await self.bot.page.
-        # rfrsh_btn_xpath = await get_xpath_from_ele()
+        clickable_ele = await self.utils.bs(
+            parser=best_raid, find=("div", {"class": "prt-button-cover"})
+        )
 
-    async def _get_best_raid(self):
-        refresh_timeout = 60
-        start = time.time()
+        return clickable_ele
 
-        while True:
-            if await is_timeout(start, refresh_timeout):
-                await self.utils.refresh()
-                start = time.time()
-
-            raid_num = await self._get_most_suitable_raid()
-
-            print(raid_num)
-            # if raid_num:
-            #     await self.pick_raid(raid_num)
-            #     if not success:
-            #         await self.bot.utils.go_to_locked_quest()
-            #         continue
-            #     return success
-            # await self._refresh_raid_filter()
-            await asyncio.sleep(0.2)
+    async def _try_entering_raid(self, raid_ele):
+        await self.utils.click(raid_ele)
 
     async def do_raids(self):
         while True:
-            try:
-                await self.bot.utils.wait_for_full_page_load()
-                await self._assign_raid_slot()
-                await self._get_best_raid()
+            # if not self.raid_filter_assigned:
+            #     await self._assign_raid_slot()
+            #
+            # raid_xpath = await self._get_most_suitable_raid()
+            # if not raid_xpath:
+            #     _log.info("No raids found. Refreshing...")
+            #     await self.utils.refresh(wait_to_load=True)
+            #     continue
+            #
+            # await self._try_entering_raid(raid_xpath)
+            await asyncio.sleep(60606006606)
 
-                if self.keyboard_interrupted:
-                    _log.info("Done! Exiting raids...")
-                    self.bot.utils.go_to_main()
-                    break
-
-            except KeyboardInterrupt:
-                _log.info("Keyboard interrupt detected!")
-                _log.info("Gracefully finishing up current raid and exiting.")
-                self.keyboard_interrupted = True
+            if self.keyboard_interrupted:
+                _log.info("Done! Exiting raids...")
+                self.bot.utils.go_to_main()
+                break

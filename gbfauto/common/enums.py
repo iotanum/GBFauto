@@ -1,3 +1,11 @@
+class SummonEnums:
+    IN_SUMMON_SELECTION = "in_summon_selection"
+    SUPPORT_ELEMENT_NUM = "element_num"
+    SUPPORT_ELEMENT = "element"
+    SUPPORT_SUMMONS_TO_PICK = "summons_from_config"
+    BEST_SUMMON = "summon"
+
+
 class BattleEnums:
     CURRENT_TURN = "current_turn"
     CURRENT_BATTLE = "current_battle"
@@ -9,6 +17,7 @@ class BattleEnums:
     BOSS_HPS = "boss_hps"
     QUEST_AP_COST = "q_ap_cost"
     FULL_AUTO = "full_auto"
+    FINAL_BATTLE = "final_battle"
 
 
 class EventEnums:

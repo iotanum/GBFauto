@@ -4,9 +4,6 @@ import time
 
 from bs4 import BeautifulSoup as bs4
 
-from gbfauto.common.battle.common import BattleCommon
-from gbfauto.common.events.common import EventsCommon
-
 _log = logging.getLogger(__name__)
 
 
@@ -15,8 +12,6 @@ class Utils:
         self.bot = bot
         self.events = self.bot.events
         self.queues = self.bot.queues
-        self.battle_common = BattleCommon(self)
-        self.events_common = EventsCommon(self)
 
     async def wait_for_full_page_load(self):
         await self.bot.page.wait_for_load_state()
@@ -24,8 +19,20 @@ class Utils:
     async def get_page_content(self):
         return await self.bot.page.content()
 
+    async def go_to_main(self):
+        await self.bot.page.goto("http://game.granbluefantasy.jp/#mypage")
+        await self.wait_for_full_page_load()
+
     async def go_to_locked_quest(self):
         await self.bot.page.goto(self.bot.questing.quest_url)
+
+    async def get_current_url(self):
+        return self.bot.page.url
+
+    async def click(self, ele, force=False):
+        xpath = await get_xpath_from_ele(ele)
+        _log.debug(f"Clicking on element: {xpath}")
+        await self.bot.page.locator(xpath).click(force=force)
 
     async def bs(self, content=None, parser=None, find=(), find_all=()):
         loop = asyncio.get_event_loop()
@@ -43,19 +50,15 @@ class Utils:
 
         return parser
 
-    async def get_current_url(self):
-        return self.bot.page.url
-
-    async def refresh(self):
+    async def refresh(self, wait_to_load=False):
         await self.bot.page.reload()
-
-    async def go_to_main(self):
-        await self.bot.page.goto("http://game.granbluefantasy.jp/#mypage")
-        await self.wait_for_full_page_load()
+        if wait_to_load:
+            print("waiting for load")
+            await self.wait_for_full_page_load()
 
 
 # Find ele ment with bs4 and get xpath with this function
-async def get_xpath_from_ele(element):
+async def get_xpath_from_ele(element, debug=True):
     components = []
     child = element if element.name else element.parent
     for parent in child.parents:
@@ -69,8 +72,9 @@ async def get_xpath_from_ele(element):
         child = parent
     components.reverse()
 
-    _log.debug(f"Xpath parsed from BS4 element: /{'/'.join(components)}")
-    return "/%s" % "/".join(components)
+    if debug:
+        _log.debug(f"Xpath parsed from BS4 element: /{'/'.join(components)}")
+    return "//%s" % "/".join(components)
 
 
 async def keys_exists(element, *keys, resp_url=None):

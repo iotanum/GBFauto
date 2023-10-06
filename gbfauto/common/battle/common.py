@@ -1,20 +1,32 @@
-from gbfauto.common.enums import BattleEnums
 import typing
+
+from gbfauto.common.enums import BattleEnums
 
 
 class BattleCommon:
-    def __init__(self, utils):
+    def __init__(self, bot):
         """
         Initializes the BattleCommon instance.
 
         Args:
-            utils: Utility functions instance.
+            bot: Utility functions instance.
         """
-        self.bot = utils.bot
-        self.utils = utils
+        self.bot = bot
+        self.utils = self.bot.utils
         self.battle = self.bot.battle
         self.queues = self.bot.queues
         self.p_status = self.bot.p_status
+
+    async def in_battle_url(self) -> bool:
+        """
+        Checks if the bot is in a battle url.
+
+        Returns:
+            bool: True if in a battle url, False otherwise.
+        """
+        possible_urls = ["#raid", "#raid_multi"]
+        current_url = await self.utils.get_current_url()
+        return any(url in current_url for url in possible_urls)
 
     async def get_current_battle(self) -> typing.Any:
         """
@@ -33,15 +45,6 @@ class BattleCommon:
             Any: Current turn information.
         """
         return self.battle[BattleEnums.CURRENT_TURN]
-
-    async def is_final_battle(self) -> bool:
-        """
-        Checks if the current battle is the final battle.
-
-        Returns:
-            bool: True if it's the final battle, False otherwise.
-        """
-        return self.battle.get("current_battle") == self.battle.get("total_battles", 0)
 
     async def need_ap(self):
         """
@@ -98,3 +101,11 @@ class BattleCommon:
             )
         )
         return bool(hp_ele)
+
+    async def enable_full_auto(self):
+        """
+        Enables full auto.
+        """
+        fa_ele = await self.utils.bs(find=("div", {"class": "txt-auto-setting"}))
+
+        return await self.utils.click(fa_ele)

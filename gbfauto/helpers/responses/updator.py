@@ -10,7 +10,6 @@ class Updator:
         self.bot = responses.bot
         self.p_status = self.bot.p_status
         self.battle = self.bot.battle
-        self.battle_common = self.bot.utils.battle_common
 
     @staticmethod
     async def _get_boss_id(hp_event):
@@ -54,7 +53,7 @@ class Updator:
 
             # Check if any boss has non-zero HP and update win conditions accordingly
             mob_killed = any(boss_hp > 0 for boss_hp in bosses.values())
-            quest_done = mob_killed and await self.battle_common.is_final_battle()
+            quest_done = mob_killed and self.battle[BattleEnums.FINAL_BATTLE]
 
             await self.update_win_conditions(mob_killed, quest_done)
             self.battle[BattleEnums.BOSS_HPS] = bosses
@@ -107,3 +106,12 @@ class Updator:
         _log.debug(
             f"Updating win condition: Wave mob killed: '{mob_killed}', Quest done: '{quest_done}'..."
         )
+
+    async def update_final_battle(self):
+        current_battle = self.battle.get(BattleEnums.CURRENT_BATTLE, 0)
+        total_battles = self.battle.get(BattleEnums.TOTAL_BATTLES)
+        if current_battle == total_battles:
+            _log.debug("Final battle detected!")
+            self.battle[BattleEnums.FINAL_BATTLE] = True
+        else:
+            self.battle[BattleEnums.FINAL_BATTLE] = False

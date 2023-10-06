@@ -18,6 +18,10 @@ class Questing:
         self.utils = self.bot.utils
         self.quest_url = None
         self.raids = Raids(self)
+
+        # For Signal Handling
+        self.keyboard_interrupted = self.bot.keyboard_interrupted
+
         self.url_action_mapping = {
             "#quest/assist": self.handle_raids,
             "#quest/supporter": self.handle_generic_quest,
@@ -27,6 +31,8 @@ class Questing:
         """
         Waits for the player to enter a quest and continuously checks for actions based on the current URL.
         """
+        self.keyboard_interrupted = False
+
         if not self.quest_url:
             _log.info("Waiting for you to enter a quest...")
 
@@ -43,6 +49,7 @@ class Questing:
         """
         Handles raids action.
         """
+        await self.bot.utils.wait_for_full_page_load()
         _log.info("Locked on to raids.")
         await self.raids.do_raids()
 

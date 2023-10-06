@@ -1,4 +1,5 @@
 import logging
+
 from gbfauto.common.tasks import background_task
 from gbfauto.common.enums import EventEnums, BattleEnums
 
@@ -18,8 +19,12 @@ class BattleTasks:
         self.battle = self.bot.battle
         self.events = self.bot.events
         self.queues = self.bot.queues
-        self.battle_common = self.bot.utils.battle_common
-        self.events_common = self.bot.utils.events_common
+        self.battle_common = self.bot.battle_common
+        self.events_common = self.bot.events_common
+
+        # Sub-attributes
+        self.in_battle = False
+        self.full_auto = False
 
         # Start background tasks
         self.is_in_battle.start()
@@ -31,23 +36,37 @@ class BattleTasks:
         Background task to check if the bot is in a battle.
         Screen in which you can do queues, skills, summons, etc.
         """
-        if await self.battle_common.can_see_enemy_hp():
-            self.battle[BattleEnums.IN_BATTLE] = True
-            _log.debug("Updating 'in_battle' status to True")
+        if await self.battle_common.in_battle_url():
+            if await self.battle_common.can_see_enemy_hp():
+                if not self.in_battle:
+                    self.battle[BattleEnums.IN_BATTLE] = True
+                    self.in_battle = True
+                    _log.debug("Updating 'in_battle' status to True")
         else:
-            self.battle[BattleEnums.IN_BATTLE] = False
-            self.battle[BattleEnums.FULL_AUTO] = False
+            if self.in_battle:
+                _log.debug("Updating 'in_battle' status to False")
+                self.battle[BattleEnums.IN_BATTLE] = False
+                self.battle[BattleEnums.FULL_AUTO] = False
+                self.in_battle = False
 
     @background_task(interval=0.2)
     async def enable_full_auto_in_loading_screen(self):
         """
         Background task to enable full auto in the loading screen.
         """
-        if not self.queues:
+        if self.queues:
             return
 
-        if not self.battle[BattleEnums.IN_BATTLE]:
+        if await self.battle_common.in_battle_url():
             if await self.events_common.is_event_recent(EventEnums.START_EVENT):
                 if not await self.battle_common.is_queue_this_turn():
-                    _log.debug("Enabling full auto in loading screen...")
-                    self.battle[BattleEnums.FULL_AUTO] = True
+                    if not self.full_auto:
+                        _log.debug("Enabling full auto in loading screen...")
+                        await self.battle_common.enable_full_auto()
+                        self.full_auto = True
+                        self.battle[BattleEnums.FULL_AUTO] = True
+                        _log.info("Enabled full auto in loading screen!")
+        else:
+            if self.full_auto:
+                self.battle[BattleEnums.FULL_AUTO] = False
+                self.full_auto = False

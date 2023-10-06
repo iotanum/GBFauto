@@ -23,7 +23,6 @@ class Login:
         self.username = None
         self.password = None
         self.login_tab = None
-        self.auth_page = "http://game.granbluefantasy.jp/#authentication"
 
     async def _set_credentials(self):
         """
@@ -32,13 +31,6 @@ class Login:
         load_dotenv(".env")
         self.username = os.getenv("GBF_LOGIN")
         self.password = os.getenv("GBF_PASSWORD")
-
-    async def _open_auth_page(self):
-        """
-        Open the authentication page.
-        """
-        _log.debug("Opening auth page...")
-        await self.bot.page.goto(self.auth_page)
 
     async def _navigate_to_mobage_login(self):
         """
@@ -89,7 +81,6 @@ class Login:
         _log.info("Logging in...")
 
         await self._set_credentials()
-        await self._open_auth_page()
         await self._navigate_to_mobage_login()
         await self._navigate_to_google_login()
         await self._enter_login()

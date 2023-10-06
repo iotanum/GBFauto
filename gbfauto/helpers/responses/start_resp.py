@@ -21,8 +21,7 @@ class StartResponse:
         self.bot = responses.bot
         self.updator = responses.updator
         self.battle = self.bot.battle
-        self.battle_common = self.bot.utils.battle_common
-        self.events_common = self.bot.utils.events_common
+        self.events_common = self.bot.events_common
 
         self._b_info = [
             {BattleEnums.TOTAL_BATTLES: ["battle", "total"]},
@@ -57,7 +56,7 @@ class StartResponse:
         Updates win conditions based on battle status.
         """
         mob_killed = not self.battle[BattleEnums.BOSS_HPS]
-        quest_done = mob_killed and await self.battle_common.is_final_battle()
+        quest_done = mob_killed and self.battle[BattleEnums.FINAL_BATTLE]
         await self.updator.update_win_conditions(mob_killed, quest_done)
 
     async def _update_summon_availability(self, r_body, resp):
@@ -81,6 +80,9 @@ class StartResponse:
         """
         await self.events_common.update_event_time(EventEnums.START_EVENT)
 
+    async def _update_is_final_battle(self):
+        await self.updator.update_final_battle()
+
     async def _update_battle(self, r_body, resp):
         """
         Updates battle information, win conditions, and summon availability based on the response.
@@ -91,6 +93,7 @@ class StartResponse:
         """
         _log.debug(f"Updating battle info from {resp.url}...")
         await self._update_event_time()
+        await self._update_is_final_battle()
         await self._update_battle_info(r_body, resp)
         await self._update_win_conditions()
         await self._update_summon_availability(r_body, resp)
