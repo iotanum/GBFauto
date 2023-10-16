@@ -543,7 +543,7 @@ class Handle:
         return True
 
     def check_if_action_is_needed(self, req, can_be_empty=False):
-        if 'raid_deck_data_create' in req['uri']:
+        if "raid_deck_data_create" in req["uri"]:
             can_be_empty = True
 
         req_body = self._bot.game_requests.get_resp_body(req, can_be_empty=can_be_empty)
@@ -551,7 +551,7 @@ class Handle:
         if not req_body:
             return
 
-        req_uri = req['uri']
+        req_uri = req["uri"]
         # Check if "create" is in the req uri
         if "create" in req_uri:
             if popup := req_body.get("popup"):
@@ -576,6 +576,7 @@ class Handle:
     def sandbox_summon_pick(self):
         self._bot.wait.for_loading_screen()
         self._bot.press.confirm_support_summon()
+        self.not_enough_of_x(sandbox=True)
 
     def use_ap_for_non_repeatables(self, ep=False):
         self.navigate_to_consumables()
@@ -957,7 +958,9 @@ class Handle:
                     total_battles = self._bot.fight["total_battles"]
 
                     if resp_turn == self._bot.fight["turn"] + 1:
-                        print(f"Attacked. Battle '{current_battle}', Turn '{current_turn}'.")
+                        print(
+                            f"Attacked. Battle '{current_battle}', Turn '{current_turn}'."
+                        )
                         return False
                     if resp_turn == current_turn and current_battle == total_battles:
                         print("Probably killed the boss.")
