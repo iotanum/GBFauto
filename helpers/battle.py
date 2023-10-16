@@ -98,7 +98,7 @@ class BattleInfo:
 
     def find_after_confirm_response(self):
         # first one for raids, second one for quests, third one for battle start
-        req_contains = ["raid_deck_data_create", "create_quest", "start.json"]
+        req_contains = ["start.json"]
         return self.game_requests.find_request(req_contains)
 
     def find_attack_btn_response(self):

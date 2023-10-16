@@ -19,7 +19,11 @@ class GbfRequests:
             return False
 
     def log_filter(self, log):
-        return log["method"] == "Network.responseReceived" and self.is_log_new(log)
+        return (
+            log["method"] == "Network.responseReceived"
+            and "json" in log["params"]["response"]["mimeType"]
+            and self.is_log_new(log)
+        )
 
     def get_logs(self):
         logs_raw = self.driver.get_log("performance")
