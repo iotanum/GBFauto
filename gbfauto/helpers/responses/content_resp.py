@@ -1,5 +1,7 @@
 import logging
 
+import playwright
+
 from gbfauto.common.utils import get_response_body, multiple_keys_exists
 
 
@@ -99,11 +101,14 @@ class ContentResponse:
         Args:
             resp: The response object.
         """
-        r_body = await get_response_body(resp)
-        r_body = await self._fix_content_response_body(r_body)
+        try:
+            r_body = await get_response_body(resp)
+            r_body = await self._fix_content_response_body(r_body)
 
-        # update user status in events
-        await self._update_player_status(r_body, resp)
+            # update user status in events
+            await self._update_player_status(r_body, resp)
 
-        _log.debug(f"Player status updated from {resp.url}")
-        _log.debug(f"Player status: {self.p_status}")
+            _log.debug(f"Player status updated from {resp.url}")
+            _log.debug(f"Player status: {self.p_status}")
+        except playwright._impl._api_types.Error:
+            _log.debug(f"Error while handling content response from {resp.url}")

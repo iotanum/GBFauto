@@ -1,7 +1,7 @@
 import logging
 
 from gbfauto.common.utils import get_response_body, keys_exists
-from gbfauto.common.enums import BattleEnums
+from gbfauto.common.enums import BattleEnums, EventEnums
 
 _log = logging.getLogger(__name__)
 
@@ -22,6 +22,7 @@ class AbilityResultResponse:
         self.common = responses.common
         self.updator = responses.updator
         self.battle = self.bot.battle
+        self.events_common = self.bot.events_common
 
     async def _update_win_conditions(self, win_event):
         """
@@ -81,6 +82,12 @@ class AbilityResultResponse:
         if isinstance(summon_enable, int):
             await self.updator.update_summon_availability(summon_enable)
 
+    async def _update_event_time(self):
+        """
+        Updates event time based on the response.
+        """
+        await self.events_common.update_event_time(EventEnums.ABILITY_EVENT)
+
     async def _update_ability_result(self, r_body, resp):
         """
         Updates ability result based on the response.
@@ -89,6 +96,7 @@ class AbilityResultResponse:
             r_body (dict): The response body in dictionary format.
             resp: The response object.
         """
+        await self._update_event_time()
         await self._update_boss_hp(r_body, resp)
         await self._update_turn(r_body, resp)
         await self._update_summon_availability(r_body, resp)

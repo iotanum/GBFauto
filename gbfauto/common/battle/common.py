@@ -84,6 +84,20 @@ class BattleCommon:
         except KeyError:
             return False
 
+    async def refresh_from_queue_this_turn(self):
+        """
+        Checks if there's a refresh queue in the current turn.
+        """
+        if not self.queues:
+            return False
+
+        current_turn = await self.get_current_turn()
+        current_battle = await self.get_current_battle()
+        try:
+            return self.queues[current_battle][current_turn]["refresh"]
+        except KeyError:
+            return False
+
     async def can_see_enemy_hp(self) -> bool:
         """
         Checks if enemy HP information is visible.
@@ -106,6 +120,26 @@ class BattleCommon:
         """
         Enables full auto.
         """
-        fa_ele = await self.utils.bs(find=("div", {"class": "txt-auto-setting"}))
+        while True:
+            fa_ele = await self.utils.bs(find=("div", {"class": "txt-auto-setting"}))
+            if fa_ele:
+                enabled = await self.utils.bs(
+                    find=("div", {"class": "btn-ready-auto anim-simple-fadein"})
+                )
+                if not enabled:
+                    await self.utils.click(fa_ele, force=True)
+                else:
+                    return True
 
-        return await self.utils.click(fa_ele)
+    async def refreshed_on_this_event(self, event, refreshed_event):
+        """
+        Checks if the bot refreshed on this event.
+
+        Args:
+            event (dict): The event to check.
+            refreshed_event (dict): The refreshed event.
+
+        Returns:
+            bool: True if refreshed on this event, False otherwise.
+        """
+        return refreshed_event == event

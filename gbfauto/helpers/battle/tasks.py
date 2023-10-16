@@ -24,11 +24,27 @@ class BattleTasks:
 
         # Sub-attributes
         self.in_battle = False
-        self.full_auto = False
+        self.full_auto_enabled = False
+        self.refreshed_on_event = {}
 
         # Start background tasks
         self.is_in_battle.start()
         self.enable_full_auto_in_loading_screen.start()
+        self.refresh_after_event.start()
+
+    async def already_refresh(self, r_event):
+        """
+        Checks if the bot already refreshed this turn.
+
+        Returns:
+            bool: True if the bot already refreshed this turn, False otherwise.
+        """
+        bla = await self.battle_common.refreshed_on_this_event(
+            r_event, self.refreshed_on_event
+        )
+        print(bla, r_event, self.refreshed_on_event, "bla")
+
+        return bla
 
     @background_task(interval=0.2)
     async def is_in_battle(self):
@@ -43,30 +59,41 @@ class BattleTasks:
                     self.in_battle = True
                     _log.debug("Updating 'in_battle' status to True")
         else:
+            self.battle[BattleEnums.IN_BATTLE] = False
+            self.battle[BattleEnums.FULL_AUTO] = False
+
             if self.in_battle:
                 _log.debug("Updating 'in_battle' status to False")
-                self.battle[BattleEnums.IN_BATTLE] = False
-                self.battle[BattleEnums.FULL_AUTO] = False
                 self.in_battle = False
 
     @background_task(interval=0.2)
+    async def refresh_after_event(self):
+        """
+        Background task to enable full auto in battle.
+        """
+        if self.battle[BattleEnums.IN_BATTLE]:
+            if r_event := await self.events_common.is_refresh_event_recent():
+                if not await self.already_refresh(r_event):
+                    if (
+                        await self.battle_common.refresh_from_queue_this_turn()
+                        or not await self.battle_common.is_queue_this_turn()
+                    ):
+                        _log.debug("Refreshing because of queue or no queue.")
+                        self.battle[BattleEnums.FULL_AUTO] = False
+                        self.refreshed_on_event = r_event
+                        await self.utils.refresh()
+
+    @background_task(interval=0.1)
     async def enable_full_auto_in_loading_screen(self):
         """
         Background task to enable full auto in the loading screen.
         """
-        if self.queues:
-            return
-
         if await self.battle_common.in_battle_url():
-            if await self.events_common.is_event_recent(EventEnums.START_EVENT):
+            if not self.battle.get(BattleEnums.FULL_AUTO, False):
                 if not await self.battle_common.is_queue_this_turn():
-                    if not self.full_auto:
-                        _log.debug("Enabling full auto in loading screen...")
-                        await self.battle_common.enable_full_auto()
-                        self.full_auto = True
+                    enabled = await self.battle_common.enable_full_auto()
+                    if enabled:
                         self.battle[BattleEnums.FULL_AUTO] = True
                         _log.info("Enabled full auto in loading screen!")
         else:
-            if self.full_auto:
-                self.battle[BattleEnums.FULL_AUTO] = False
-                self.full_auto = False
+            self.battle[BattleEnums.FULL_AUTO] = False
