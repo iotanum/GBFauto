@@ -1,5 +1,6 @@
 import io
-import requests
+import time
+
 from PIL import Image
 from ultralytics import YOLO
 from bs4 import BeautifulSoup as bs
@@ -39,6 +40,7 @@ class Verification:
                 while True:
                     ele = self.driver.find_element("xpath", f"{xpath}//img")
                     if ele.is_displayed():
+                        time.sleep(3)
                         return ele
 
         return False
