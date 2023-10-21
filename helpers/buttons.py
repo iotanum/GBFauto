@@ -7,6 +7,7 @@ from bs4 import SoupStrainer as ss
 from .timeout import Timeout
 
 import time
+import sys
 
 
 class Press:
@@ -113,7 +114,13 @@ class Press:
     def confirm_support_summon(
         self, support_dict=None, support_element_num=None, first_summon=None
     ):
+        max_retries = 2
+        c_retries = 0
+
         while True:
+            if c_retries == max_retries:
+                sys.exit("Too many retries, exiting..")
+
             parser = bs(self._driver.page_source, "lxml")
             confirm_btn = parser.find("div", {"class": "btn-usual-ok se-quest-start"})
 
@@ -125,10 +132,11 @@ class Press:
 
             verif = self._bot.handle.handle_verification()
             if verif:
+                c_retries += 1
                 self.support_summon(
                     support_dict=support_dict,
                     support_element_num=support_element_num,
-                    first_summon=True if not support_dict else False,
+                    first_summon=first_summon,
                 )
 
     def attack_button(self):

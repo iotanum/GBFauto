@@ -1490,29 +1490,11 @@ class Handle:
         self._bot.req_start_time = dt.now(tz=ZoneInfo("GMT")) - datetime.timedelta(0, 5)
 
     def handle_verification(self):
-        timeout = 5
-        start = time.time()
-        max_retries = 2
-        c_retries = 0
-
-        while True:
-            if time.time() - start >= timeout:
-                break
-
-            if c_retries == max_retries:
-                sys.exit("Too many retries, exiting..")
-
-            if "supporter" not in str(self._driver.current_url):
-                break
-
-            verif_ele = self._bot.verification.is_verification_popup()
-            if verif_ele:
-                print("Verification popup!")
-                prediction = self._bot.verification.predict_captcha_from_element(
-                    verif_ele
-                )
-                self._bot.verification.send_captcha_answer(prediction)
-                c_retries += 1
-                return True
-            else:
-                break
+        verif_ele = self._bot.verification.is_verification_popup()
+        if verif_ele:
+            print("Verification popup!")
+            prediction = self._bot.verification.predict_captcha_from_element(
+                verif_ele
+            )
+            self._bot.verification.send_captcha_answer(prediction)
+            return True
