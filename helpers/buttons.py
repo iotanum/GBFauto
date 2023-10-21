@@ -133,11 +133,14 @@ class Press:
             verif = self._bot.handle.handle_verification()
             if verif:
                 c_retries += 1
-                self.support_summon(
-                    support_dict=support_dict,
-                    support_element_num=support_element_num,
-                    first_summon=first_summon,
-                )
+                try:
+                    self.support_summon(
+                        support_dict=support_dict,
+                        support_element_num=support_element_num,
+                        first_summon=first_summon,
+                    )
+                except:
+                    pass
 
     def attack_button(self):
         start = time.time()

@@ -1493,8 +1493,6 @@ class Handle:
         verif_ele = self._bot.verification.is_verification_popup()
         if verif_ele:
             print("Verification popup!")
-            prediction = self._bot.verification.predict_captcha_from_element(
-                verif_ele
-            )
+            prediction = self._bot.verification.predict_captcha_from_element(verif_ele)
             self._bot.verification.send_captcha_answer(prediction)
             return True
