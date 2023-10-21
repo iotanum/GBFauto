@@ -123,7 +123,13 @@ class Press:
                 ).click()
                 return False
 
-            self._bot.handle.handle_verification()
+            verif = self._bot.handle.handle_verification()
+            if verif:
+                self.support_summon(
+                    support_dict=support_dict,
+                    support_element_num=support_element_num,
+                    first_summon=True if not support_dict else False,
+                )
 
     def attack_button(self):
         start = time.time()

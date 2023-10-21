@@ -1513,4 +1513,4 @@ class Handle:
                 )
                 self._bot.verification.send_captcha_answer(prediction)
                 c_retries += 1
-                return
+                return True
