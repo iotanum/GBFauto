@@ -113,6 +113,7 @@ class GBFGame:
             )
 
         # make life easier
+        self.chrome_options.add_argument("--force-device-scale-factor=1")
         self.chrome_options.add_argument("--mute-audio")
         self.chrome_options.add_argument("--window-size=130,760")
 
