@@ -553,6 +553,9 @@ class Handle:
                 print("Bot is not in battle yet? Probably a popup occurred.")
                 return False
 
+            if "empty" in self._driver.current_url:
+                return False
+
             if "supporter" not in self._driver.current_url:
                 return True
 
