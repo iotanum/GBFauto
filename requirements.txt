@@ -8,3 +8,6 @@ aiohttp
 undetected-chromedriver
 python-dateutil
 tzdata
+ultralytics
+Pillow
+requests

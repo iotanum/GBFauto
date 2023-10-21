@@ -4,6 +4,7 @@ import os
 import random
 import asyncio
 import datetime
+import sys
 from datetime import datetime as dt
 from zoneinfo import ZoneInfo
 
@@ -15,8 +16,10 @@ from selenium.webdriver.common.by import By
 from bs4 import BeautifulSoup as bs
 from bs4 import SoupStrainer as ss
 from dotenv import load_dotenv
+
 import aiohttp
 from aiohttp import web
+
 
 load_dotenv("config.env")
 
@@ -1485,3 +1488,29 @@ class Handle:
 
     def set_req_time(self):
         self._bot.req_start_time = dt.now(tz=ZoneInfo("GMT")) - datetime.timedelta(0, 5)
+
+    def handle_verification(self):
+        timeout = 5
+        start = time.time()
+        max_retries = 2
+        c_retries = 0
+
+        while True:
+            if time.time() - start >= timeout:
+                break
+
+            if c_retries == max_retries:
+                sys.exit("Too many retries, exiting..")
+
+            if "supporter" not in str(self._driver.current_url):
+                break
+
+            verif_ele = self._bot.verification.is_verification_popup()
+            if verif_ele:
+                print("Verification popup!")
+                prediction = self._bot.verification.predict_captcha_from_element(
+                    verif_ele
+                )
+                self._bot.verification.send_captcha_answer(prediction)
+                c_retries += 1
+                return

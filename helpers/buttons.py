@@ -123,6 +123,8 @@ class Press:
                 ).click()
                 return False
 
+            self._bot.handle.handle_verification()
+
     def attack_button(self):
         start = time.time()
 

@@ -16,6 +16,7 @@ from helpers.actions import Action
 from helpers.handles import Handle
 from helpers.game_requests import GbfRequests
 from helpers.battle import BattleInfo
+from helpers.verification import Verification
 
 import time
 import os
@@ -51,6 +52,7 @@ class GBFGame:
         self.handle = Handle(self)
         self.game_requests = GbfRequests(self)
         self.battle = BattleInfo(self)
+        self.verification = Verification(self)
         ##############################################
         self.total_ranks = 0
         self.total_exp = 0
