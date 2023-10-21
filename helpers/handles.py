@@ -540,7 +540,18 @@ class Handle:
                 return in_summon_screen
 
         self.track_ap_usage()
-        return True
+        return self.check_if_in_battle()
+
+    def check_if_in_battle(self):
+        timeout = 5
+        start = time.time()
+        while True:
+            if time.time() - start > timeout:
+                print("Bot is not in battle yet? Probably a popup occurred.")
+                return False
+
+            if "supporter" not in self._driver.current_url:
+                return True
 
     def check_if_action_is_needed(self, req, can_be_empty=False):
         if "raid_deck_data_create" in req["uri"]:

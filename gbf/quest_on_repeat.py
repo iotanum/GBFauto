@@ -355,7 +355,10 @@ class QuestOnRepeat:
         return suitable_raid_idx
 
     def pick_raid(self, raid_num):
-        self.bot.press.pick_raid(raid_num)
+        try:
+            self.bot.press.pick_raid(raid_num)
+        except selenium_err.exceptions.ElementClickInterceptedException:
+            return False
 
     def post_summon_checks(self):
         self.bot.handle.set_req_time()
@@ -378,12 +381,12 @@ class QuestOnRepeat:
 
     def handle_new_raids_join(self):
         refresh_timeout = 60
-        start = time.time()
+        start_refresh = time.time()
 
         while True:
-            if time.time() - start > refresh_timeout:
+            if time.time() - start_refresh > refresh_timeout:
                 self.bot.handle.refresh_page()
-                start = time.time()
+                start_refresh = time.time()
 
             raid_num = self.get_most_suitable_raid()
 
