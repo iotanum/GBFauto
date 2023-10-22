@@ -363,6 +363,7 @@ class QuestOnRepeat:
     def post_summon_checks(self):
         self.bot.handle.set_req_time()
         while True:
+            print("post_summon_checks")
             if self.bot.handle.results_screen():
                 return True
 
