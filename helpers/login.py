@@ -39,7 +39,8 @@ class GBFGame:
 
     def __init__(self):
         self.chrome_options = self.set_selenium_provider()
-        self.service = Service(executable_path="utils/chromedriver.exe")
+        self.executable_path = self.get_executable_path()
+        self.service = Service(executable_path=self.executable_path)
         self.capabilities = DesiredCapabilities.CHROME
         self.capabilities["goog:loggingPrefs"] = {"performance": "ALL"}
         self.custom_chrome_options()
@@ -76,6 +77,14 @@ class GBFGame:
 
     def run_time(self):
         return time.time() - self._start_time
+
+    def get_executable_path(self):
+        if system == "Windows":
+            return "utils/chromedriver.exe"
+        elif system == "Darwin":
+            return "utils/chromedriver"
+        else:
+            return "utils/chromedriver"
 
     def set_selenium_provider(self):
         if UNDETECTED_CHROME_MODE == 1:
