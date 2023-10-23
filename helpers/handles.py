@@ -1498,4 +1498,5 @@ class Handle:
             print("Verification popup!")
             prediction = self._bot.verification.predict_captcha_from_element(verif_ele)
             self._bot.verification.send_captcha_answer(prediction)
+            time.sleep(5)
             return True

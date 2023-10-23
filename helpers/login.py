@@ -21,6 +21,7 @@ from helpers.verification import Verification
 import time
 import os
 import ctypes
+import platform
 
 import undetected_chromedriver as uc
 
@@ -30,6 +31,7 @@ load_dotenv("config.env")
 
 MANUAL_LOGIN = int(os.getenv("MANUAL_LOGIN"))
 UNDETECTED_CHROME_MODE = int(os.getenv("UC_MODE"))
+system = platform.system()
 
 
 class GBFGame:
@@ -113,9 +115,18 @@ class GBFGame:
             )
 
         # make life easier
-        self.chrome_options.add_argument("--force-device-scale-factor=1")
+        self.set_scaling_factor()
         self.chrome_options.add_argument("--mute-audio")
         self.chrome_options.add_argument("--window-size=130,760")
+
+    def set_scaling_factor(self):
+        if system == "Windows":
+            print("This is a Windows PC.")
+        elif system == "Darwin":
+            self.chrome_options.add_argument("--force-device-scale-factor=1")
+            print("This is a macOS PC.")
+        else:
+            print("This is not a Windows or macOS PC.")
 
     def get_screen_resolution(self):
         user32 = ctypes.windll.user32
