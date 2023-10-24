@@ -305,7 +305,11 @@ class QuestOnRepeat:
             self.bot.handle.not_enough_of_x(ep=self.bot.new_raids)
 
     def go_to_quest(self):
+        print("Going back to quest.", self.driver.current_url)
+        self.driver.execute_script("return document.readyState == 'complete';")
+        print("Page is loaded? :D", self.driver.current_url)
         self.driver.get(self.quest_url)
+        print("Waiting for quest to load.", self.driver.current_url)
 
     def repeatable_quest(self):
         while True:
@@ -324,6 +328,7 @@ class QuestOnRepeat:
         raids = raids.find_all("div", {"class": "prt-raid-info"})
         suitable_raid_ele = raids[0]
         suitable_raid_idx = None
+        lower_hp_limit = 15
 
         for idx, raid in enumerate(raids, 1):
             hp_bar = raid.find("div", {"class": "prt-raid-gauge-inner"})
@@ -332,10 +337,12 @@ class QuestOnRepeat:
             suitable_raid_hp_bar = suitable_raid_ele.find(
                 "div", {"class": "prt-raid-gauge-inner"}
             )
-            suitable_raid_hp = re.findall(r"\d+", str(suitable_raid_hp_bar["style"]))[0]
-            hp = re.findall(r"\d+", hp_ele)[0]
+            suitable_raid_hp = int(
+                re.findall(r"\d+", str(suitable_raid_hp_bar["style"]))[0]
+            )
+            hp = int(re.findall(r"\d+", hp_ele)[0])
 
-            if suitable_raid_hp <= hp:
+            if suitable_raid_hp <= hp and hp >= lower_hp_limit:
                 suitable_raid_ele = raid
                 suitable_raid_idx = idx
 

@@ -130,12 +130,9 @@ class GBFGame:
 
     def set_scaling_factor(self):
         if system == "Windows":
-            print("This is a Windows PC.")
+            return
         elif system == "Darwin":
             self.chrome_options.add_argument("--force-device-scale-factor=1")
-            print("This is a macOS PC.")
-        else:
-            print("This is not a Windows or macOS PC.")
 
     def get_screen_resolution(self):
         user32 = ctypes.windll.user32
