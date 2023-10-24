@@ -983,7 +983,7 @@ class Handle:
                         print("Probably killed the boss.")
                         return True
 
-            if time.time() - start > 60:
+            if time.time() - start > 20:
                 print("Didn't find a atk btn request?")
                 return
 

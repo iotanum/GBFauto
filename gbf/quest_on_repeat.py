@@ -305,20 +305,7 @@ class QuestOnRepeat:
             self.bot.handle.not_enough_of_x(ep=self.bot.new_raids)
 
     def go_to_quest(self):
-        attempts = 0
-
-        while True:
-            if self.driver.current_url == self.quest_url:
-                break
-
-            else:
-                self.driver.get(self.quest_url)
-                time.sleep(0.5)
-                attempts += 1
-
-                # Avoid constant location change spam
-                if attempts > 1:
-                    time.sleep(3)
+        self.driver.get(self.quest_url)
 
     def repeatable_quest(self):
         while True:
