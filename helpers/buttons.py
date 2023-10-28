@@ -114,7 +114,7 @@ class Press:
     def confirm_support_summon(
         self, support_dict=None, support_element_num=None, first_summon=None
     ):
-        max_retries = 2
+        max_retries = 4
         c_retries = 0
 
         while True:
