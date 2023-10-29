@@ -56,6 +56,9 @@ class Handle:
 
                 if self.results_screen():
                     if "empty" in current_url:
+                        self._driver.execute_script(
+                            "return document.readyState == 'complete';"
+                        )
                         break
 
                     try:
