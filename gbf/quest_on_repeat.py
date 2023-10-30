@@ -323,7 +323,7 @@ class QuestOnRepeat:
         raids = raids.find_all("div", {"class": "prt-raid-info"})
         suitable_raid_ele = raids[0]
         suitable_raid_idx = None
-        lower_hp_limit = 15
+        lower_hp_limit = 35
 
         for idx, raid in enumerate(raids, 1):
             hp_bar = raid.find("div", {"class": "prt-raid-gauge-inner"})
