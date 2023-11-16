@@ -39,6 +39,8 @@ class Press:
         self._mobage_thing_xpath = '//*[@id="notify-response-button"]/div'
         self._raid_refresh_btn_xpath = '//*[@id="prt-assist-search"]/div[2]/div[2]'
         self._ok_button_class = "btn-usual-ok"
+        self._play_again_xpath = '//*[@id="cnt-result"]/div[1]/div[2]/div[2]'
+        self._play_next_xpath = '//*[@id="pop"]/div/div[3]/div[2]'
 
     def _wait_for_button(self, search_by, element_name, timeout=5):
         expected_behaviour = EC.element_to_be_clickable
@@ -263,11 +265,11 @@ class Press:
         self._driver.find_element(By.XPATH, chapter_id_btn_xpath).click()
 
     def play_again_quest(self):
-        search_by = By.CSS_SELECTOR
+        search_by = By.XPATH
 
-        elem = self._wait_for_button(search_by, self._play_again_quest_css, timeout=10)
+        elem = self._wait_for_button(search_by, self._play_again_xpath, timeout=10)
         self._driver.find_element(
-            By.CSS_SELECTOR, self._play_again_quest_css
+            search_by, self._play_again_xpath
         ).click() if elem else None
         return elem
 
@@ -279,9 +281,9 @@ class Press:
         self._driver.find_element(By.XPATH, self._confirm_summon_battle_xpath).click()
 
     def usual_next(self):
-        search_by = By.CLASS_NAME
-        self._wait_for_button(search_by, self._next_button_class)
-        self._driver.find_element(By.CLASS_NAME, self._next_button_class).click()
+        search_by = By.XPATH
+        self._wait_for_button(search_by, self._play_next_xpath)
+        self._driver.find_element(search_by, self._play_next_xpath).click()
 
     def auto_attack(self):
         start = time.time()

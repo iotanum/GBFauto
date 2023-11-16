@@ -324,6 +324,7 @@ class QuestOnRepeat:
         suitable_raid_ele = raids[0]
         suitable_raid_idx = None
         lower_hp_limit = 35
+        higher_hp_limit = 75
 
         for idx, raid in enumerate(raids, 1):
             hp_bar = raid.find("div", {"class": "prt-raid-gauge-inner"})
@@ -337,7 +338,7 @@ class QuestOnRepeat:
             )
             hp = int(re.findall(r"\d+", hp_ele)[0])
 
-            if suitable_raid_hp <= hp and hp >= lower_hp_limit:
+            if suitable_raid_hp <= hp <= higher_hp_limit and hp >= lower_hp_limit:
                 suitable_raid_ele = raid
                 suitable_raid_idx = idx
 
