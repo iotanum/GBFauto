@@ -8,6 +8,7 @@ from .timeout import Timeout
 
 import time
 import sys
+import re
 
 
 class Press:
@@ -124,7 +125,8 @@ class Press:
                 sys.exit("Too many retries, exiting..")
 
             parser = bs(self._driver.page_source, "lxml")
-            confirm_btn = parser.find("div", {"class": "btn-usual-ok se-quest-start"})
+            confirm_btn_regex = re.compile(r"btn-usual-ok")
+            confirm_btn = parser.find("div", {"class": confirm_btn_regex})
 
             if confirm_btn:
                 self._driver.find_element(
