@@ -33,7 +33,7 @@ class Skills:
                 }
 
                 if character == "F":
-                    queue_final[idx]["Full Auto"] = True
+                    queue_final[idx]["FullAuto"] = True
                     continue
 
                 queue_final[idx]["Character"] = int(character)
@@ -54,7 +54,7 @@ class Skills:
         if len(queue) > max_actions_per_turn:
             raise AttributeError("Too many steps, max is 17 in 1 turn.")
         for index, step in enumerate(list(queue.values())):
-            if step["Full Auto"]:
+            if step["FullAuto"]:
                 if index != len(list(queue.values())) - 1:
                     raise AttributeError(
                         "Full Auto can only be used at the end of the queue."
