@@ -304,9 +304,9 @@ class Press:
                 # With "auto-guard" auto-attack xpath
                 # self._driver.find_element(By.XPATH, self._auto_attack_xpath).click()
                 # Without one
-                self._driver.find_element(
-                    By.XPATH, '//*[@id="wrapper"]/div[3]/div[2]/div[7]'
-                ).click()
+
+                fa_btn_xpath = self._bot.handle.get_xpath_from_ele(auto_button)
+                self._driver.find_element(By.XPATH, fa_btn_xpath).click()
                 break
 
             time.sleep(0.15)

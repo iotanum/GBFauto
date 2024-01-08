@@ -24,7 +24,17 @@ class Skills:
 
         for idx, step in enumerate(queue, 1):
             for character, ability, *rest in step.split():
-                queue_final[idx] = {"Character": None, "Ability": None, "Select": None}
+                print(character, ability, rest)
+                queue_final[idx] = {
+                    "Character": None,
+                    "Ability": None,
+                    "Select": None,
+                    "FullAuto": False,
+                }
+
+                if character == "F":
+                    queue_final[idx]["Full Auto"] = True
+                    continue
 
                 queue_final[idx]["Character"] = int(character)
                 queue_final[idx]["Ability"] = ability_to_num[ability]
@@ -43,6 +53,12 @@ class Skills:
 
         if len(queue) > max_actions_per_turn:
             raise AttributeError("Too many steps, max is 17 in 1 turn.")
+        for index, step in enumerate(list(queue.values())):
+            if step["Full Auto"]:
+                if index != len(list(queue.values())) - 1:
+                    raise AttributeError(
+                        "Full Auto can only be used at the end of the queue."
+                    )
         for step, action in queue.items():
             char_num = queue[step]["Character"]
             ability_num = queue[step]["Ability"]
@@ -189,6 +205,13 @@ class Skills:
                 char_num = self._queue[step]["Character"]
                 ability_num = self._queue[step]["Ability"]
                 select_party_member = self._queue[step]["Select"]
+                full_auto = self._queue[step]["FullAuto"]
+
+                # If full auto is used, then break the loop
+                if full_auto:
+                    self._bot.press.auto_attack()
+                    break
+
                 # Instantly break if queue in config is empty
                 if char_num == 7:
                     break
