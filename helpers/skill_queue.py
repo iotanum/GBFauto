@@ -213,6 +213,8 @@ class Skills:
 
                 # If full auto is used, then break the loop
                 if full_auto:
+                    if self._queue[step - 1]["Character"] != 5:
+                        self._bot.press.back()
                     self._bot.press.auto_attack()
                     break
 
