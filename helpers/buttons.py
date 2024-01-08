@@ -296,7 +296,7 @@ class Press:
 
             parser = bs(self._driver.page_source, "lxml")
 
-            auto_button = parser.find_all(
+            auto_button = parser.find(
                 "div", {"class": "btn-auto", "style": "display: block;"}
             )
 
