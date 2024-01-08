@@ -63,8 +63,9 @@ class Skills:
             char_num = queue[step]["Character"]
             ability_num = queue[step]["Ability"]
             select_num = queue[step]["Select"]
+            full_auto = queue[step]["FullAuto"]
 
-            if char_num == 'F':
+            if full_auto:
                 continue
 
             if char_num != 5 and ability_num > 4:
