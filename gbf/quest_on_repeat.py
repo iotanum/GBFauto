@@ -130,7 +130,9 @@ class QuestOnRepeat:
 
             try:
                 if queues and this_turn_queue:
-                    self.bot.press.attack_button()
+                    # check if FA was in queue, don't press attack button
+                    if not queues[self.bot.fight["battle"]][self.bot.fight["turn"]]["FullAuto"]:
+                        self.bot.press.attack_button()
 
                 boss_killed = self.bot.handle.wait_for_next_turn()
                 if self.bot.handle.results_screen():
