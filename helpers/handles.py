@@ -682,14 +682,14 @@ class Handle:
                 print(queue_for_turn, "queue for this turn")
                 self._bot.queue.do_queue(queue_for_turn, raids=raids)
 
-                # Give 'True' to the queue which was just done
-                # this way I do checks later what queues were done
-                queues[current_battle][self._bot.fight["turn"]] = True
+            #     # Give 'True' to the queue which was just done
+            #     # this way I do checks later what queues were done
+            #     queues[current_battle][self._bot.fight["turn"]] = True
 
-            # Map done queues with "True" if queue turn is lower than the current turn in battle
-            for turn, queue in queues_for_battle.items():
-                if turn < self._bot.fight["turn"]:
-                    queues[current_battle][turn] = True
+            # # Map done queues with "True" if queue turn is lower than the current turn in battle
+            # for turn, queue in queues_for_battle.items():
+            #     if turn < self._bot.fight["turn"]:
+            #         queues[current_battle][turn] = True
 
         return queues if queues_for_battle else None
 
@@ -986,7 +986,7 @@ class Handle:
                         print("Probably killed the boss.")
                         return True
 
-            if time.time() - start > 20:
+            if time.time() - start > 34:
                 print("Didn't find a atk btn request?")
                 return
 

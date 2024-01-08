@@ -131,7 +131,7 @@ class QuestOnRepeat:
             try:
                 if queues and this_turn_queue:
                     # check if FA was in queue, don't press attack button
-                    if not queues[self.bot.fight["battle"]][self.bot.fight["turn"]]["FullAuto"]:
+                    if not 'fa' in queues[self.bot.fight["battle"]][self.bot.fight["turn"]].lower():
                         self.bot.press.attack_button()
 
                 boss_killed = self.bot.handle.wait_for_next_turn()
@@ -326,7 +326,7 @@ class QuestOnRepeat:
         suitable_raid_ele = raids[0]
         suitable_raid_idx = None
         lower_hp_limit = 35
-        higher_hp_limit = 75
+        higher_hp_limit = 100
 
         for idx, raid in enumerate(raids, 1):
             hp_bar = raid.find("div", {"class": "prt-raid-gauge-inner"})
