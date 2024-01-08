@@ -64,6 +64,9 @@ class Skills:
             ability_num = queue[step]["Ability"]
             select_num = queue[step]["Select"]
 
+            if char_num == 'F':
+                continue
+
             if char_num != 5 and ability_num > 4:
                 raise AttributeError("Character cannot have more than 4 abilities!")
             elif select_num is not None and select_num > 6:
