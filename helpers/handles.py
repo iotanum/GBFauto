@@ -977,7 +977,7 @@ class Handle:
                     current_battle = self._bot.fight["battle"]
                     total_battles = self._bot.fight["total_battles"]
 
-                    if resp_turn == self._bot.fight["turn"] + 1:
+                    if resp_turn > self._bot.fight["turn"] + 1:
                         print(
                             f"Attacked. Battle '{current_battle}', Turn '{current_turn}'."
                         )
