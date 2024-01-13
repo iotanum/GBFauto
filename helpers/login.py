@@ -127,6 +127,10 @@ class GBFGame:
         self.set_scaling_factor()
         self.chrome_options.add_argument("--mute-audio")
         self.chrome_options.add_argument("--window-size=130,760")
+        self.chrome_options.add_argument('--disable-gpu')
+        self.chrome_options.add_argument('--no-sandbox')
+        self.chrome_options.add_argument('--disable-setuid-sandbox')
+        self.chrome_options.add_argument('--disable-dev-shm-usage')
 
     def set_scaling_factor(self):
         if system == "Windows":
