@@ -971,7 +971,6 @@ class Handle:
 
     def full_auto_refresh_handle(self):
         start = time.time()
-        self.set_req_time()
 
         while True:
             if req := self._bot.battle.find_ability_btn_response():
@@ -1002,7 +1001,6 @@ class Handle:
         while True:
             if fa_refresh == 1:
                 self.full_auto_refresh_handle()
-                self.set_req_time()
 
             if req := self._bot.battle.find_attack_btn_response():
                 if resp := self._bot.game_requests.get_resp_body(req[0]):
