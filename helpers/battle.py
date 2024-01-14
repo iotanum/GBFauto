@@ -105,6 +105,14 @@ class BattleInfo:
         req_contains = ["normal_attack_result"]
         return self.bot.game_requests.find_request(req_contains)
 
+    def find_ability_btn_response(self):
+        req_contains = ["ability_result.json"]
+        return self.bot.game_requests.find_request(req_contains)
+
+    def find_summon_btn_response(self):
+        req_contains = ["summon_result.json"]
+        return self.bot.game_requests.find_request(req_contains)
+
     # contains information of a battle start situation
     def find_battle_start_response(self):
         req_contains = ["start.json"]
