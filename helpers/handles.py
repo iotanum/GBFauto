@@ -964,11 +964,46 @@ class Handle:
 
         return queues
 
-    def wait_for_next_turn(self):
+    def handle_fa_refresh(self):
+        self.set_req_time()
+        self.refresh_page()
+        self.enable_auto_in_loading_screen()
+
+    def full_auto_refresh_handle(self):
         start = time.time()
-        self._bot.handle.set_req_time()
+        self.set_req_time()
 
         while True:
+            if req := self._bot.battle.find_ability_btn_response():
+                print("Ability btn response found, refreshing for another skill.")
+                self.handle_fa_refresh()
+                break
+
+            if req := self._bot.battle.find_summon_btn_response():
+                print("Summon btn response found, refreshing for another skill.")
+                self.handle_fa_refresh()
+                break
+
+            if self.results_screen():
+                print("Battle finished, 'result' in URL.", "full_auto_refresh_handle")
+                return True
+
+            if start - time.time() > 8:
+                print("Timeout on full auto refresh handle, trying again..")
+                start = time.time()
+                self.handle_fa_refresh()
+
+    def wait_for_next_turn(self):
+        start = time.time()
+        self.set_req_time()
+        load_dotenv("config.env", override=True)
+        fa_refresh = int(os.getenv("FA_REFRESH"))
+
+        while True:
+            if fa_refresh == 1:
+                self.full_auto_refresh_handle()
+                self.set_req_time()
+
             if req := self._bot.battle.find_attack_btn_response():
                 if resp := self._bot.game_requests.get_resp_body(req[0]):
                     resp_turn = resp["status"]["turn"]
