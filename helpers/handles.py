@@ -983,9 +983,13 @@ class Handle:
                 self.handle_fa_refresh()
                 break
 
+            if req := self._bot.battle.find_attack_btn_response():
+                print("Attack btn response found, refreshing for another skill.")
+                return req
+
             if self.results_screen():
                 print("Battle finished, 'result' in URL.", "full_auto_refresh_handle")
-                return True
+                return
 
             if start - time.time() > 8:
                 print("Timeout on full auto refresh handle, trying again..")
@@ -997,12 +1001,13 @@ class Handle:
         self.set_req_time()
         load_dotenv("config.env", override=True)
         fa_refresh = int(os.getenv("FA_REFRESH"))
+        fa_done = False
 
         while True:
             if fa_refresh == 1:
-                self.full_auto_refresh_handle()
+                fa_done = self.full_auto_refresh_handle()
 
-            if req := self._bot.battle.find_attack_btn_response():
+            if req := self._bot.battle.find_attack_btn_response() or fa_done:
                 if resp := self._bot.game_requests.get_resp_body(req[0]):
                     resp_turn = resp["status"]["turn"]
 
