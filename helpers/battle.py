@@ -113,6 +113,9 @@ class BattleInfo:
         req_contains = ["summon_result.json"]
         return self.bot.game_requests.find_request(req_contains)
 
+    def find_generic_response(self, req_contains):
+        return self.bot.game_requests.find_request(req_contains)
+
     # contains information of a battle start situation
     def find_battle_start_response(self):
         req_contains = ["start.json"]

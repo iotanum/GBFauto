@@ -970,28 +970,23 @@ class Handle:
         self.enable_auto_in_loading_screen()
 
     def full_auto_refresh_handle(self):
+        self.set_req_time()
         start = time.time()
 
+        resp_contains = ["normal_attack_result", "ability_result.json", "summon_result.json"]
+
         while True:
-            if req := self._bot.battle.find_ability_btn_response():
-                print("Ability btn response found, refreshing for another skill.")
+            if req := self._bot.battle.find_generic_response(resp_contains):
+                if "normal_attack" in req[0]["uri"]:
+                    return req
                 self.handle_fa_refresh()
                 break
-
-            if req := self._bot.battle.find_summon_btn_response():
-                print("Summon btn response found, refreshing for another skill.")
-                self.handle_fa_refresh()
-                break
-
-            if req := self._bot.battle.find_attack_btn_response():
-                print("Attack btn response found, refreshing for another skill.")
-                return req
 
             if self.results_screen():
                 print("Battle finished, 'result' in URL.", "full_auto_refresh_handle")
                 return
 
-            if start - time.time() > 8:
+            if time.time() - start > 8:
                 print("Timeout on full auto refresh handle, trying again..")
                 start = time.time()
                 self.handle_fa_refresh()
@@ -999,6 +994,7 @@ class Handle:
     def wait_for_next_turn(self):
         start = time.time()
         self.set_req_time()
+
         load_dotenv("config.env", override=True)
         fa_refresh = int(os.getenv("FA_REFRESH"))
         fa_done = False
@@ -1008,6 +1004,7 @@ class Handle:
                 fa_done = self.full_auto_refresh_handle()
 
             if req := self._bot.battle.find_attack_btn_response() or fa_done:
+                print(req[0], "fa_done?")
                 if resp := self._bot.game_requests.get_resp_body(req[0]):
                     resp_turn = resp["status"]["turn"]
 
