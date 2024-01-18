@@ -327,11 +327,13 @@ class QuestOnRepeat:
         if not raids:
             return
 
+        load_dotenv("config.env", override=True)
+        lower_hp_limit = int(os.getenv("RAIDS_LOWER_HP_LIMIT", 35))
+        higher_hp_limit = int(os.getenv("RAIDS_UPPER_HP_LIMIT", 100))
+
         raids = raids.find_all("div", {"class": "prt-raid-info"})
         suitable_raid_ele = raids[0]
         suitable_raid_idx = None
-        lower_hp_limit = 35
-        higher_hp_limit = 100
 
         for idx, raid in enumerate(raids, 1):
             hp_bar = raid.find("div", {"class": "prt-raid-gauge-inner"})
