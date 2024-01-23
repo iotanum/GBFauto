@@ -20,7 +20,6 @@ from dotenv import load_dotenv
 import aiohttp
 from aiohttp import web
 
-
 load_dotenv("config.env")
 
 EXTREME_BATTLES = int(os.getenv("EXTREME_BATTLES"))
@@ -124,8 +123,8 @@ class Handle:
             # or if there was no popups
             popup_search_time = time.time()
             if (
-                popup_search_time - popup_search_start > 3.5
-                or not self.results_screen()
+                    popup_search_time - popup_search_start > 3.5
+                    or not self.results_screen()
             ):
                 # 'After fight popup' means that the bot finished a quest
                 if kill is True:
@@ -157,11 +156,11 @@ class Handle:
                 team_lvl_elem = party.find("div", {"class": "prt-party-npc"})
 
             if (
-                main_mask
-                and kill is True
-                and not popup
-                and mc_lvl_elem
-                and exp_popup is True
+                    main_mask
+                    and kill is True
+                    and not popup
+                    and mc_lvl_elem
+                    and exp_popup is True
             ):
                 # It's exact percentages
                 mc_lvl_xp_percentage = mc_lvl_elem.find(
@@ -303,8 +302,8 @@ class Handle:
                         self._bot.press.usual_close()
 
                 elif any(
-                    name in popup_name
-                    for name in ["mission-check", "update-beginner-mission-teamraid"]
+                        name in popup_name
+                        for name in ["mission-check", "update-beginner-mission-teamraid"]
                 ):
                     mission_description = popup.find(
                         "div", {"class": "txt-mission-description"}
@@ -775,8 +774,8 @@ class Handle:
             if len(needed_summons) < 1:
                 for idx, summon in enumerate(supp_summon_dict.values(), 1):
                     if (
-                        search_for in summon["Name"].lower()
-                        and summon["SkLvl"] >= MIN_SKLEVEL_THRESHOLD
+                            search_for in summon["Name"].lower()
+                            and summon["SkLvl"] >= MIN_SKLEVEL_THRESHOLD
                     ):
                         needed_summons[idx] = summon
 
@@ -819,16 +818,16 @@ class Handle:
                     ]:
                         # Pick last picked friend summon by ID
                         if (
-                            self.support_id == summon["ID"]
-                            and self.support_name == summon["Name"]
+                                self.support_id == summon["ID"]
+                                and self.support_name == summon["Name"]
                         ):
                             final_summ_pick = summon
                             # Can't be bothered
                             idx = len(needed_summons)
                         elif (
-                            summon["SkLvl"] >= final_summ_pick["SkLvl"]
-                            and summon["Friend"] is True
-                            and search_for in summon["Name"].lower()
+                                summon["SkLvl"] >= final_summ_pick["SkLvl"]
+                                and summon["Friend"] is True
+                                and search_for in summon["Name"].lower()
                         ):
                             final_summ_pick = summon
                             self.support_id = summon["ID"]
@@ -926,7 +925,7 @@ class Handle:
             # Check if EVERY enemy is alive (aka main_fight start) before exiting this method
             try:
                 if all(
-                    "display: block;" in enemy["style"] for enemy in enemies_visible
+                        "display: block;" in enemy["style"] for enemy in enemies_visible
                 ):
                     break
             # fuck
@@ -1267,8 +1266,8 @@ class Handle:
                 )
 
                 async with session.post(
-                    f"http://{DISCORD_BOT_SERVER_IP}:{DISCORD_BOT_SERVER_PORT}{endpoint}",
-                    data=form_data,
+                        f"http://{DISCORD_BOT_SERVER_IP}:{DISCORD_BOT_SERVER_PORT}{endpoint}",
+                        data=form_data,
                 ) as resp:
                     if resp.status == 200:
                         print(
@@ -1434,14 +1433,15 @@ class Handle:
                 child.name
                 if 1 == len(siblings)
                 else "%s[%d]"
-                % (child.name, next(i for i, s in enumerate(siblings, 1) if s is child))
+                     % (child.name, next(i for i, s in enumerate(siblings, 1) if s is child))
             )
             child = parent
         components.reverse()
         return "/%s" % "/".join(components)
 
     def is_auto_in_loading_enabled(self):
-        parser = bs(self._driver.page_source, "lxml")
+        parse_only = ss("div", class_="btn-ready-auto anim-simple-fadein")
+        parser = bs(self._driver.page_source, "lxml", parse_only=parse_only)
 
         enabled = parser.find("div", {"class": "btn-ready-auto anim-simple-fadein"})
 
@@ -1492,34 +1492,28 @@ class Handle:
                 break
 
             if auto_button_in_loading_screen == 1:
-                while True:
-                    try:
-                        if time.time() - start >= timout:
-                            self.refresh_page()
-                            start = time.time()
+                try:
+                    fa_xpath = self.find_fa_ele_in_loading_screen()
+                    self._driver.find_element(By.XPATH, fa_xpath).click()
 
-                        if self.results_screen():
-                            return
-
-                        fa_xpath = self.find_fa_ele_in_loading_screen()
-                        self._driver.find_element(By.XPATH, fa_xpath).click()
-
-                        if self.is_auto_in_loading_enabled():
-                            self._bot.auto_button_on = True
-                            return
-                    except (
+                    if self.is_auto_in_loading_enabled():
+                        self._bot.auto_button_on = True
+                        return
+                except (
                         ElementClickInterceptedException,
                         ElementClickInterceptedException,
                         InvalidArgumentException,
                         ElementNotInteractableException,
                         NoSuchElementException,
                         StaleElementReferenceException,
-                    ):
-                        continue
+                ):
+                    continue
 
             else:
                 self.enable_auto_in_battle()
                 break
+
+            time.sleep(0.1)
 
     def results_screen(self):
         return "result" in str(self._driver.current_url)
