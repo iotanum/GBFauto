@@ -1477,6 +1477,7 @@ class Handle:
                 self._bot.press.auto_attack()
                 self._bot.auto_button_on = True
 
+
     def enable_auto_in_loading_screen(self):
         load_dotenv("config.env", override=True)
         auto_button_in_loading_screen = int(os.getenv("AUTO_IN_LOADING_SCREEN"))
@@ -1492,28 +1493,34 @@ class Handle:
                 break
 
             if auto_button_in_loading_screen == 1:
-                try:
-                    fa_xpath = self.find_fa_ele_in_loading_screen()
-                    self._driver.find_element(By.XPATH, fa_xpath).click()
+                while True:
+                    try:
+                        if time.time() - start >= timout:
+                            self.refresh_page()
+                            start = time.time()
 
-                    if self.is_auto_in_loading_enabled():
-                        self._bot.auto_button_on = True
-                        return
-                except (
+                        if self.results_screen():
+                            return
+
+                        fa_xpath = self.find_fa_ele_in_loading_screen()
+                        self._driver.find_element(By.XPATH, fa_xpath).click()
+
+                        if self.is_auto_in_loading_enabled():
+                            self._bot.auto_button_on = True
+                            return
+                    except (
                         ElementClickInterceptedException,
                         ElementClickInterceptedException,
                         InvalidArgumentException,
                         ElementNotInteractableException,
                         NoSuchElementException,
                         StaleElementReferenceException,
-                ):
-                    continue
+                    ):
+                        continue
 
             else:
                 self.enable_auto_in_battle()
                 break
-
-            time.sleep(0.1)
 
     def results_screen(self):
         return "result" in str(self._driver.current_url)
