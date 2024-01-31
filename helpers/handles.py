@@ -66,6 +66,13 @@ class Handle:
                         popup = parser.find("div", {"class": ["pop-show"]})
                         if popup:
                             break
+
+                        loot = parser.find(
+                            "div", {"class": "cnt-get-treasure common-frame show"}
+                        )
+                        if loot:
+                            print("Loot screen appeared, moving on. 1")
+                            break
                     except:
                         continue
 
@@ -87,7 +94,7 @@ class Handle:
             # Loot 'window' is a styled element that is displayed after first popups
             # after the fight
             loot = parser.find(
-                "div", {"class": "cnt-get-treasure", "style": "display: block;"}
+                "div", {"class": "cnt-get-treasure common-frame show"}
             )
             if loot and timer_assigned is False:
                 loot_appear_time = time.time()
@@ -990,6 +997,8 @@ class Handle:
                 start = time.time()
                 self.handle_fa_refresh()
 
+        print("exited full_auto_refresh_handle")
+
     def wait_for_next_turn(self):
         start = time.time()
         self.set_req_time()
@@ -1476,7 +1485,6 @@ class Handle:
                 self._bot.press.attack_button()
                 self._bot.press.auto_attack()
                 self._bot.auto_button_on = True
-
 
     def enable_auto_in_loading_screen(self):
         load_dotenv("config.env", override=True)

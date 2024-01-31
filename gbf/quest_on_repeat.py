@@ -210,7 +210,7 @@ class QuestOnRepeat:
         if fight_ended:
             # Also check if after refreshing the page we're still in a fight
             # or quest contains more than 1 fight
-            if "result" not in self.driver.current_url:
+            if not self.bot.handle.results_screen():
                 # if not self.num_of_fights > 1:
                 self.bot.handle.refresh_page()
 
