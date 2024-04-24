@@ -334,7 +334,15 @@ class Press:
     def approve_mobage_thing(self):
         search_by = By.XPATH
         self._wait_for_button(search_by, self._mobage_thing_xpath)
-        self._driver.find_element(search_by, self._mobage_thing_xpath).click()
+
+        try:
+            ele = self._driver.find_element(search_by, self._mobage_thing_xpath)
+            if ele:
+                ele.click()
+                return True
+            return
+        except:
+            return
 
     def raid_filter_refresh(self):
         try:

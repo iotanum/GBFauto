@@ -233,7 +233,10 @@ class GBFGame:
         )
 
     def approve_mobage_thing(self):
-        self.press.approve_mobage_thing()
+        while True:
+            if self.press.approve_mobage_thing():
+                return
+            time.sleep(1)
 
     def login(self, login, password):
         if GBFGame.started is False:
