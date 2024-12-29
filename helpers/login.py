@@ -110,7 +110,7 @@ class GBFGame:
     def custom_chrome_options(self):
         # Resize chrome window on smaller screens (otherwise chrome driver crashes?)
         self.chrome_options.add_argument("--window-size=500,720")
-        self.chrome_options.binary_location = "/Applications/Google Chrome Beta.app/Contents/MacOS/Google Chrome Beta"
+        # self.chrome_options.binary_location = "/Applications/Google Chrome Beta.app/Contents/MacOS/Google Chrome Beta"
         if UNDETECTED_CHROME_MODE != 1:
             # # Disable occlusion; no throttling when the window is not on-top
             # state = {
