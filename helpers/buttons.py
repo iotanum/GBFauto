@@ -78,7 +78,7 @@ class Press:
             # Misc. support
             if support_element_num == 7:
                 first_support_summon_xpath = (
-                    f'//*[@id="cnt-quest"]/div[2]/div[{3}]/div[1]/div[4]'
+                    f'//*[@id="cnt-quest"]/div[2]/div[{4}]/div[1]/div[4]'
                 )
 
             search_by = By.XPATH
