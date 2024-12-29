@@ -87,7 +87,7 @@ class Press:
             self._driver.find_element(By.XPATH, first_support_summon_xpath).click()
         else:
             element_tab_num = (
-                (support_element_num + 3) if support_element_num < 7 else 3
+                (support_element_num + 4) if support_element_num < 7 else 4
             )
             support_summon_xpath = f'//*[@id="cnt-quest"]/div[2]/div[{element_tab_num}]/div[{support_dict["Num"]}]'
             search_by = By.XPATH
