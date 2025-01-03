@@ -38,7 +38,7 @@ class Press:
         self._approve_backup_request_gw_xpath = '//*[@id="pop"]/div/div[3]/a'
         # TODO
         self._mobage_thing_xpath = '//*[@id="notify-response-button"]/div'
-        self._raid_refresh_btn_xpath = '//*[@id="prt-assist-search"]/div[2]/div[2]'
+        self._raid_refresh_btn_xpath = '//*[@id="prt-assist-search"]/div[1]/div[3]'
         self._ok_button_class = "btn-usual-ok"
         self._play_again_xpath = '//*[@id="cnt-result"]/div[1]/div[2]/div[2]'
         self._play_next_xpath = '//*[@id="pop"]/div/div[3]/div[2]'
