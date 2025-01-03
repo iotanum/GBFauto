@@ -1039,6 +1039,8 @@ class Handle:
     def not_enough_of_x(self, sandbox=False, timeout=3, ep=False):
         start = time.time()
         ap_ep_class = "pop-usual pop-stamina pop-show"
+        if ep:
+            ap_ep_class = "pop-usual pop-stamina common-item-recovery-pop pop-show"
         if sandbox:
             ap_ep_class = "pop-usual pop-recover-aap proceed pop-show"
 
