@@ -1424,11 +1424,24 @@ class Handle:
             # Eat less CPU
             time.sleep(0.1)
 
-    def get_raid_filter_raids(self):
+    def is_refresh_event_filter_available(self):
+        while True:
+            parser = bs(self._driver.page_source, 'lxml')
+
+            refresh_btn = parser.find('div', {'class': 'btn-switch-list event active'})
+            if refresh_btn:
+                return True
+
+            time.sleep(0.1)
+
+    def get_filter_raids(self, event_filter=False):
         parser = bs(self._driver.page_source, "lxml")
+        raids_id = "prt-search-list"
+        if event_filter:
+            raids_id = 'prt-multi-list'
 
         try:
-            raids = parser.find("div", {"id": "prt-search-list"})
+            raids = parser.find("div", {"id": raids_id})
             raid = raids.find("div", {"class", "txt-raid-name"})
             if raid:
                 return raids

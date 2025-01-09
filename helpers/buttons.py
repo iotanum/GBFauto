@@ -1,6 +1,6 @@
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.by import By
-
+import selenium
 from bs4 import BeautifulSoup as bs
 from bs4 import SoupStrainer as ss
 
@@ -39,6 +39,7 @@ class Press:
         # TODO
         self._mobage_thing_xpath = '//*[@id="notify-response-button"]/div'
         self._raid_refresh_btn_xpath = '//*[@id="prt-assist-search"]/div[1]/div[3]'
+        self._event_refresh_btn_xpath = '//*[@id="prt-assist-multi"]/div[1]/div[2]'
         self._ok_button_class = "btn-usual-ok"
         self._play_again_xpath = '//*[@id="cnt-result"]/div[1]/div[2]/div[2]'
         self._play_next_xpath = '//*[@id="pop"]/div/div[3]/div[2]'
@@ -352,13 +353,29 @@ class Press:
         except:
             pass
 
-    def pick_raid(self, raid_num):
-        raid_pick_xpath = f'//*[@id="prt-search-list"]/div[{raid_num}]'
+    def event_filter_refresh(self):
+        try:
+            search_by = By.XPATH
+            self._wait_for_button(search_by, self._event_refresh_btn_xpath)
+            self._driver.find_element(search_by, self._event_refresh_btn_xpath).click()
+        except:
+            pass
+
+    def pick_raid(self, raid_num, events_filter=False):
+        filter_div_id = "prt-assist-search" if not events_filter else "prt-multi-list"
+        raid_pick_xpath = f'//*[@id="{filter_div_id}"]/div[{raid_num}]'
         search_by = By.XPATH
 
         # i'm tired
         element = self._driver.find_element(By.XPATH, raid_pick_xpath)
         self._driver.execute_script("arguments[0].scrollIntoView(true);", element)
 
-        self._wait_for_button(search_by, raid_pick_xpath)
-        self._driver.find_element(search_by, raid_pick_xpath).click()
+        while True:
+            try:
+                self._wait_for_button(search_by, raid_pick_xpath)
+                self._driver.find_element(search_by, raid_pick_xpath).click()
+                return
+            except selenium.common.exceptions.StaleElementReferenceException:
+                pass
+
+            time.sleep(0.1)

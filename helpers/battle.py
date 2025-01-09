@@ -124,3 +124,7 @@ class BattleInfo:
     def find_raid_assist_response(self):
         req_contains = ["quest/assist/search/assist_list"]
         return self.bot.game_requests.find_request(req_contains)
+
+    def find_event_assist_response(self):
+        req_contains = ["quest/assist_list"]
+        return self.bot.game_requests.find_request(req_contains)

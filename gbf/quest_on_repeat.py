@@ -17,6 +17,7 @@ class QuestOnRepeat:
         self.coop = False
         self.sandbox = False
         self.quest_url = None
+        self.event_raids = False
         # Some solo/raids that can be hosted are not always
         # repeatable, aka doesn't have "play again" button
         self.is_repeatable = False
@@ -64,14 +65,16 @@ class QuestOnRepeat:
         self.bot.handle.set_req_time()
         while True:
             raid_filter_num = self.get_raid_filter()
-            if raid_filter_num:
-                print(f"Is 'Filter {raid_filter_num}' correct?")
+            event_filter_num = self.get_event_filter()
+
+            if raid_filter_num or event_filter_num:
+                print(f"Is filter '{raid_filter_num}' correct?")
                 answer = input("Y/N: ")
                 validated = self.validate_raid_filter_input(answer)
                 if not validated:
                     print("Please choose between Y or N.")
                 if validated and answer.lower() == "y":
-                    print(f"Locked to 'Filter {raid_filter_num}'.")
+                    print(f"Locked to filter '{raid_filter_num}'.")
                     break
 
     def validate_raid_filter_input(self, answer: str):
@@ -98,6 +101,18 @@ class QuestOnRepeat:
             raid_filter_num = raid_filter_num[-1].split("/")[0]
 
             return raid_filter_num
+
+    def get_event_filter(self):
+        req = self.bot.battle.find_event_assist_response()
+        if req:
+            req = req[0]
+
+            raid_filter_num = req["uri"].split("assist_list/")
+            raid_filter_num = raid_filter_num[-1].split("?")[0]
+
+            if raid_filter_num == '1':
+                self.event_raids = True
+                return 'Events'
 
     def remove_battle_scene_element(self):
         try:
@@ -318,11 +333,17 @@ class QuestOnRepeat:
             self.do_repeatable_quest()
 
     def refresh_raid_filter(self):
-        if self.bot.handle.is_refresh_raid_filter_available():
-            self.bot.press.raid_filter_refresh()
+        if not self.event_raids:
+            if self.bot.handle.is_refresh_raid_filter_available():
+                self.bot.press.raid_filter_refresh()
+                return True
+        else:
+            if self.bot.handle.is_refresh_event_filter_available():
+                self.bot.press.event_filter_refresh()
+                return True
 
     def get_most_suitable_raid(self):
-        raids = self.bot.handle.get_raid_filter_raids()
+        raids = self.bot.handle.get_filter_raids(event_filter=self.event_raids)
         # if raids come back empty -> just return
         if not raids:
             return
@@ -355,7 +376,7 @@ class QuestOnRepeat:
 
     def pick_raid(self, raid_num):
         try:
-            self.bot.press.pick_raid(raid_num)
+            self.bot.press.pick_raid(raid_num, events_filter=self.event_raids)
         except selenium_err.exceptions.ElementClickInterceptedException:
             return False
 
@@ -399,7 +420,10 @@ class QuestOnRepeat:
                 print("handle_new_raids_join")
                 return success
 
-            self.refresh_raid_filter()
+            refreshed = self.refresh_raid_filter()
+            if refreshed:
+                start_refresh = time.time()
+            time.sleep(0.1)
 
     def handle_pre_fight(self):
         modes = [self.coop, self.sandbox, self.bot.new_raids]
