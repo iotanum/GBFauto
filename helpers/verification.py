@@ -31,14 +31,18 @@ class Verification:
         """
         parser = bs(self.driver.page_source, "lxml")
         popup_ele = parser.find("div", {"class": "prt-popup-header"})
-
+        print(popup_ele, "popup ele")
         if popup_ele:
+            print("popup found", popup_ele.text)
             if "verification" in popup_ele.text.lower():
+                print("verification popup found")
                 popup_body_ele = parser.find("div", {"class": "prt-popup-body"})
                 xpath = self.bot.handle.get_xpath_from_ele(popup_body_ele)
-
+                print("xpath", xpath)
                 while True:
+                    print("trying to find img for verif...")
                     ele = self.driver.find_element("xpath", f"{xpath}//img")
+                    print("verif img ele", ele)
                     if ele.is_displayed():
                         time.sleep(3)
                         return ele

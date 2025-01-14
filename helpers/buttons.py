@@ -122,6 +122,7 @@ class Press:
         c_retries = 0
 
         while True:
+            print("Confirming support summon..")
             if c_retries == max_retries:
                 sys.exit("Too many retries, exiting..")
 
@@ -130,13 +131,17 @@ class Press:
             confirm_btn = parser.find("div", {"class": confirm_btn_regex})
 
             if confirm_btn:
+                print("Confirming support summon..")
                 self._driver.find_element(
                     By.XPATH, self._support_summon_confirm_xpath
                 ).click()
+                print("Support summon confirmed.")
                 return False
 
+            print("checking for verification..")
             verif = self._bot.handle.handle_verification()
             if verif:
+                print("Verification found.")
                 c_retries += 1
                 try:
                     self.support_summon(
