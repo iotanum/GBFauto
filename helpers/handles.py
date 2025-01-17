@@ -558,15 +558,18 @@ class Handle:
         timeout = 5
         start = time.time()
         while True:
-            if time.time() - start > timeout:
-                print("Bot is not in battle yet? Probably a popup occurred.")
-                return False
+            try:
+                if time.time() - start > timeout:
+                    print("Bot is not in battle yet? Probably a popup occurred.")
+                    return False
 
-            if "empty" in self._driver.current_url:
-                return False
+                if "empty" in self._driver.current_url:
+                    return False
 
-            if "supporter" not in self._driver.current_url:
-                return True
+                if "supporter" not in self._driver.current_url:
+                    return True
+            except WebDriverException:
+                pass
 
     def check_if_action_is_needed(self, req, can_be_empty=False):
         if "raid_deck_data_create" in req["uri"]:
