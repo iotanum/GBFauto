@@ -367,7 +367,7 @@ class Press:
             pass
 
     def pick_raid(self, raid_num, events_filter=False):
-        filter_div_id = "prt-assist-search" if not events_filter else "prt-multi-list"
+        filter_div_id = "prt-search-list" if not events_filter else "prt-multi-list"
         raid_pick_xpath = f'//*[@id="{filter_div_id}"]/div[{raid_num}]'
         search_by = By.XPATH
 
