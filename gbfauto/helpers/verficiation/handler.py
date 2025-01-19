@@ -29,14 +29,17 @@ class Verification:
 
         retries = 3
         for _ in range(retries):
+            _log.info(f"Try {_ + 1} of {retries}.")
             prediction = await self.predict_captcha_from_element()
             await self.send_captcha_answer(prediction)
 
             if await self.is_successful_verification():
                 break
+            _log.info("Prediction was incorrect. Retrying...")
 
     async def is_successful_verification(self):
         resp_regex = re.compile(".*\/c\/a\?.*")
+        _log.debug("Waiting to see if prediction was correct...")
         async with self.bot.page.expect_response(resp_regex) as resp:
             response = await resp.value
             r_body = await get_response_body(response)
@@ -54,12 +57,14 @@ class Verification:
         Returns:
             The verification popup element or False if not found.
         """
+        _log.debug("Taking screenshot of verification image...")
         popup_body_ele = await self.utils.bs(find=("div", {"class": "prt-popup-body"}))
         xpath = await get_xpath_from_ele(popup_body_ele)
         img_xpath = f"{xpath}//img"
         locator = self.bot.page.locator(f"xpath={img_xpath}")
         await locator.wait_for()
         await locator.screenshot(path="verification.png")
+        _log.debug("Screenshot taken.")
 
     @staticmethod
     async def get_captcha_model():
@@ -106,7 +111,6 @@ class Verification:
         to_sort.sort(key=lambda x: x[0])
         # parse to string by class name
         result = "".join([x[1] for x in to_sort])
-        print("Captcha prediction:", result)
         return result
 
     async def predict_captcha_from_element(self):
@@ -132,6 +136,7 @@ class Verification:
         """
 
         # Enter the prediction in the box
+        _log.debug(f"Entering '{prediction}' captcha answer...")
         text_entry_element = await self.utils.bs(
             find=("textarea", {"class": "frm-message"})
         )
@@ -140,6 +145,7 @@ class Verification:
         await text_entry_locator.press_sequentially(prediction, delay=100)
 
         # Press "send"
+        _log.debug(f"Confirming '{prediction}' captcha answer...")
         send_element = await self.utils.bs(find=("div", {"class": "btn-talk-message"}))
         send_xpath = await get_xpath_from_ele(send_element)
         await self.bot.page.locator(f"{send_xpath}").click()
