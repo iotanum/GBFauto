@@ -128,7 +128,7 @@ class SummonsCommon:
             async with self.bot.page.expect_response(uri_regex) as resp:
                 response = await resp.value
                 body = await get_response_body(response)
-                print(body, "body, check_for_popups")
+                _log.debug(f"A popup after confirming the summon: {body}")
                 if not body.get("error", True):
                     _log.info("Raid ended popup.")
                     return True

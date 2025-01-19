@@ -7,7 +7,7 @@ from playwright_stealth import Stealth
 _log = logging.getLogger(__name__)
 
 CONTEXT_OPTIONS = {
-    "viewport": None  # {"width": 560, "height": 760},
+    "viewport": {"width": 560, "height": 760},
 }
 BROWSER_OPTIONS = {
     "headless": False,
@@ -22,7 +22,6 @@ BROWSER_OPTIONS = {
 
 AUTH_PAGE = "http://game.granbluefantasy.jp/#authentication"
 _log.debug(f"Engine configuration: {BROWSER_OPTIONS}, {CONTEXT_OPTIONS}")
-print("asd")
 
 
 async def _browser_events(browser):

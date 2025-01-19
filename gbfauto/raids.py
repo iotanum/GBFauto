@@ -100,7 +100,7 @@ class Raids:
         Waits for the battle to end.
         """
         while not self.battle[BattleEnums.IN_BATTLE]:
-            print("Waiting for battle to start...")
+            _log.debug("Waiting for battle to start...")
             if await self.utils.is_in_result_screen():
                 _log.info("Too slow, fellas. Returning to raid filters screen...")
                 self.navigated_to_raids = False
@@ -109,7 +109,7 @@ class Raids:
             await asyncio.sleep(0.1)
 
         while self.battle[BattleEnums.IN_BATTLE]:
-            print("Waiting for battle to end...")
+            _log.debug("Waiting for battle to end...")
             await asyncio.sleep(0.1)
 
         result_resp_regex = re.compile(".*result.*\/content.*")
@@ -132,7 +132,10 @@ class Raids:
             refresh_ele = await self.is_refresh_raid_filter_available()
             _log.info("No raids found. Refreshing...")
             ele_xpath = await get_xpath_from_ele(refresh_ele)
-            await self.bot.page.locator(ele_xpath).click()
+
+            locator = self.bot.page.locator(f"xpath={ele_xpath}")
+            if await locator.is_enabled():
+                await locator.click()
 
     async def do_raids(self):
         self.raid_uri = await self.bot.utils.get_current_url()

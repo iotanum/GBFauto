@@ -23,11 +23,11 @@ class Utils:
         await self.bot.page.wait_for_load_state()
 
     async def go_to_url(self, url, ele=None):
-        print(f"Going to url: {url}", ele)
+        _log.debug(f"Going to url: {url}", ele)
         await self.bot.page.goto(url)
         await self.bot.page.wait_for_url(url)
-        print("Waiting for ele", ele)
         if ele:
+            _log.debug(f"Waiting for ele after going to '{url}':", ele)
             await self.bot.page.wait_for_selector(ele)
 
     async def go_to_locked_quest(self):
