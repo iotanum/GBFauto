@@ -135,7 +135,7 @@ class Verification:
         text_entry_element = await self.utils.bs(find=("textarea", {"class": "frm-message"}))
         text_entry_xpath = await get_xpath_from_ele(text_entry_element)
         text_entry_locator = self.bot.page.locator(f"{text_entry_xpath}")
-        await text_entry_locator.press_sequentially(prediction)
+        await text_entry_locator.press_sequentially(prediction, delay=100)
 
         # Press "send"
         send_element = await self.utils.bs(find=("div", {"class": "btn-talk-message"}))
