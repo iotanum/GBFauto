@@ -135,6 +135,10 @@ class SummonsCommon:
                 if popup := body.get("popup"):
                     if "is full" in popup.get("body").lower():
                         _log.info(body["popup"])
+                    if "verification" in popup.get("body").lower():
+                        _log.info("!!! Verification popup !!!")
+                        await self.bot.captcha.handler()
+
                     return True
         except Exception as e:
             _log.error(f"Error: {str(e)}")

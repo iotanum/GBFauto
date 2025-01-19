@@ -10,6 +10,7 @@ from gbfauto.common.utils import Utils
 
 from gbfauto.helpers.battle.tasks import BattleTasks
 from gbfauto.helpers.summons.tasks import SummonsTasks
+from gbfauto.helpers.verficiation.handler import Verification
 
 from gbfauto.common.battle.common import BattleCommon
 from gbfauto.common.events.common import EventsCommon
@@ -57,6 +58,7 @@ class Bot:
         self.skills = Skills(self)
         self.login = Login(self)
         self.questing = Questing(self)
+        self.captcha = Verification(self)
 
         # Background task attributes
         self.battle_tasks = BattleTasks(self)

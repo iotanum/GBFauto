@@ -2,6 +2,7 @@ import logging
 import asyncio
 import time
 from concurrent.futures import ThreadPoolExecutor
+import playwright
 
 from bs4 import BeautifulSoup as bs4
 
@@ -34,8 +35,11 @@ class Utils:
         await self.bot.page.goto(self.bot.questing.quest_url)
 
     async def get_current_url(self):
-        current_url = await self.bot.page.evaluate("window.location.href")
-        return current_url
+        try:
+            current_url = await self.bot.page.evaluate("window.location.href")
+            return current_url
+        except playwright._impl._errors.Error:
+            return ""
 
     async def is_in_result_screen(self):
         current_url = await self.get_current_url()
