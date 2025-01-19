@@ -129,8 +129,8 @@ class SummonsCommon:
                 response = await resp.value
                 body = await get_response_body(response)
                 _log.debug(f"A popup after confirming the summon: {body}")
-                if not body.get("error", True):
-                    _log.info("Raid ended popup.")
+                if "error" in body.keys():
+                    _log.info("Raid already ended, possibly.")
                     return True
                 if popup := body.get("popup"):
                     if "is full" in popup.get("body").lower():

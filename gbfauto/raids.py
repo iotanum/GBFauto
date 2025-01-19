@@ -4,7 +4,7 @@ import re
 
 from gbfauto.helpers.summons.handle import SummonHandle
 from gbfauto.common.enums import BattleEnums
-from gbfauto.common.utils import get_xpath_from_ele
+from gbfauto.common.utils import get_xpath_from_ele, get_response_body
 from gbfauto.helpers.actions.ep import Ep
 
 
@@ -92,8 +92,27 @@ class Raids:
 
         return clickable_ele
 
+    async def check_for_entry_popups(self, body):
+        if "error" in body.keys():
+            _log.info("Raid already ended, possibly.")
+            return True
+        if popup := body.get("popup"):
+            if "is full" in popup.get("body").lower():
+                _log.info(body["popup"])
+            return
+
     async def _try_entering_raid(self, raid_ele):
         await self.utils.click(raid_ele)
+
+        quest_start_re = re.compile(".*quest\/check_.*start.*")
+        async with self.bot.page.expect_response(quest_start_re) as resp:
+            response = await resp.value
+            body = await get_response_body(response)
+            popup = await self.check_for_entry_popups(body)
+            if popup is not None:
+                return
+
+        return True
 
     async def wait_for_battle_to_end(self):
         """
@@ -161,7 +180,11 @@ class Raids:
                 await self.refresh_raid_filter()
                 continue
 
-            await self._try_entering_raid(raid_xpath)
+            success_entry = await self._try_entering_raid(raid_xpath)
+            if not success_entry:
+                await self.utils.refresh(element=raid_list_ele_selector)
+                continue
+
             popup = await self.summon_handle.pick_summon()
             if popup:
                 self.navigated_to_raids = False
