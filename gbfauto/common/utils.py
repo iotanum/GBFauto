@@ -1,6 +1,7 @@
 import logging
 import asyncio
 import time
+from concurrent.futures import ThreadPoolExecutor
 
 from bs4 import BeautifulSoup as bs4
 
@@ -12,49 +13,61 @@ class Utils:
         self.bot = bot
         self.events = self.bot.events
         self.queues = self.bot.queues
-
-    async def wait_for_full_page_load(self):
-        await self.bot.page.wait_for_load_state()
+        self.executor = ThreadPoolExecutor()
 
     async def get_page_content(self):
         return await self.bot.page.content()
 
     async def go_to_main(self):
         await self.bot.page.goto("http://game.granbluefantasy.jp/#mypage")
-        await self.wait_for_full_page_load()
+        await self.bot.page.wait_for_load_state()
+
+    async def go_to_url(self, url, ele=None):
+        print(f"Going to url: {url}", ele)
+        await self.bot.page.goto(url)
+        await self.bot.page.wait_for_url(url)
+        print("Waiting for ele", ele)
+        if ele:
+            await self.bot.page.wait_for_selector(ele)
 
     async def go_to_locked_quest(self):
         await self.bot.page.goto(self.bot.questing.quest_url)
 
     async def get_current_url(self):
-        return self.bot.page.url
+        current_url = await self.bot.page.evaluate("window.location.href")
+        return current_url
 
-    async def click(self, ele, force=False):
+    async def is_in_result_screen(self):
+        current_url = await self.get_current_url()
+        return "result" in current_url
+
+    async def click(self, ele, force=False, timeout=5):
         xpath = await get_xpath_from_ele(ele)
         _log.debug(f"Clicking on element: {xpath}")
-        await self.bot.page.locator(xpath).click(force=force)
+        await self.bot.page.locator(xpath).click(force=force, timeout=timeout * 1000)
 
     async def bs(self, content=None, parser=None, find=(), find_all=()):
         loop = asyncio.get_event_loop()
 
+        if content is None:
+            content = await self.get_page_content()
+
         if parser is None:
-            if content is None:
-                content = await self.get_page_content()
-            parser = await loop.run_in_executor(None, bs4, content, "lxml")
+            parser = await loop.run_in_executor(self.executor, bs4, content, "lxml")
 
         if find:
-            return await loop.run_in_executor(None, parser.find, *find)
+            return await loop.run_in_executor(self.executor, parser.find, *find)
 
         if find_all:
-            return await loop.run_in_executor(None, parser.find_all, *find_all)
+            return await loop.run_in_executor(self.executor, parser.find_all, *find_all)
 
         return parser
 
-    async def refresh(self, wait_to_load=False):
+    async def refresh(self, element=None):
         await self.bot.page.reload()
-        if wait_to_load:
-            print("waiting for load")
-            await self.wait_for_full_page_load()
+
+        if element:
+            await self.bot.page.wait_for_selector(element)
 
 
 def find_siblings_in_executor(parent, child_name):

@@ -1,7 +1,10 @@
 import logging
+import os
+
+from dotenv import load_dotenv
 
 from gbfauto.common.tasks import background_task
-from gbfauto.common.enums import EventEnums, BattleEnums
+from gbfauto.common.enums import BattleEnums
 
 _log = logging.getLogger(__name__)
 
@@ -31,6 +34,7 @@ class BattleTasks:
         self.is_in_battle.start()
         self.enable_full_auto_in_loading_screen.start()
         self.refresh_after_event.start()
+        self.battle_done.start()
 
     async def already_refresh(self, r_event):
         """
@@ -42,7 +46,6 @@ class BattleTasks:
         bla = await self.battle_common.refreshed_on_this_event(
             r_event, self.refreshed_on_event
         )
-        print(bla, r_event, self.refreshed_on_event, "bla")
 
         return bla
 
@@ -71,6 +74,11 @@ class BattleTasks:
         """
         Background task to enable full auto in battle.
         """
+        load_dotenv(".env", override=True)
+        enabled = os.getenv("FA_REFRESH", False)
+        if not enabled:
+            return
+
         if self.battle[BattleEnums.IN_BATTLE]:
             if r_event := await self.events_common.is_refresh_event_recent():
                 if not await self.already_refresh(r_event):
@@ -82,6 +90,26 @@ class BattleTasks:
                         self.battle[BattleEnums.FULL_AUTO] = False
                         self.refreshed_on_event = r_event
                         await self.utils.refresh()
+
+    @background_task(interval=0.2)
+    async def battle_done(self):
+        """
+        Background task to check if the battle is done.
+        """
+        load_dotenv(".env", override=True)
+        fa_refresh_enabled = os.getenv("FA_REFRESH", False)
+        if fa_refresh_enabled:
+            return
+
+        try:
+            if self.battle[BattleEnums.BOSS_KILLED]:
+                if self.battle[BattleEnums.IN_BATTLE]:
+                    _log.debug("Battle is done, refreshing...")
+                    self.battle[BattleEnums.IN_BATTLE] = False
+                    self.battle[BattleEnums.FULL_AUTO] = False
+                    await self.utils.refresh()
+        except KeyError:
+            pass
 
     @background_task(interval=0.1)
     async def enable_full_auto_in_loading_screen(self):

@@ -11,7 +11,7 @@ def get_args():
         "--log-level",
         type=str,
         choices=["debug", "info", "warning", "error", "critical", "all"],
-        default="info",
+        default="debug",
         metavar="",
         help="Set log level. (default: %(default)s)",
     )

@@ -1,5 +1,4 @@
 import logging
-import re
 from typing import List, Dict, Union
 
 from bs4 import BeautifulSoup
@@ -44,7 +43,7 @@ async def _extract_summon_data(
             }
         )
 
-    _log.debug(f"Summons successfully parsed!")
+    _log.debug("Summons successfully parsed!")
     return summon_data
 
 

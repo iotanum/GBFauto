@@ -2,12 +2,12 @@ import logging
 import os
 
 from playwright.async_api import async_playwright
-from playwright_stealth import stealth_async
+from playwright_stealth import Stealth
 
 _log = logging.getLogger(__name__)
 
 CONTEXT_OPTIONS = {
-    "viewport": {"width": 560, "height": 760},
+    "viewport": None  # {"width": 560, "height": 760},
 }
 BROWSER_OPTIONS = {
     "headless": False,
@@ -22,6 +22,7 @@ BROWSER_OPTIONS = {
 
 AUTH_PAGE = "http://game.granbluefantasy.jp/#authentication"
 _log.debug(f"Engine configuration: {BROWSER_OPTIONS}, {CONTEXT_OPTIONS}")
+print("asd")
 
 
 async def _browser_events(browser):
@@ -46,8 +47,8 @@ async def launch_engine():
     context = await pw.chromium.launch_persistent_context(
         **BROWSER_OPTIONS, **CONTEXT_OPTIONS
     )
+    await Stealth().apply_stealth_async(context)
     page = context.pages[0]
     await page.goto(AUTH_PAGE)
-    await stealth_async(page)
     _log.debug("Engine launched!")
     return page

@@ -1,4 +1,5 @@
 import typing
+import asyncio
 
 from gbfauto.common.enums import BattleEnums
 
@@ -105,31 +106,31 @@ class BattleCommon:
         Returns:
             bool: True if visible, False otherwise.
         """
-        hp_ele = await self.utils.bs(
-            find=(
-                "div",
-                {
-                    "class": "btn-enemy-gauge prt-enemy-percent alive",
-                    "style": "display: block;",
-                },
-            )
+        hp_ele = await self.bot.page.query_selector(
+            "div.btn-enemy-gauge.prt-enemy-percent.alive[style*='display: block;']"
         )
-        return bool(hp_ele)
+        return hp_ele is not None
 
     async def enable_full_auto(self):
         """
-        Enables full auto.
+        Enables full auto mode in the most efficient way using Playwright.
         """
         while True:
-            fa_ele = await self.utils.bs(find=("div", {"class": "txt-auto-setting"}))
+            # Check if the "Full Auto" setting element is visible
+            fa_ele = await self.bot.page.query_selector("div.txt-auto-setting")
             if fa_ele:
-                enabled = await self.utils.bs(
-                    find=("div", {"class": "btn-ready-auto anim-simple-fadein"})
+                # Check if the "enabled" button is present
+                enabled = await self.bot.page.query_selector(
+                    "div.btn-ready-auto.anim-simple-fadein"
                 )
                 if not enabled:
-                    await self.utils.click(fa_ele, force=True)
+                    await fa_ele.click(force=True)
+                    return
                 else:
                     return True
+
+            # Add a short delay before rechecking
+            await asyncio.sleep(0.1)
 
     async def refreshed_on_this_event(self, event, refreshed_event):
         """

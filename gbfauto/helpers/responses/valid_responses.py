@@ -8,6 +8,7 @@ class ValidResponses:
     USE_NORMAL_ITEM = "use_normal_item"
     QUEST_INFO = "quest/cleared_list"
     SUMMON = "summon_result.json"
+    CHECK_MULTI_START = "check_multi_start"
 
     @classmethod
     async def is_valid(cls, response):

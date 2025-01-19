@@ -2,7 +2,6 @@ import asyncio
 
 from gbfauto.common.logger import setup_logger
 from gbfauto.common.args import get_args
-from gbfauto.common.signal_handler import SignalHandler
 
 from gbfauto.common.engine import launch_engine
 from gbfauto.bot import Bot
@@ -20,11 +19,11 @@ async def main():
     """
     Main function to run the GBF Auto bot.
     """
-    signal_handler = SignalHandler()
+    # signal_handler = SignalHandler()
     await setup()
 
     bot_engine = await launch_engine()
-    await Bot(bot_engine, signal_handler).run()
+    await Bot(bot_engine).run()
 
 
 if __name__ == "__main__":

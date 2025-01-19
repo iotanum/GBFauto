@@ -9,6 +9,8 @@ from gbfauto.helpers.responses.n_attack_resp import NormalAttackResponse
 from gbfauto.helpers.responses.q_info_resp import QuestInfoResponse
 from gbfauto.helpers.responses.updator import Updator
 from gbfauto.helpers.responses.summ_resp import SummonResponse
+from gbfauto.helpers.responses.check_multi_start import CheckMultiStart
+from gbfauto.helpers.responses.use_normal_item import UseNormalItemResponse
 
 _log = logging.getLogger(__name__)
 
@@ -35,6 +37,8 @@ class Responses:
         self.quest_info_resp = QuestInfoResponse(self)
         self.content_resp = ContentResponse(self)
         self.summon_resp = SummonResponse(self)
+        self.check_multi_start = CheckMultiStart(self)
+        self.use_normal_item_resp = UseNormalItemResponse(self)
 
     @staticmethod
     async def _filter(resp):
@@ -68,6 +72,8 @@ class Responses:
             ValidResponses.NORMAL_ATTACK: self.normal_attack_resp.normal_attack_resp_handler,
             ValidResponses.QUEST_INFO: self.quest_info_resp.quest_info_response_handler,
             ValidResponses.SUMMON: self.summon_resp.summon_response_handler,
+            ValidResponses.CHECK_MULTI_START: self.check_multi_start.check_multi_start_handler,
+            ValidResponses.USE_NORMAL_ITEM: self.use_normal_item_resp.handler,
         }
 
         handler = None

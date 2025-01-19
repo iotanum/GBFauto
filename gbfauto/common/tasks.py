@@ -1,8 +1,6 @@
 import logging
 import asyncio
 import inspect
-import sys
-import traceback
 
 _log = logging.getLogger(__name__)
 

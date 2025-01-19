@@ -2,6 +2,11 @@ import logging
 import asyncio
 import re
 
+from gbfauto.helpers.summons.handle import SummonHandle
+from gbfauto.common.enums import BattleEnums
+from gbfauto.common.utils import get_xpath_from_ele
+from gbfauto.helpers.actions.ep import Ep
+
 
 _log = logging.getLogger(__name__)
 
@@ -9,13 +14,19 @@ _log = logging.getLogger(__name__)
 class Raids:
     def __init__(self, questing):
         self.bot = questing.bot
-        self.utils = questing.bot.utils
-
+        self.utils = self.bot.utils
+        self.summon_handle = SummonHandle(self.bot)
+        self.p_status = self.bot.p_status
+        self.ep_handler = Ep(self.bot)
         # For Signal Handling
-        self.keyboard_interrupted = self.bot.keyboard_interrupted
+        # self.keyboard_interrupted = self.bot.keyboard_interrupted
 
         # Common
         self.raid_filter_assigned = False
+        self.popup = self.bot.popup
+        self.battle = self.bot.battle
+        self.raid_uri = None
+        self.navigated_to_raids = True
 
     async def _get_raid_filter(self):
         try:
@@ -84,21 +95,73 @@ class Raids:
     async def _try_entering_raid(self, raid_ele):
         await self.utils.click(raid_ele)
 
-    async def do_raids(self):
-        while True:
-            # if not self.raid_filter_assigned:
-            #     await self._assign_raid_slot()
-            #
-            # raid_xpath = await self._get_most_suitable_raid()
-            # if not raid_xpath:
-            #     _log.info("No raids found. Refreshing...")
-            #     await self.utils.refresh(wait_to_load=True)
-            #     continue
-            #
-            # await self._try_entering_raid(raid_xpath)
-            await asyncio.sleep(60606006606)
+    async def wait_for_battle_to_end(self):
+        """
+        Waits for the battle to end.
+        """
+        while not self.battle[BattleEnums.IN_BATTLE]:
+            print("Waiting for battle to start...")
+            if await self.utils.is_in_result_screen():
+                _log.info("Too slow, fellas. Returning to raid filters screen...")
+                self.navigated_to_raids = False
+                return
 
-            if self.keyboard_interrupted:
-                _log.info("Done! Exiting raids...")
-                self.bot.utils.go_to_main()
-                break
+            await asyncio.sleep(0.1)
+
+        while self.battle[BattleEnums.IN_BATTLE]:
+            print("Waiting for battle to end...")
+            await asyncio.sleep(0.1)
+
+        result_resp_regex = re.compile(".*result.*\/content.*")
+        async with self.bot.page.expect_response(result_resp_regex) as resp:
+            await resp.value
+            self.navigated_to_raids = False
+            _log.info("Returning to raid filters screen...")
+
+    async def is_refresh_raid_filter_available(self):
+        class_name = "btn-search-refresh"
+        ele = await self.utils.bs(find=("div", {"class": class_name}))
+
+        return ele
+
+    async def refresh_raid_filter(self):
+        disabled = "btn-search-refresh disabled"
+        disabled_ele = await self.utils.bs(find=("div", {"class": disabled}))
+
+        if not disabled_ele:
+            refresh_ele = await self.is_refresh_raid_filter_available()
+            _log.info("No raids found. Refreshing...")
+            ele_xpath = await get_xpath_from_ele(refresh_ele)
+            await self.bot.page.locator(ele_xpath).click()
+
+    async def do_raids(self):
+        self.raid_uri = await self.bot.utils.get_current_url()
+        raid_list_ele_selector = "#prt-search-list > div > div"
+
+        while True:
+            if not self.navigated_to_raids:
+                await self.bot.utils.go_to_url(
+                    self.raid_uri, ele=raid_list_ele_selector
+                )
+                self.navigated_to_raids = True
+
+            if not self.raid_filter_assigned:
+                await self._assign_raid_slot()
+
+            used_ep = await self.ep_handler.use_ep()
+            if used_ep:
+                await self.utils.refresh(element=raid_list_ele_selector)
+                continue
+
+            raid_xpath = await self._get_most_suitable_raid()
+            if not raid_xpath:
+                await self.refresh_raid_filter()
+                continue
+
+            await self._try_entering_raid(raid_xpath)
+            popup = await self.summon_handle.pick_summon()
+            if popup:
+                self.navigated_to_raids = False
+                continue
+
+            await self.wait_for_battle_to_end()

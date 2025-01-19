@@ -26,3 +26,6 @@ class EventEnums:
     SUMMON_EVENT = "summon_event"
     NORMAL_ATTACK_EVENT = "normal_attack_event"
     LATEST_EVENT = "latest_event"
+    SUMMON_SCREEN_EVENT = "summon_screen_event"
+    SUMMON_PICKED_EVENT = "summon_picked_event"
+    SUMMON_CONFIRMED_EVENT = "summon_confirmed_event"

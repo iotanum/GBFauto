@@ -20,7 +20,7 @@ class Questing:
         self.raids = Raids(self)
 
         # For Signal Handling
-        self.keyboard_interrupted = self.bot.keyboard_interrupted
+        # self.keyboard_interrupted = self.bot.keyboard_interrupted
 
         self.url_action_mapping = {
             "#quest/assist": self.handle_raids,
@@ -49,7 +49,6 @@ class Questing:
         """
         Handles raids action.
         """
-        await self.bot.utils.wait_for_full_page_load()
         _log.info("Locked on to raids.")
         await self.raids.do_raids()
 

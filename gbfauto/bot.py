@@ -22,7 +22,7 @@ class Bot:
     Class representing the main automation bot for the game.
     """
 
-    def __init__(self, engine, signal_handler):
+    def __init__(self, engine):
         """
         Initializes the Bot instance.
 
@@ -33,7 +33,7 @@ class Bot:
         self.context = self.page.context
 
         # For Signal Handling
-        self.keyboard_interrupted = signal_handler.keyboard_interrupt
+        # self.keyboard_interrupted = signal_handler.keyboard_interrupt
 
         # Sub-attributes
         self.events = dict()
@@ -41,6 +41,7 @@ class Bot:
         self.summons = dict()
         self.battle = dict()
         self.queues = dict()
+        self.popup = None
 
         # Common attributes
         self.utils = Utils(self)

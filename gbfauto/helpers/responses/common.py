@@ -1,6 +1,5 @@
 import logging
 
-from gbfauto.helpers.responses.valid_responses import ValidResponses
 
 _log = logging.getLogger(__name__)
 
