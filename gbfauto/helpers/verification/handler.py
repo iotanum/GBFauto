@@ -25,10 +25,10 @@ class Verification:
         self.utils = self.bot.utils
 
     async def handler(self):
-        await self.screenshot_verification_img()
-
         retries = 3
         for _ in range(retries):
+            await self.screenshot_verification_img()
+
             _log.info(f"Try {_ + 1} of {retries}.")
             prediction = await self.predict_captcha_from_element()
             await self.send_captcha_answer(prediction)
