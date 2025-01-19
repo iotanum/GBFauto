@@ -15,6 +15,7 @@ BROWSER_OPTIONS = {
     "user_data_dir": os.path.join(os.getcwd(), "browser_user_data"),
     "args": [
         "--hide-crash-restore-bubble",
+        "--disable-infobars",
     ],
     "ignore_default_args": ["--enable-automation", "--mute-audio"],
     "chromium_sandbox": True,

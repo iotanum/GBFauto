@@ -49,6 +49,20 @@ class BattleTasks:
 
         return bla
 
+    async def need_refresh(self, na=False):
+        """
+        Checks if the bot needs to refresh.
+
+        Returns:
+            bool: True if the bot needs to refresh, False otherwise.
+        """
+        if self.battle[BattleEnums.IN_BATTLE]:
+            if r_event := await self.events_common.is_refresh_event_recent(na=na):
+                if not await self.already_refresh(r_event):
+                    self.battle[BattleEnums.FULL_AUTO] = False
+                    self.refreshed_on_event = r_event
+                    await self.utils.refresh()
+
     @background_task(interval=0.2)
     async def is_in_battle(self):
         """
@@ -77,30 +91,17 @@ class BattleTasks:
         load_dotenv(".env", override=True)
         enabled = os.getenv("FA_REFRESH", False)
         if not enabled:
+            # Always refresh after normal attacks
+            await self.need_refresh(na=True)
             return
 
-        if self.battle[BattleEnums.IN_BATTLE]:
-            if r_event := await self.events_common.is_refresh_event_recent():
-                if not await self.already_refresh(r_event):
-                    if (
-                        await self.battle_common.refresh_from_queue_this_turn()
-                        or not await self.battle_common.is_queue_this_turn()
-                    ):
-                        _log.debug("Refreshing because of queue or no queue.")
-                        self.battle[BattleEnums.FULL_AUTO] = False
-                        self.refreshed_on_event = r_event
-                        await self.utils.refresh()
+        await self.need_refresh()
 
     @background_task(interval=0.2)
     async def battle_done(self):
         """
         Background task to check if the battle is done.
         """
-        load_dotenv(".env", override=True)
-        fa_refresh_enabled = os.getenv("FA_REFRESH", False)
-        if fa_refresh_enabled:
-            return
-
         try:
             if self.battle[BattleEnums.BOSS_KILLED]:
                 _log.debug("Battle is done, refreshing...")

@@ -64,7 +64,7 @@ class EventsCommon:
         event_time = await self._get_event_time(event)
         return event_time is not None and event_time < 1
 
-    async def is_refresh_event_recent(self) -> bool | dict:
+    async def is_refresh_event_recent(self, na=False) -> bool | dict:
         """
         Checks if the refresh event is recent based on a time threshold.
 
@@ -77,6 +77,11 @@ class EventsCommon:
             EventEnums.SUMMON_EVENT,
         ]
 
-        for event in refresh_events:
-            if await self.is_event_recent(event):
-                return {event: await self._get_event_time(event)}
+        if na:
+            normal_atk_event = EventEnums.NORMAL_ATTACK_EVENT
+            if await self.is_event_recent(normal_atk_event):
+                return {normal_atk_event: await self._get_event_time(normal_atk_event)}
+        else:
+            for event in refresh_events:
+                if await self.is_event_recent(event):
+                    return {event: await self._get_event_time(event)}

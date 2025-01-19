@@ -127,7 +127,7 @@ class Raids:
 
             await asyncio.sleep(0.1)
 
-        while self.battle[BattleEnums.IN_BATTLE]:
+        while not self.battle[BattleEnums.BOSS_KILLED]:
             _log.debug("Waiting for battle to end...")
             await asyncio.sleep(0.1)
 

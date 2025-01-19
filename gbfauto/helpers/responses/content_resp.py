@@ -1,7 +1,9 @@
 import logging
+import re
 
 import playwright
 
+from gbfauto.common.enums import BattleEnums
 from gbfauto.common.utils import get_response_body, multiple_keys_exists
 
 
@@ -20,6 +22,7 @@ class ContentResponse:
         self.common = responses.common
         self.p_status = self.bot.p_status
         self.battle_common = self.bot.battle_common
+        self.battle = self.bot.battle
 
     @staticmethod
     async def _fix_content_response_body(r_body):
@@ -94,6 +97,22 @@ class ContentResponse:
         await self._update_current_ap(r_body, resp)
         await self._update_current_ep(r_body, resp)
 
+    async def _update_battle_status(self, r_body, resp):
+        """
+        Updates the battle status based on the response.
+
+        Args:
+            r_body (dict): The response body.
+            resp: The response object.
+        """
+        _log.debug(f"Trying to update 'battle_status' from '{resp.url}'")
+
+        # if it's a result response, update required keys for battle
+        result_resp_regex = re.compile(".*result.*\/content.*")
+        if result_resp_regex.match(resp.url):
+            self.battle[BattleEnums.BOSS_KILLED] = True
+            self.battle[BattleEnums.BOSS_HPS] = {}
+
     async def content_response_handler(self, resp):
         """
         Handles the content response.
@@ -107,8 +126,10 @@ class ContentResponse:
 
             # update user status in events
             await self._update_player_status(r_body, resp)
+            await self._update_battle_status(r_body, resp)
 
             _log.debug(f"Player status updated from {resp.url}")
             _log.debug(f"Player status: {self.p_status}")
+            _log.debug(f"Battle status: {self.battle}")
         except playwright._impl._api_types.Error:
             _log.debug(f"Error while handling content response from {resp.url}")
