@@ -98,8 +98,8 @@ class Raids:
             return True
         if popup := body.get("popup"):
             if "is full" in popup.get("body").lower():
-                _log.info(body["popup"])
-            return
+                _log.info(f"Popup while joining the raid: {popup['body']}")
+                return True
 
     async def _try_entering_raid(self, raid_ele):
         await self.utils.click(raid_ele)
@@ -109,7 +109,7 @@ class Raids:
             response = await resp.value
             body = await get_response_body(response)
             popup = await self.check_for_entry_popups(body)
-            if popup is not None:
+            if popup:
                 return
 
         return True
@@ -191,3 +191,8 @@ class Raids:
                 continue
 
             await self.wait_for_battle_to_end()
+            self.bot.battle_count += 1
+            _log.info(
+                f"Total battles: {self.bot.battle_count}\n"
+                f"Avg time per battle: {await self.bot.get_avg_time_per_battle()}s"
+            )

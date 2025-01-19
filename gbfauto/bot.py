@@ -1,5 +1,6 @@
 import logging
 import os
+import time
 
 from gbfauto.events import Events
 from gbfauto.login import Login
@@ -42,6 +43,8 @@ class Bot:
         self.battle = dict()
         self.queues = dict()
         self.popup = None
+        self.startup_time = time.time()
+        self.battle_count = 0
 
         # Common attributes
         self.utils = Utils(self)
@@ -58,6 +61,18 @@ class Bot:
         # Background task attributes
         self.battle_tasks = BattleTasks(self)
         self.summon_tasks = SummonsTasks(self)
+
+    async def get_avg_time_per_battle(self):
+        """
+        Gets the average battle time.
+
+        Returns:
+            float: The average battle time.
+        """
+        total_running_time = time.time() - self.startup_time
+        if self.battle_count:
+            return round(total_running_time / self.battle_count, 2)
+        return 0
 
     async def _is_logged_in(self):
         """

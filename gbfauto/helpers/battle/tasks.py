@@ -103,11 +103,11 @@ class BattleTasks:
 
         try:
             if self.battle[BattleEnums.BOSS_KILLED]:
-                if self.battle[BattleEnums.IN_BATTLE]:
-                    _log.debug("Battle is done, refreshing...")
-                    self.battle[BattleEnums.IN_BATTLE] = False
-                    self.battle[BattleEnums.FULL_AUTO] = False
-                    await self.utils.refresh()
+                _log.debug("Battle is done, refreshing...")
+                self.battle[BattleEnums.IN_BATTLE] = False
+                self.battle[BattleEnums.FULL_AUTO] = False
+                self.battle[BattleEnums.BOSS_KILLED] = False
+                await self.utils.refresh()
         except KeyError:
             pass
 
