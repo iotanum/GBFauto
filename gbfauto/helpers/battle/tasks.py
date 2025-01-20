@@ -43,11 +43,10 @@ class BattleTasks:
         Returns:
             bool: True if the bot already refreshed this turn, False otherwise.
         """
-        bla = await self.battle_common.refreshed_on_this_event(
+        refreshed = await self.battle_common.refreshed_on_this_event(
             r_event, self.refreshed_on_event
         )
-
-        return bla
+        return refreshed
 
     async def need_refresh(self, na=False):
         """

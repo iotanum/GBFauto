@@ -66,7 +66,9 @@ class Ep:
                                 )
                                 locator = self.bot.page.locator(dropdown_ele_xpath)
 
-                                await locator.select_option(value=last_ep_berry_ele.text)
+                                await locator.select_option(
+                                    value=last_ep_berry_ele.text
+                                )
                                 return True
 
                 await asyncio.sleep(0.1)
