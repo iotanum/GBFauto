@@ -24,7 +24,7 @@ class Utils:
         await self.bot.page.wait_for_load_state()
 
     async def go_to_url(self, url, ele=None):
-        _log.debug(f"Going to url: {url}", ele)
+        _log.debug(f"Going to url: '{url}', waiting for ele: {ele}")
         await self.bot.page.goto(url)
         await self.bot.page.wait_for_url(url)
         if ele:
