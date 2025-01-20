@@ -1,6 +1,8 @@
 import re
 import asyncio
 
+from gbfauto.common.utils import get_xpath_from_ele
+
 
 class Ep:
     def __init__(self, bot):
@@ -58,15 +60,13 @@ class Ep:
                                 parser=berry_item_ele,
                             )
                             if options:
-                                last_ep_pill_ele = options[-1]
-
-                                await self.bot.page.wait_for_selector(
-                                    "select.use-item-num"
+                                last_ep_berry_ele = options[-1]
+                                dropdown_ele_xpath = await get_xpath_from_ele(
+                                    berry_item_ele
                                 )
-                                for _ in range(int(last_ep_pill_ele.text)):
-                                    await self.bot.page.keyboard.press("ArrowDown")
+                                locator = self.bot.page.locator(dropdown_ele_xpath)
 
-                                await self.bot.page.keyboard.press("Enter")
+                                await locator.select_option(value=last_ep_berry_ele.text)
                                 return True
 
                 await asyncio.sleep(0.1)
