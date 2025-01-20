@@ -111,6 +111,19 @@ class BattleCommon:
         )
         return hp_ele is not None
 
+    async def get_enemy_hp(self) -> typing.List[int]:
+        """
+        Gets the enemy HP information.
+
+        Returns:
+            list: List of enemy HPs.
+        """
+        if await self.can_see_enemy_hp():
+            hp_eles = await self.bot.page.query_selector_all(
+                "span.txt-gauge-value[id*='enemy-hp']"
+            )
+            return [int(await hp_ele.text_content()) for hp_ele in hp_eles]
+
     async def enable_full_auto(self):
         """
         Enables full auto mode in the most efficient way using Playwright.

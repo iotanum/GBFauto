@@ -63,6 +63,20 @@ class BattleTasks:
                     self.refreshed_on_event = r_event
                     await self.utils.refresh()
 
+    async def is_boss_dead(self):
+        """
+        Checks if the boss is dead.
+
+        Returns:
+            bool: True if the boss is dead, False otherwise.
+        """
+        boss_hps = await self.battle_common.get_enemy_hp()
+        if boss_hps:
+            all_dead = all(hp == 0 for hp in boss_hps)
+            if all_dead:
+                _log.info("All boss HPs are 0, boss is dead!")
+            return all_dead
+
     @background_task(interval=0.2)
     async def is_in_battle(self):
         """
@@ -102,7 +116,7 @@ class BattleTasks:
         """
         Background task to check if the battle is done.
         """
-        if self.battle.get(BattleEnums.BOSS_KILLED, False):
+        if self.battle.get(BattleEnums.BOSS_KILLED, False) or await self.is_boss_dead():
             self.battle[BattleEnums.IN_BATTLE] = False
             self.battle[BattleEnums.FULL_AUTO] = False
             self.battle[BattleEnums.BOSS_KILLED] = False
