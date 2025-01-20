@@ -41,7 +41,7 @@ class StartResponse:
         if len(r_body.keys()) == 1:
             if r_body.get("redirect"):
                 _log.debug("'start.json' returned a redirect. Battle is over.")
-                await self._update_event_time(EventEnums.BATTLE_END_EVENT)
+                # await self._update_event_time(EventEnums.BATTLE_END_EVENT)
                 self.battle[BattleEnums.BOSS_HPS] = {}
                 self.battle[BattleEnums.BOSS_KILLED] = True
                 return

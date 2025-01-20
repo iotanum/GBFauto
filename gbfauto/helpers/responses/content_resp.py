@@ -118,10 +118,9 @@ class ContentResponse:
         result_resp_regex = re.compile(".*result.*\/content.*")
         if result_resp_regex.match(resp.url):
             # update event time
-            await self._update_event_time()
-
             self.battle[BattleEnums.BOSS_KILLED] = True
             self.battle[BattleEnums.BOSS_HPS] = {}
+            await self._update_event_time()
 
     async def content_response_handler(self, resp):
         """

@@ -103,11 +103,12 @@ class BattleTasks:
         Background task to check if the battle is done.
         """
         if self.battle.get(BattleEnums.BOSS_KILLED, False):
+            self.battle[BattleEnums.IN_BATTLE] = False
+            self.battle[BattleEnums.FULL_AUTO] = False
+            self.battle[BattleEnums.BOSS_KILLED] = False
+
             if await self.battle_common.in_battle_url():
                 _log.debug("Battle is done, refreshing...")
-                self.battle[BattleEnums.IN_BATTLE] = False
-                self.battle[BattleEnums.FULL_AUTO] = False
-                self.battle[BattleEnums.BOSS_KILLED] = False
                 await self.utils.refresh()
 
     @background_task(interval=0.1)
