@@ -3,7 +3,7 @@ import re
 
 import playwright
 
-from gbfauto.common.enums import BattleEnums
+from gbfauto.common.enums import BattleEnums, EventEnums
 from gbfauto.common.utils import get_response_body, multiple_keys_exists
 
 
@@ -22,6 +22,7 @@ class ContentResponse:
         self.common = responses.common
         self.p_status = self.bot.p_status
         self.battle_common = self.bot.battle_common
+        self.events_common = self.bot.events_common
         self.battle = self.bot.battle
 
     @staticmethod
@@ -97,6 +98,12 @@ class ContentResponse:
         await self._update_current_ap(r_body, resp)
         await self._update_current_ep(r_body, resp)
 
+    async def _update_event_time(self, event=EventEnums.BATTLE_END_EVENT):
+        """
+        Updates event time based on the response.
+        """
+        await self.events_common.update_event_time(event=event)
+
     async def _update_battle_status(self, r_body, resp):
         """
         Updates the battle status based on the response.
@@ -110,6 +117,9 @@ class ContentResponse:
         # if it's a result response, update required keys for battle
         result_resp_regex = re.compile(".*result.*\/content.*")
         if result_resp_regex.match(resp.url):
+            # update event time
+            await self._update_event_time()
+
             self.battle[BattleEnums.BOSS_KILLED] = True
             self.battle[BattleEnums.BOSS_HPS] = {}
 
@@ -128,8 +138,8 @@ class ContentResponse:
             await self._update_player_status(r_body, resp)
             await self._update_battle_status(r_body, resp)
 
-            _log.debug(f"Player status updated from {resp.url}")
-            _log.debug(f"Player status: {self.p_status}")
-            _log.debug(f"Battle status: {self.battle}")
+            _log.debug(f"'Content' response handler, updated from '{resp.url}'")
+            _log.debug(f"'Content' response handler, player status: {self.p_status}")
+            _log.debug(f"'Content' response handler, battle status: {self.battle}")
         except playwright._impl._api_types.Error:
             _log.debug(f"Error while handling content response from {resp.url}")

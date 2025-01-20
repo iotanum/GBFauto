@@ -3,7 +3,7 @@ import asyncio
 import re
 
 from gbfauto.helpers.summons.handle import SummonHandle
-from gbfauto.common.enums import BattleEnums
+from gbfauto.common.enums import BattleEnums, EventEnums
 from gbfauto.common.utils import get_xpath_from_ele, get_response_body
 from gbfauto.helpers.actions.ep import Ep
 
@@ -18,6 +18,8 @@ class Raids:
         self.summon_handle = SummonHandle(self.bot)
         self.p_status = self.bot.p_status
         self.ep_handler = Ep(self.bot)
+        self.events_common = self.bot.events_common
+
         # For Signal Handling
         # self.keyboard_interrupted = self.bot.keyboard_interrupted
 
@@ -127,15 +129,13 @@ class Raids:
 
             await asyncio.sleep(0.1)
 
-        while not self.battle[BattleEnums.BOSS_KILLED]:
+        while True:
             _log.debug("Waiting for battle to end...")
+            if await self.events_common.is_event_recent(EventEnums.BATTLE_END_EVENT):
+                self.navigated_to_raids = False
+                _log.info("Returning to raid filters screen...")
+                return
             await asyncio.sleep(0.1)
-
-        result_resp_regex = re.compile(".*result.*\/content.*")
-        async with self.bot.page.expect_response(result_resp_regex) as resp:
-            await resp.value
-            self.navigated_to_raids = False
-            _log.info("Returning to raid filters screen...")
 
     async def is_refresh_raid_filter_available(self):
         class_name = "btn-search-refresh"

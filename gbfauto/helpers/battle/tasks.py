@@ -102,15 +102,13 @@ class BattleTasks:
         """
         Background task to check if the battle is done.
         """
-        try:
-            if self.battle[BattleEnums.BOSS_KILLED]:
+        if self.battle.get(BattleEnums.BOSS_KILLED, False):
+            if await self.battle_common.in_battle_url():
                 _log.debug("Battle is done, refreshing...")
                 self.battle[BattleEnums.IN_BATTLE] = False
                 self.battle[BattleEnums.FULL_AUTO] = False
                 self.battle[BattleEnums.BOSS_KILLED] = False
                 await self.utils.refresh()
-        except KeyError:
-            pass
 
     @background_task(interval=0.1)
     async def enable_full_auto_in_loading_screen(self):

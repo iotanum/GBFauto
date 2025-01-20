@@ -38,6 +38,14 @@ class StartResponse:
             r_body (dict): The response body in dictionary format.
             resp: The response object.
         """
+        if len(r_body.keys()) == 1:
+            if r_body.get("redirect"):
+                _log.debug("'start.json' returned a redirect. Battle is over.")
+                await self._update_event_time(EventEnums.BATTLE_END_EVENT)
+                self.battle[BattleEnums.BOSS_HPS] = {}
+                self.battle[BattleEnums.BOSS_KILLED] = True
+                return
+
         # Scan through _b_info and update battle info
         # includes: total_battles, current_battle, current_turn, bosses (hp, names, etc.)
         for p_info in self._b_info:
@@ -74,11 +82,11 @@ class StartResponse:
         if isinstance(summon_enable, int):
             await self.updator.update_summon_availability(summon_enable)
 
-    async def _update_event_time(self):
+    async def _update_event_time(self, event=EventEnums.START_EVENT):
         """
         Updates event time based on the response.
         """
-        await self.events_common.update_event_time(EventEnums.START_EVENT)
+        await self.events_common.update_event_time(event)
 
     async def _update_is_final_battle(self):
         await self.updator.update_final_battle()
@@ -108,5 +116,5 @@ class StartResponse:
         r_body = await get_response_body(resp)
         await self._update_battle(r_body, resp)
 
-        _log.debug(f"Battle info updated from {resp.url}")
-        _log.debug(f"Battle info: {self.battle}")
+        _log.debug(f"'start' response handler, updated from {resp.url}")
+        _log.debug(f"'start' response handler, battle info: {self.battle}")
