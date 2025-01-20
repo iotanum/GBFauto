@@ -99,9 +99,8 @@ class Raids:
             _log.info("Raid already ended, possibly.")
             return True
         if popup := body.get("popup"):
-            if "is full" in popup.get("body").lower():
-                _log.info(f"Popup while joining the raid: {popup['body']}")
-                return True
+            _log.info(f"Popup while joining the raid: {popup['body']}")
+            return True
 
     async def _try_entering_raid(self, raid_ele):
         await self.utils.click(raid_ele)
