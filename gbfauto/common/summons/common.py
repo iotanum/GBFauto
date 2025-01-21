@@ -158,7 +158,9 @@ class SummonsCommon:
     async def is_in_summon_selection(self):
         while True:
             if await self.events_common.is_event_recent(EventEnums.SUMMON_SCREEN_EVENT):
-                _log.debug("Found an event for summon_screen, continuing with the process.")
+                _log.debug(
+                    "Found an event for summon_screen, continuing with the process."
+                )
                 if await self.is_in_summon_selection_url():
                     if await self.can_select_summon():
                         return True

@@ -23,10 +23,15 @@ async def _extract_summon_data(
     return [
         {
             "name": summon.find("span", class_="js-summon-name").text,
-            "level": int(summon.find("span", class_="txt-summon-level").text.split()[-1]),
+            "level": int(
+                summon.find("span", class_="txt-summon-level").text.split()[-1]
+            ),
             "friend_name": summon.find("span", class_="txt-supporter-name").text,
-            "friend_lvl": int(summon.find("span", class_="txt-supporter-level").text.split()[-1]),
-            "is_friend": "ico-friend" in summon.find("div", class_="prt-supporter-name")["class"],
+            "friend_lvl": int(
+                summon.find("span", class_="txt-supporter-level").text.split()[-1]
+            ),
+            "is_friend": "ico-friend"
+            in summon.find("div", class_="prt-supporter-name")["class"],
             "element": summon,
         }
         for summon in summon_options
@@ -53,8 +58,13 @@ async def get_best_summon(
     summon_data.sort(key=lambda x: (-x["level"], -x["is_friend"]))
 
     best_option = next(
-        (summon for pick in summons_from_config for summon in summon_data if pick.lower() in summon["name"].lower()),
-        None
+        (
+            summon
+            for pick in summons_from_config
+            for summon in summon_data
+            if pick.lower() in summon["name"].lower()
+        ),
+        None,
     )
     _log.debug(f"Best summon option: {best_option}")
 

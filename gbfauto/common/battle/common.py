@@ -133,12 +133,12 @@ class BattleCommon:
         """
         fa_ele = self.bot.page.locator("div.txt-auto-setting")
         if await fa_ele.is_visible():
-            enabled_ele = fa_ele.locator(
-                "div.btn-ready-auto.anim-simple-fadein"
-            )
+            enabled_ele = fa_ele.locator("div.btn-ready-auto.anim-simple-fadein")
             if enabled_ele:
                 # Sadly need to enable the key here to get the maximum responsiveness out of the bot
-                _log.debug(f"Updating '{BattleEnums.FULL_AUTO}' status to True in helper function.")
+                _log.debug(
+                    f"Updating '{BattleEnums.FULL_AUTO}' status to True in helper function."
+                )
                 self.battle[BattleEnums.FULL_AUTO] = True
 
             await fa_ele.click(force=True)

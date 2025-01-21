@@ -3,6 +3,7 @@ import asyncio
 import time
 from concurrent.futures import ThreadPoolExecutor
 import playwright
+from playwright.async_api import Error
 
 from bs4 import BeautifulSoup as bs4
 
@@ -133,7 +134,15 @@ async def multiple_keys_exists(element, keys, resp_url=None):
 
 async def get_response_body(resp):
     _log.debug(f"Getting response body from {resp.url}..")
-    return await resp.json()
+    try:
+        return await resp.json()
+    except Error as e:
+        if "No resource with given identifier found" in str(e):
+            print(f"Failed to retrieve response body for '{resp.url}': {e}")
+        else:
+            print(
+                f"An unexpected error occurred while trying to retrieve response body for '{resp.url}': {e}"
+            )
 
 
 async def is_timeout(start_time, timeout):
