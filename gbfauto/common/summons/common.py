@@ -128,7 +128,8 @@ class SummonsCommon:
             async with self.bot.page.expect_response(uri_regex) as resp:
                 response = await resp.value
                 body = await get_response_body(response)
-                _log.debug(f"A popup after confirming the summon: {body}")
+                if body:
+                    _log.debug(f"A popup after confirming the summon: {body}")
                 if "error" in body.keys():
                     _log.info("Raid already ended, possibly.")
                     return True

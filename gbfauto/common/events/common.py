@@ -1,6 +1,6 @@
 import logging
 import time
-from gbfauto.common.enums import EventEnums
+from gbfauto.common.enums import EventEnums, BattleEnums
 import typing
 
 _log = logging.getLogger(__name__)
@@ -85,3 +85,11 @@ class EventsCommon:
             for event in refresh_events:
                 if await self.is_event_recent(event):
                     return {event: await self._get_event_time(event)}
+
+        # Always check for "moved too fast" popup in battle
+        if await self.is_event_recent(BattleEnums.BATTLE_POPUP):
+            return {
+                BattleEnums.BATTLE_POPUP: await self._get_event_time(
+                    BattleEnums.BATTLE_POPUP
+                )
+            }

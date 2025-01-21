@@ -18,6 +18,7 @@ class NormalAttackResponse:
         self.bot = responses.bot
         self.common = responses.common
         self.updator = responses.updator
+        self.common = responses.common
         self.battle = self.bot.battle
         self.events_common = self.bot.events_common
 
@@ -79,11 +80,25 @@ class NormalAttackResponse:
         if isinstance(summon_enable, int):
             await self.updator.update_summon_availability(summon_enable)
 
-    async def _update_event_time(self):
+    async def _update_event_time(self, event=EventEnums.NORMAL_ATTACK_EVENT):
         """
         Updates event time based on the response.
         """
-        await self.events_common.update_event_time(EventEnums.NORMAL_ATTACK_EVENT)
+        await self.events_common.update_event_time(event)
+
+    async def _check_for_popup(self, r_body, resp):
+        """
+        Checks for a popup message and updates the event time if found.
+
+        Args:
+            r_body (dict): The response body.
+            resp: The response object.
+        """
+
+        if await self.common.is_popup(r_body):
+            if popup_body := r_body.get("popup"):
+                _log.debug(f"Popup found in normal_attack resp: '{popup_body}'")
+                await self._update_event_time(BattleEnums.BATTLE_POPUP)
 
     async def _update_battle(self, r_body, resp):
         """
@@ -97,6 +112,7 @@ class NormalAttackResponse:
         await self._update_boss_hp(r_body, resp)
         await self._update_turn(r_body, resp)
         await self._update_summon_availability(r_body, resp)
+        await self._check_for_popup(r_body, resp)
 
     async def normal_attack_resp_handler(self, resp):
         """

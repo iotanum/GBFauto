@@ -20,6 +20,7 @@ class StartResponse:
         """
         self.bot = responses.bot
         self.updator = responses.updator
+        self.common = responses.common
         self.battle = self.bot.battle
         self.events_common = self.bot.events_common
 
@@ -41,10 +42,9 @@ class StartResponse:
         # Always update FULL_AUTO to false when you get a start.json resp
         self.battle[BattleEnums.FULL_AUTO] = False
 
-        if len(r_body.keys()) == 1:
+        if await self.common.is_popup(r_body):
             if r_body.get("redirect"):
                 _log.debug("'start.json' returned a redirect. Battle is over.")
-                # await self._update_event_time(EventEnums.BATTLE_END_EVENT)
                 self.battle[BattleEnums.BOSS_HPS] = {}
                 self.battle[BattleEnums.BOSS_KILLED] = True
                 return

@@ -77,3 +77,7 @@ class Common:
         boss_positions = [event.get("pos") + 1 for event in boss_gauge_events]
         _log.debug(f"Boss gauge change events found for bosses: {boss_positions}")
         return boss_gauge_events
+
+    async def is_popup(self, r_body):
+        if len(r_body.keys()) == 1:
+            return True

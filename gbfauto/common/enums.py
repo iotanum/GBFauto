@@ -18,6 +18,7 @@ class BattleEnums:
     QUEST_AP_COST = "q_ap_cost"
     FULL_AUTO = "full_auto"
     FINAL_BATTLE = "final_battle"
+    BATTLE_POPUP = "battle_popup"
 
 
 class EventEnums:

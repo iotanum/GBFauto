@@ -1,10 +1,13 @@
 import logging
 import os
+import time
 
 from dotenv import load_dotenv
 
 from gbfauto.common.tasks import background_task
-from gbfauto.common.enums import BattleEnums
+from gbfauto.common.enums import BattleEnums, EventEnums
+from gbfauto.common.utils import is_timeout
+
 
 _log = logging.getLogger(__name__)
 
@@ -29,12 +32,15 @@ class BattleTasks:
         self.in_battle = False
         self.full_auto_enabled = False
         self.refreshed_on_event = {}
+        self.last_hp_change_time = 0
+        self.boss_hps = []
 
         # Start background tasks
         self.is_in_battle.start()
         self.enable_full_auto_in_loading_screen.start()
         self.refresh_after_event.start()
         self.battle_done.start()
+        self.is_battle_hanged.start()
 
     async def already_refresh(self, r_event):
         """
@@ -55,7 +61,7 @@ class BattleTasks:
         Returns:
             bool: True if the bot needs to refresh, False otherwise.
         """
-        if self.battle[BattleEnums.IN_BATTLE]:
+        if self.battle.get(BattleEnums.IN_BATTLE, False):
             if r_event := await self.events_common.is_refresh_event_recent(na=na):
                 if not await self.already_refresh(r_event):
                     self.refreshed_on_event = r_event
@@ -69,6 +75,10 @@ class BattleTasks:
             bool: True if the boss is dead, False otherwise.
         """
         boss_hps = await self.battle_common.get_enemy_hp()
+        if boss_hps != self.boss_hps:
+            self.boss_hps = boss_hps
+            self.last_hp_change_time = time.time()
+
         if boss_hps:
             all_dead = all(hp == 0 for hp in boss_hps)
             if all_dead:
@@ -83,16 +93,16 @@ class BattleTasks:
         """
         if await self.battle_common.in_battle_url():
             if await self.battle_common.can_see_enemy_hp():
-                if not self.in_battle:
-                    self.battle[BattleEnums.IN_BATTLE] = True
-                    self.in_battle = True
+                # Update last HP change time
+                if not self.battle[BattleEnums.IN_BATTLE]:
                     _log.debug("Updating 'in_battle' status to True")
-        else:
-            self.battle[BattleEnums.IN_BATTLE] = False
+                self.battle[BattleEnums.IN_BATTLE] = True
+                return
 
-            if self.in_battle:
-                _log.debug("Updating 'in_battle' status to False")
-                self.in_battle = False
+        if self.battle.get(BattleEnums.IN_BATTLE, False):
+            _log.debug("Updating 'in_battle' status to False")
+        self.battle[BattleEnums.IN_BATTLE] = False
+        self.last_hp_change_time = time.time()
 
     @background_task(interval=0.2)
     async def refresh_after_event(self):
@@ -114,7 +124,7 @@ class BattleTasks:
         Background task to check if the battle is done.
         """
         if self.battle.get(BattleEnums.BOSS_KILLED, False) or await self.is_boss_dead():
-            self.battle[BattleEnums.IN_BATTLE] = False
+            _log.info("Not in battle 2")
             self.battle[BattleEnums.BOSS_KILLED] = False
 
             if await self.battle_common.in_battle_url():
@@ -130,3 +140,18 @@ class BattleTasks:
             if not self.battle.get(BattleEnums.FULL_AUTO, False):
                 if not await self.battle_common.is_queue_this_turn():
                     await self.battle_common.enable_full_auto()
+
+    @background_task(interval=0.1)
+    async def is_battle_hanged(self):
+        """
+        Background task to check if the battle is hanged.
+        """
+        timeout = 3
+        if self.battle.get(BattleEnums.IN_BATTLE, False):
+            last_event_time = self.events[EventEnums.LATEST_EVENT]
+            if await is_timeout(last_event_time, timeout):
+                if await is_timeout(self.last_hp_change_time, timeout):
+                    _log.info(
+                        f"Battle hanged! Both last event and HP didn't change for {timeout}s, refreshing..."
+                    )
+                    await self.utils.refresh()

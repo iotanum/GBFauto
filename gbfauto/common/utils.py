@@ -143,6 +143,7 @@ async def get_response_body(resp):
             _log.error(
                 f"An unexpected error occurred while trying to retrieve response body for '{resp.url}': {e}"
             )
+        return {}
 
 
 async def is_timeout(start_time, timeout):
