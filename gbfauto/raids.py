@@ -4,7 +4,7 @@ import re
 
 from gbfauto.helpers.summons.handle import SummonHandle
 from gbfauto.common.enums import BattleEnums, EventEnums
-from gbfauto.common.utils import get_xpath_from_ele, get_response_body
+from gbfauto.common.utils import get_response_body
 from gbfauto.helpers.actions.ep import Ep
 
 
@@ -72,6 +72,7 @@ class Raids:
         raids = await self._get_raids()
 
         if not raids:
+            _log.info("No raids found.")
             return None
 
         best_raid = None
@@ -136,28 +137,12 @@ class Raids:
                 return
             await asyncio.sleep(0.1)
 
-    async def is_refresh_raid_filter_available(self):
-        class_name = "btn-search-refresh"
-        ele = await self.utils.bs(find=("div", {"class": class_name}))
-        if ele:
-            return ele
-
     async def refresh_raid_filter(self):
-        disabled = "btn-search-refresh disabled"
-        while True:
-            disabled_ele = await self.utils.bs(find=("div", {"class": disabled}))
-            if not disabled_ele:
-                break
+        disabled_ele = self.bot.page.locator("div.btn-search-refresh.disabled")
+        if await disabled_ele.count() > 0:
+            return
 
-            await asyncio.sleep(0.1)
-
-        refresh_ele = await self.is_refresh_raid_filter_available()
-        _log.info("No raids found. Refreshing...")
-        ele_xpath = await get_xpath_from_ele(refresh_ele)
-
-        locator = self.bot.page.locator(f"xpath={ele_xpath}")
-        if await locator.is_enabled():
-            await locator.click()
+        await self.bot.page.locator("div.btn-search-refresh").click()
 
     async def do_raids(self):
         self.raid_uri = await self.bot.utils.get_current_url()

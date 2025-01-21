@@ -132,16 +132,15 @@ class BattleCommon:
         Enables full auto mode in the most efficient way using Playwright.
         """
         fa_ele = self.bot.page.locator("div.txt-auto-setting")
-        if await fa_ele.is_visible():
+        if await fa_ele.count():
             enabled_ele = fa_ele.locator("div.btn-ready-auto.anim-simple-fadein")
-            if enabled_ele:
+            if not await enabled_ele.count():
                 # Sadly need to enable the key here to get the maximum responsiveness out of the bot
+                await fa_ele.click(force=True)
+                self.battle[BattleEnums.FULL_AUTO] = True
                 _log.debug(
                     f"Updating '{BattleEnums.FULL_AUTO}' status to True in helper function."
                 )
-                self.battle[BattleEnums.FULL_AUTO] = True
-
-            await fa_ele.click(force=True)
 
     async def refreshed_on_this_event(self, event, refreshed_event):
         """

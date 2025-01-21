@@ -124,7 +124,6 @@ class BattleTasks:
         Background task to check if the battle is done.
         """
         if self.battle.get(BattleEnums.BOSS_KILLED, False) or await self.is_boss_dead():
-            _log.info("Not in battle 2")
             self.battle[BattleEnums.BOSS_KILLED] = False
 
             if await self.battle_common.in_battle_url():
