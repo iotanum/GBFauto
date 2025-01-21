@@ -1,4 +1,5 @@
 import logging
+import playwright
 
 from gbfauto.common.utils import get_response_body, keys_exists
 from gbfauto.common.enums import BattleEnums, EventEnums
@@ -104,8 +105,11 @@ class NormalAttackResponse:
         Args:
             resp: The response object.
         """
-        r_body = await get_response_body(resp)
-        await self._update_battle(r_body, resp)
+        try:
+            r_body = await get_response_body(resp)
+            await self._update_battle(r_body, resp)
+        except playwright._impl._errors.Error:
+            _log.debug(f"Error while handling 'normal_attack_response' from {resp.url}")
 
         _log.debug(f"Battle info updated from {resp.url}")
         _log.debug(f"Battle info: {self.battle}")

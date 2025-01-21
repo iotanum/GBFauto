@@ -2,7 +2,7 @@ import logging
 import re
 import asyncio
 
-from gbfauto.common.enums import SummonEnums
+from gbfauto.common.enums import SummonEnums, EventEnums
 from gbfauto.common.utils import get_response_body
 
 _log = logging.getLogger(__name__)
@@ -156,15 +156,9 @@ class SummonsCommon:
         return await self.check_for_popups()
 
     async def is_in_summon_selection(self):
-        supp_screen_resp = None
         while True:
-            if not supp_screen_resp:
-                uri_regex = re.compile(".*quest/content/supporter.*")
-                async with self.bot.page.expect_response(uri_regex) as resp:
-                    await resp.value
-                    supp_screen_resp = True
-
-            if supp_screen_resp:
+            if await self.events_common.is_event_recent(EventEnums.SUMMON_SCREEN_EVENT):
+                _log.debug("Found an event for summon_screen, continuing with the process.")
                 if await self.is_in_summon_selection_url():
                     if await self.can_select_summon():
                         return True

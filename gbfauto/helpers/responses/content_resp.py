@@ -117,10 +117,23 @@ class ContentResponse:
         # if it's a result response, update required keys for battle
         result_resp_regex = re.compile(".*result.*\/content.*")
         if result_resp_regex.match(resp.url):
-            # update event time
             self.battle[BattleEnums.BOSS_KILLED] = True
             self.battle[BattleEnums.BOSS_HPS] = {}
             await self._update_event_time()
+
+    async def _update_summon_resp_status(self, r_body, resp):
+        """
+        Updates summon response status based on the response.
+
+        Args:
+            r_body (dict): The response body.
+            resp: The response object.
+        """
+        _log.debug(f"Trying to update 'summon_screen_resp' from '{resp.url}'")
+
+        result_resp_regex = re.compile(".*quest/content/supporter.*")
+        if result_resp_regex.match(resp.url):
+            await self._update_event_time(event=EventEnums.SUMMON_SCREEN_EVENT)
 
     async def content_response_handler(self, resp):
         """
@@ -136,6 +149,7 @@ class ContentResponse:
             # update user status in events
             await self._update_player_status(r_body, resp)
             await self._update_battle_status(r_body, resp)
+            await self._update_summon_resp_status(r_body, resp)
 
             _log.debug(f"'Content' response handler, updated from '{resp.url}'")
             _log.debug(f"'Content' response handler, player status: {self.p_status}")
