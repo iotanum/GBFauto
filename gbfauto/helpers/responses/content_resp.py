@@ -135,6 +135,19 @@ class ContentResponse:
         if result_resp_regex.match(resp.url):
             await self._update_event_time(event=EventEnums.SUMMON_SCREEN_EVENT)
 
+    async def _check_for_popup(self, r_body):
+        """
+        Checks for a popup message and updates the event time if found.
+
+        Args:
+            r_body (dict): The response body.
+        """
+
+        if await self.common.is_popup(r_body):
+            if popup_body := r_body.get("popup"):
+                _log.debug(f"Popup found in content resp: '{popup_body}'")
+                await self._update_event_time(BattleEnums.BATTLE_POPUP)
+
     async def content_response_handler(self, resp):
         """
         Handles the content response.
@@ -147,6 +160,7 @@ class ContentResponse:
             r_body = await self._fix_content_response_body(r_body)
 
             # update user status in events
+            await self._check_for_popup(r_body)
             await self._update_player_status(r_body, resp)
             await self._update_battle_status(r_body, resp)
             await self._update_summon_resp_status(r_body, resp)
