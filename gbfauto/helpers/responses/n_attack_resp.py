@@ -86,13 +86,12 @@ class NormalAttackResponse:
         """
         await self.events_common.update_event_time(event)
 
-    async def _check_for_popup(self, r_body, resp):
+    async def _check_for_popup(self, r_body):
         """
         Checks for a popup message and updates the event time if found.
 
         Args:
             r_body (dict): The response body.
-            resp: The response object.
         """
 
         if await self.common.is_popup(r_body):
@@ -112,7 +111,6 @@ class NormalAttackResponse:
         await self._update_boss_hp(r_body, resp)
         await self._update_turn(r_body, resp)
         await self._update_summon_availability(r_body, resp)
-        await self._check_for_popup(r_body, resp)
 
     async def normal_attack_resp_handler(self, resp):
         """
@@ -123,6 +121,7 @@ class NormalAttackResponse:
         """
         try:
             r_body = await get_response_body(resp)
+            await self._check_for_popup(r_body)
             await self._update_battle(r_body, resp)
         except playwright._impl._errors.Error:
             _log.debug(f"Error while handling 'normal_attack_response' from {resp.url}")

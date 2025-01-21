@@ -93,10 +93,9 @@ class BattleTasks:
         """
         if await self.battle_common.in_battle_url():
             if await self.battle_common.can_see_enemy_hp():
-                # Update last HP change time
+                self.battle[BattleEnums.IN_BATTLE] = True
                 if not self.battle[BattleEnums.IN_BATTLE]:
                     _log.debug("Updating 'in_battle' status to True")
-                self.battle[BattleEnums.IN_BATTLE] = True
                 return
 
         if self.battle.get(BattleEnums.IN_BATTLE, False):
@@ -125,7 +124,6 @@ class BattleTasks:
         """
         if self.battle.get(BattleEnums.BOSS_KILLED, False) or await self.is_boss_dead():
             self.battle[BattleEnums.BOSS_KILLED] = False
-
             if await self.battle_common.in_battle_url():
                 _log.debug("Battle is done, refreshing...")
                 await self.utils.refresh()

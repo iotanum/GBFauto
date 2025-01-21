@@ -42,13 +42,6 @@ class StartResponse:
         # Always update FULL_AUTO to false when you get a start.json resp
         self.battle[BattleEnums.FULL_AUTO] = False
 
-        if await self.common.is_popup(r_body):
-            if r_body.get("redirect"):
-                _log.debug("'start.json' returned a redirect. Battle is over.")
-                self.battle[BattleEnums.BOSS_HPS] = {}
-                self.battle[BattleEnums.BOSS_KILLED] = True
-                return
-
         # Scan through _b_info and update battle info
         # includes: total_battles, current_battle, current_turn, bosses (hp, names, etc.)
         for p_info in self._b_info:
@@ -109,6 +102,24 @@ class StartResponse:
         await self._update_win_conditions()
         await self._update_summon_availability(r_body, resp)
 
+    async def _check_for_popup(self, r_body):
+        """
+        Checks for a popup message and updates the event time if found.
+
+        Args:
+            r_body (dict): The response body.
+        """
+
+        if await self.common.is_popup(r_body):
+            if popup_body := r_body.get("popup"):
+                _log.debug(f"Popup found in start_resp resp: '{popup_body}'")
+                await self._update_event_time(BattleEnums.BATTLE_POPUP)
+
+            if r_body.get("redirect"):
+                _log.debug("'start.json' returned a redirect. Battle is over.")
+                self.battle[BattleEnums.BOSS_HPS] = {}
+                self.battle[BattleEnums.BOSS_KILLED] = True
+
     async def start_response_handler(self, resp):
         """
         Handles the start response.
@@ -117,6 +128,7 @@ class StartResponse:
             resp: The response object.
         """
         r_body = await get_response_body(resp)
+        await self._check_for_popup(r_body)
         await self._update_battle(r_body, resp)
 
         _log.debug(f"'start' response handler, updated from {resp.url}")
