@@ -38,6 +38,9 @@ class StartResponse:
             r_body (dict): The response body in dictionary format.
             resp: The response object.
         """
+        # Always update FULL_AUTO to false when you get a start.json resp
+        self.battle[BattleEnums.FULL_AUTO] = False
+
         if len(r_body.keys()) == 1:
             if r_body.get("redirect"):
                 _log.debug("'start.json' returned a redirect. Battle is over.")

@@ -58,7 +58,6 @@ class BattleTasks:
         if self.battle[BattleEnums.IN_BATTLE]:
             if r_event := await self.events_common.is_refresh_event_recent(na=na):
                 if not await self.already_refresh(r_event):
-                    self.battle[BattleEnums.FULL_AUTO] = False
                     self.refreshed_on_event = r_event
                     await self.utils.refresh()
 
@@ -90,7 +89,6 @@ class BattleTasks:
                     _log.debug("Updating 'in_battle' status to True")
         else:
             self.battle[BattleEnums.IN_BATTLE] = False
-            self.battle[BattleEnums.FULL_AUTO] = False
 
             if self.in_battle:
                 _log.debug("Updating 'in_battle' status to False")
@@ -117,7 +115,6 @@ class BattleTasks:
         """
         if self.battle.get(BattleEnums.BOSS_KILLED, False) or await self.is_boss_dead():
             self.battle[BattleEnums.IN_BATTLE] = False
-            self.battle[BattleEnums.FULL_AUTO] = False
             self.battle[BattleEnums.BOSS_KILLED] = False
 
             if await self.battle_common.in_battle_url():
@@ -133,5 +130,3 @@ class BattleTasks:
             if not self.battle.get(BattleEnums.FULL_AUTO, False):
                 if not await self.battle_common.is_queue_this_turn():
                     await self.battle_common.enable_full_auto()
-        else:
-            self.battle[BattleEnums.FULL_AUTO] = False
