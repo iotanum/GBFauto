@@ -138,9 +138,9 @@ async def get_response_body(resp):
         return await resp.json()
     except Error as e:
         if "No resource with given identifier found" in str(e):
-            print(f"Failed to retrieve response body for '{resp.url}': {e}")
+            _log.error(f"Failed to retrieve response body for '{resp.url}': {e}")
         else:
-            print(
+            _log.error(
                 f"An unexpected error occurred while trying to retrieve response body for '{resp.url}': {e}"
             )
 
