@@ -132,9 +132,6 @@ class BattleTasks:
         if await self.battle_common.in_battle_url():
             if not self.battle.get(BattleEnums.FULL_AUTO, False):
                 if not await self.battle_common.is_queue_this_turn():
-                    enabled = await self.battle_common.enable_full_auto()
-                    if enabled:
-                        self.battle[BattleEnums.FULL_AUTO] = True
-                        _log.info("Enabled full auto in loading screen!")
+                    await self.battle_common.enable_full_auto()
         else:
             self.battle[BattleEnums.FULL_AUTO] = False

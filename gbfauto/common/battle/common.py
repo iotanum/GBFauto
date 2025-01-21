@@ -1,7 +1,10 @@
 import typing
-import asyncio
+import logging
 
 from gbfauto.common.enums import BattleEnums
+
+
+_log = logging.getLogger(__name__)
 
 
 class BattleCommon:
@@ -128,22 +131,17 @@ class BattleCommon:
         """
         Enables full auto mode in the most efficient way using Playwright.
         """
-        while True:
-            # Check if the "Full Auto" setting element is visible
-            fa_ele = await self.bot.page.query_selector("div.txt-auto-setting")
-            if fa_ele:
-                # Check if the "enabled" button is present
-                enabled = await self.bot.page.query_selector(
-                    "div.btn-ready-auto.anim-simple-fadein"
-                )
-                if not enabled:
-                    await fa_ele.click(force=True)
-                    return
-                else:
-                    return True
+        fa_ele = self.bot.page.locator("div.txt-auto-setting")
+        if await fa_ele.is_visible():
+            enabled_ele = fa_ele.locator(
+                "div.btn-ready-auto.anim-simple-fadein"
+            )
+            if enabled_ele:
+                # Sadly need to enable the key here to get the maximum responsiveness out of the bot
+                _log.debug(f"Updating '{BattleEnums.FULL_AUTO}' status to True in helper function.")
+                self.battle[BattleEnums.FULL_AUTO] = True
 
-            # Add a short delay before rechecking
-            await asyncio.sleep(0.1)
+            await fa_ele.click(force=True)
 
     async def refreshed_on_this_event(self, event, refreshed_event):
         """
