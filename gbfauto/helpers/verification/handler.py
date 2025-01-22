@@ -25,7 +25,7 @@ class Verification:
         self.utils = self.bot.utils
 
     async def handler(self):
-        retries = 3
+        retries = 5
         for _ in range(retries):
             await self.screenshot_verification_img()
 
