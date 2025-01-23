@@ -121,7 +121,7 @@ class BattleTasks:
 
         await self.need_refresh()
 
-    @background_task(interval=0.2)
+    @background_task(interval=0.5)
     async def battle_done(self):
         """
         Background task to check if the battle is done.
@@ -145,12 +145,12 @@ class BattleTasks:
                 if not await self.battle_common.is_queue_this_turn():
                     await self.battle_common.enable_full_auto()
 
-    @background_task(interval=0.1)
+    @background_task(interval=5)
     async def is_battle_hanged(self):
         """
         Background task to check if the battle is hanged.
         """
-        timeout = 5
+        timeout = 10
         if self.battle.get(BattleEnums.IN_BATTLE, False):
             last_event_time = self.events[EventEnums.LATEST_EVENT]
             if await is_timeout(last_event_time, timeout):
