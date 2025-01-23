@@ -4,10 +4,10 @@ import asyncio
 from gbfauto.common.utils import get_xpath_from_ele
 
 
-class Ep:
+class Ap:
     def __init__(self, bot):
         """
-        Initializes the Ep instance.
+        Initializes the Ap instance.
 
         Args:
             bot: Bot instance.
@@ -16,62 +16,17 @@ class Ep:
         self.utils = self.bot.utils
         self.battle_common = self.bot.battle_common
 
-        self.minimum_ep = 15
+        self.minimum_ap = 50
 
-    async def wait_for_ep_response(self):
+    async def wait_for_ap_response(self):
         """
-        Waits for the EP response.
+        Waits for the AP response.
         """
 
         uri_regex = re.compile(".*normal_item_list.*")
         async with self.bot.page.expect_response(uri_regex) as resp:
             await resp.value
             return True
-
-    async def try_in_menu_bp(self):
-        """
-        Tries to use EP in the menu BP screen.
-        """
-        in_menu_bp_class_name = re.compile("prt-user-bp.*")
-        in_menu_bp_ele = await self.utils.bs(
-            find=("div", {"class": in_menu_bp_class_name})
-        )
-        if in_menu_bp_ele:
-            await self.utils.click(in_menu_bp_ele)
-
-            await self.wait_for_ep_response()
-
-            popup_ele_regex = re.compile("pop-usual pop-recover-stamina .* pop-show")
-            while True:
-                is_visible = await self.utils.bs(
-                    find=("div", {"class": popup_ele_regex})
-                )
-                if is_visible:
-                    use_item_ele = await self.utils.bs(
-                        find_all=("select", {"class": "use-item-num"})
-                    )
-                    if use_item_ele:
-                        berry_item_ele = use_item_ele[-1]
-                        await self.utils.click(berry_item_ele)
-
-                        if berry_item_ele:
-                            options = await self.utils.bs(
-                                find_all=("option", {"value": True}),
-                                parser=berry_item_ele,
-                            )
-                            if options:
-                                last_ep_berry_ele = options[-1]
-                                dropdown_ele_xpath = await get_xpath_from_ele(
-                                    berry_item_ele
-                                )
-                                locator = self.bot.page.locator(dropdown_ele_xpath)
-
-                                await locator.select_option(
-                                    value=last_ep_berry_ele.text
-                                )
-                                return True
-
-                await asyncio.sleep(0.1)
 
     async def use_in_consumable_menu(self):
         consumables_url = "https://game.granbluefantasy.jp/#item/"
@@ -133,17 +88,14 @@ class Ep:
 
             await asyncio.sleep(0.1)
 
-    async def use_ep(self):
+    async def use_ap(self):
         """
         Uses EP if the current EP is greater than the minimum EP.
         """
-        current_ep = self.bot.p_status.get("current_ep", 0)
+        current_ep = self.bot.p_status.get("current_ap", 0)
 
-        if current_ep > self.minimum_ep:
+        if current_ep > self.minimum_ap:
             return
 
-        in_menu_success = await self.try_in_menu_bp()
-        if not in_menu_success:
-            await self.use_in_consumable_menu()
-
+        await self.use_in_consumable_menu()
         return await self.confirm_usage()

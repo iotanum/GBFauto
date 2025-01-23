@@ -2,6 +2,7 @@ import logging
 import asyncio
 
 from gbfauto.raids import Raids
+from gbfauto.generic_quests import GenericQuest
 
 _log = logging.getLogger(__name__)
 
@@ -18,6 +19,7 @@ class Questing:
         self.utils = self.bot.utils
         self.quest_url = None
         self.raids = Raids(self)
+        self.generic_q = GenericQuest(self)
 
         # For Signal Handling
         # self.keyboard_interrupted = self.bot.keyboard_interrupted
@@ -31,8 +33,6 @@ class Questing:
         """
         Waits for the player to enter a quest and continuously checks for actions based on the current URL.
         """
-        self.keyboard_interrupted = False
-
         if not self.quest_url:
             _log.info("Waiting for you to enter a quest...")
 
@@ -57,4 +57,4 @@ class Questing:
         Handles generic quest action.
         """
         _log.info("Locked on to generic quest.")
-        pass
+        await self.generic_q.do_quest()
