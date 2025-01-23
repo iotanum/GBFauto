@@ -31,3 +31,4 @@ class EventEnums:
     SUMMON_PICKED_EVENT = "summon_picked_event"
     SUMMON_CONFIRMED_EVENT = "summon_confirmed_event"
     BATTLE_END_EVENT = "battle_end_event"
+    RESULT_SCREEN_EVENT = "result_screen_event"

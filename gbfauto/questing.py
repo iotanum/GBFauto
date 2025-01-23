@@ -50,6 +50,7 @@ class Questing:
         Handles raids action.
         """
         _log.info("Locked on to raids.")
+        self.bot.raids = True
         await self.raids.do_raids()
 
     async def handle_generic_quest(self) -> None:

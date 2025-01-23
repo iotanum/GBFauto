@@ -1,8 +1,7 @@
 import logging
-import playwright
 
-from gbfauto.common.utils import get_response_body, keys_exists
-from gbfauto.common.enums import BattleEnums, EventEnums
+from gbfauto.common.utils import get_response_body
+from gbfauto.common.enums import EventEnums
 
 _log = logging.getLogger(__name__)
 
@@ -16,101 +15,16 @@ class NormalAttackResponse:
             responses: The parent responses object.
         """
         self.bot = responses.bot
-        self.common = responses.common
-        self.updator = responses.updator
-        self.common = responses.common
-        self.battle = self.bot.battle
+        self.resp_common = responses.common
         self.events_common = self.bot.events_common
-
-    async def _update_win_conditions(self, win_event):
-        """
-        Updates win conditions based on the win event.
-
-        Args:
-            win_event: The win event.
-        """
-        mob_killed = bool(win_event)
-        quest_done = mob_killed and self.battle[BattleEnums.FINAL_BATTLE]
-
-        await self.updator.update_win_conditions(mob_killed, quest_done)
-
-    async def _update_turn(self, r_body, resp):
-        """
-        Updates the turn based on the response.
-
-        Args:
-            r_body (dict): The response body.
-            resp: The response object.
-        """
-        nested_key = ["status", "turn"]
-        turn_value = await keys_exists(r_body, *nested_key, resp_url=resp.url)
-
-        if turn_value:
-            await self.updator.update_turn(turn_value, resp.url)
-
-    async def _update_boss_hp(self, r_body, resp):
-        """
-        Updates boss HP and win conditions based on the response.
-
-        Args:
-            r_body (dict): The response body.
-            resp: The response object.
-        """
-        scenarios = await keys_exists(r_body, "scenario", resp_url=resp.url)
-
-        if scenarios:
-            boss_gauge_events = await self.common.gather_gauge_change_events(scenarios)
-            await self.updator.update_boss_hp(boss_gauge_events)
-
-            win_event = await self.common.gather_win_event(scenarios)
-            await self._update_win_conditions(win_event)
-
-    async def _update_summon_availability(self, r_body, resp):
-        """
-        Updates summon availability based on the response.
-
-        Args:
-            r_body (dict): The response body.
-            resp: The response object.
-        """
-        nested_key = ["status", "summon_enable"]
-        summon_enable = await keys_exists(r_body, *nested_key, resp_url=resp.url)
-
-        # custom check because Python evaluates 0 as false
-        if isinstance(summon_enable, int):
-            await self.updator.update_summon_availability(summon_enable)
-
-    async def _update_event_time(self, event=EventEnums.NORMAL_ATTACK_EVENT):
-        """
-        Updates event time based on the response.
-        """
-        await self.events_common.update_event_time(event)
-
-    async def _check_for_popup(self, r_body):
-        """
-        Checks for a popup message and updates the event time if found.
-
-        Args:
-            r_body (dict): The response body.
-        """
-
-        if await self.common.is_popup(r_body):
-            if popup_body := r_body.get("popup"):
-                _log.debug(f"Popup found in normal_attack resp: '{popup_body}'")
-                await self._update_event_time(BattleEnums.BATTLE_POPUP)
+        self.battle = self.bot.battle
 
     async def _update_battle(self, r_body, resp):
         """
         Updates battle information based on the response.
-
-        Args:
-            r_body (dict): The response body.
-            resp: The response object.
         """
-        await self._update_event_time()
-        await self._update_boss_hp(r_body, resp)
-        await self._update_turn(r_body, resp)
-        await self._update_summon_availability(r_body, resp)
+        await self.resp_common.update_turn(r_body, resp)
+        await self.resp_common.update_summon_availability(r_body, resp)
 
     async def normal_attack_resp_handler(self, resp):
         """
@@ -119,12 +33,11 @@ class NormalAttackResponse:
         Args:
             resp: The response object.
         """
-        try:
-            r_body = await get_response_body(resp)
-            await self._check_for_popup(r_body)
-            await self._update_battle(r_body, resp)
-        except playwright._impl._errors.Error:
-            _log.debug(f"Error while handling 'normal_attack_response' from {resp.url}")
+        r_body = await get_response_body(resp)
+        await self.events_common.update_event_time(EventEnums.NORMAL_ATTACK_EVENT)
+        await self.resp_common.update_popup_status(r_body, resp)
+        await self.resp_common.update_battle_from_scenarios(r_body, resp)
+        await self._update_battle(r_body, resp)
 
-        _log.debug(f"Battle info updated from {resp.url}")
-        _log.debug(f"Battle info: {self.battle}")
+        _log.debug(f"Normal attack response handled from '{resp.url}'")
+        _log.debug(f"Battle Status: {self.battle}")

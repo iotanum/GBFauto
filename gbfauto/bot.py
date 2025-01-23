@@ -46,6 +46,7 @@ class Bot:
         self.popup = None
         self.startup_time = time.time()
         self.battle_count = 0
+        self.raids = False
 
         # Common attributes
         self.utils = Utils(self)

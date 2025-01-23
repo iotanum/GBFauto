@@ -120,6 +120,7 @@ class ContentResponse:
             self.battle[BattleEnums.BOSS_KILLED] = True
             self.battle[BattleEnums.BOSS_HPS] = {}
             await self._update_event_time()
+            await self._update_event_time(event=EventEnums.RESULT_SCREEN_EVENT)
 
     async def _update_summon_resp_status(self, r_body, resp):
         """
@@ -143,7 +144,7 @@ class ContentResponse:
             r_body (dict): The response body.
         """
 
-        if await self.common.is_popup(r_body):
+        if len(r_body.keys()) == 1:
             if popup_body := r_body.get("popup"):
                 _log.debug(f"Popup found in content resp: '{popup_body}'")
                 await self._update_event_time(BattleEnums.BATTLE_POPUP)

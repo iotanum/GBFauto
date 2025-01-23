@@ -61,9 +61,13 @@ class BattleTasks:
         Returns:
             bool: True if the bot needs to refresh, False otherwise.
         """
-        if self.battle.get(BattleEnums.IN_BATTLE, False):
+        if (
+            self.battle.get(BattleEnums.IN_BATTLE, False)
+            or await self.battle_common.in_battle_url()
+        ):
             if r_event := await self.events_common.is_refresh_event_recent(na=na):
                 if not await self.already_refresh(r_event):
+                    _log.debug(f"Refresh event found! {r_event}")
                     self.refreshed_on_event = r_event
                     await self.utils.refresh()
 
@@ -122,6 +126,9 @@ class BattleTasks:
         """
         Background task to check if the battle is done.
         """
+        if not self.bot.raids:
+            return
+
         if self.battle.get(BattleEnums.BOSS_KILLED, False) or await self.is_boss_dead():
             self.battle[BattleEnums.BOSS_KILLED] = False
             if await self.battle_common.in_battle_url():
@@ -143,7 +150,7 @@ class BattleTasks:
         """
         Background task to check if the battle is hanged.
         """
-        timeout = 3
+        timeout = 5
         if self.battle.get(BattleEnums.IN_BATTLE, False):
             last_event_time = self.events[EventEnums.LATEST_EVENT]
             if await is_timeout(last_event_time, timeout):

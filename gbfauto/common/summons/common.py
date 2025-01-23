@@ -87,6 +87,29 @@ class SummonsCommon:
         await self.utils.click(all_eles[supp_ele - 1], timeout=1)
         return await self.is_supp_ele_clicked(supp_ele)
 
+    async def update_consumables_status(self):
+        """
+        Updates the consumables status using Playwright.
+        """
+        consumables_ele = self.bot.page.locator("div.txt-stamina")
+
+        if await consumables_ele.count() > 0:
+            consumables_text = await consumables_ele.inner_text()
+            consumables_ele = consumables_ele.locator("span.txt-stamina-after")
+            if await consumables_ele.count() > 0:
+                if "AP" in consumables_text:
+                    consumables_text = await consumables_ele.inner_text()
+                    self.p_status["current_ap"] = int(consumables_text.strip())
+                    _log.debug(f"Updating AP from summon screen: {self.p_status}")
+                    return True
+                if "EP" in consumables_text:
+                    consumables_text = await consumables_ele.inner_text()
+                    self.p_status["current_ep"] = int(consumables_text.strip())
+                    _log.debug(f"Updating EP from summon screen: {self.p_status}")
+                    return True
+
+        return False
+
     async def is_summon_clicked(self):
         """
         Checks if a summon is clicked.
@@ -110,9 +133,10 @@ class SummonsCommon:
                     find=("div", {"class": class_re, "style": style_re})
                 )
                 if visible:
-                    return True
+                    if await self.update_consumables_status():
+                        return True
 
-            await asyncio.sleep(1)
+            await asyncio.sleep(0.5)
 
     async def click_best_summon(self, best_summon):
         """
@@ -123,7 +147,7 @@ class SummonsCommon:
         return await self.is_summon_clicked()
 
     async def check_for_popups(self):
-        uri_regex = re.compile(".*deck_data_create.*")
+        uri_regex = re.compile(".*deck_data_create.*|.*create_quest.*")
         try:
             async with self.bot.page.expect_response(uri_regex) as resp:
                 response = await resp.value

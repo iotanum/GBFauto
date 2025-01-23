@@ -20,7 +20,7 @@ class StartResponse:
         """
         self.bot = responses.bot
         self.updator = responses.updator
-        self.common = responses.common
+        self.resp_common = responses.common
         self.battle = self.bot.battle
         self.events_common = self.bot.events_common
 
@@ -47,42 +47,11 @@ class StartResponse:
         for p_info in self._b_info:
             k, nested_key = list(p_info.items())[0]
             if info := await keys_exists(r_body, *nested_key, resp_url=resp.url):
-                _log.debug(f"Updating battle info for '{k}' with '{info}'...")
-
                 if isinstance(info, list):
-                    await self.updator.update_boss_hp(info)
+                    await self.resp_common.update_boss_hp(info)
                     continue
 
                 self.battle[k] = int(info)
-
-    async def _update_win_conditions(self):
-        """
-        Updates win conditions based on battle status.
-        """
-        mob_killed = not self.battle[BattleEnums.BOSS_HPS]
-        quest_done = mob_killed and self.battle[BattleEnums.FINAL_BATTLE]
-        await self.updator.update_win_conditions(mob_killed, quest_done)
-
-    async def _update_summon_availability(self, r_body, resp):
-        """
-        Updates summon availability based on the response.
-
-        Args:
-            r_body (dict): The response body in dictionary format.
-            resp: The response object.
-        """
-        key = ["summon_enable"]
-        summon_enable = await keys_exists(r_body, *key, resp_url=resp.url)
-
-        # Custom check because Python evaluates 0 as false
-        if isinstance(summon_enable, int):
-            await self.updator.update_summon_availability(summon_enable)
-
-    async def _update_event_time(self, event=EventEnums.START_EVENT):
-        """
-        Updates event time based on the response.
-        """
-        await self.events_common.update_event_time(event)
 
     async def _update_is_final_battle(self):
         await self.updator.update_final_battle()
@@ -95,12 +64,9 @@ class StartResponse:
             r_body (dict): The response body in dictionary format.
             resp: The response object.
         """
-        _log.debug(f"Updating battle info from {resp.url}...")
-        await self._update_event_time()
         await self._update_is_final_battle()
         await self._update_battle_info(r_body, resp)
-        await self._update_win_conditions()
-        await self._update_summon_availability(r_body, resp)
+        await self.resp_common.update_summon_availability(r_body, resp)
 
     async def _check_for_popup(self, r_body):
         """
@@ -109,16 +75,11 @@ class StartResponse:
         Args:
             r_body (dict): The response body.
         """
-
-        if await self.common.is_popup(r_body):
-            if popup_body := r_body.get("popup"):
-                _log.debug(f"Popup found in start_resp resp: '{popup_body}'")
-                await self._update_event_time(BattleEnums.BATTLE_POPUP)
-
-            if r_body.get("redirect"):
-                _log.debug("'start.json' returned a redirect. Battle is over.")
-                self.battle[BattleEnums.BOSS_HPS] = {}
-                self.battle[BattleEnums.BOSS_KILLED] = True
+        if r_body.get("redirect"):
+            _log.debug("'start.json' returned a redirect. Battle is over.")
+            self.battle[BattleEnums.BOSS_HPS] = {}
+            self.battle[BattleEnums.BOSS_KILLED] = True
+            self.events_common.update_event_time(EventEnums.BATTLE_END_EVENT)
 
     async def start_response_handler(self, resp):
         """
@@ -129,7 +90,10 @@ class StartResponse:
         """
         r_body = await get_response_body(resp)
         await self._check_for_popup(r_body)
+        await self.events_common.update_event_time(EventEnums.START_EVENT)
+        await self.resp_common.update_popup_status(r_body, resp)
+        await self.resp_common.update_battle_from_scenarios(r_body, resp)
         await self._update_battle(r_body, resp)
 
-        _log.debug(f"'start' response handler, updated from {resp.url}")
-        _log.debug(f"'start' response handler, battle info: {self.battle}")
+        _log.debug(f"Start response handled from '{resp.url}'")
+        _log.debug(f"Battle Status: {self.battle}")

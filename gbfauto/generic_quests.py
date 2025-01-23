@@ -1,11 +1,9 @@
 import logging
 import asyncio
-import re
 
 from gbfauto.helpers.summons.handle import SummonHandle
-from gbfauto.common.enums import BattleEnums, EventEnums
-from gbfauto.common.utils import get_response_body
-from gbfauto.helpers.actions.ep import Ep
+from gbfauto.common.enums import EventEnums
+from gbfauto.helpers.actions.ap import Ap
 
 
 _log = logging.getLogger(__name__)
@@ -17,7 +15,7 @@ class GenericQuest:
         self.utils = self.bot.utils
         self.summon_handle = SummonHandle(self.bot)
         self.p_status = self.bot.p_status
-        self.ep_handler = Ep(self.bot)
+        self.ap_handler = Ap(self.bot)
         self.events_common = self.bot.events_common
 
         # Common
@@ -29,20 +27,11 @@ class GenericQuest:
         """
         Waits for the battle to end.
         """
-        while not self.battle[BattleEnums.IN_BATTLE]:
-            _log.debug("Waiting for battle to start...")
-            if await self.events_common.is_event_recent(EventEnums.BATTLE_END_EVENT):
-                _log.info("Too slow, fellas. Returning to raid filters screen...")
-                self.navigated_to_quest_uri = False
-                return
-
-            await asyncio.sleep(0.1)
-
         while True:
             _log.debug("Waiting for battle to end...")
-            if await self.events_common.is_event_recent(EventEnums.BATTLE_END_EVENT):
+            if await self.events_common.is_event_recent(EventEnums.RESULT_SCREEN_EVENT):
                 self.navigated_to_quest_uri = False
-                _log.info("Returning to raid filters screen...")
+                _log.info("Returning to the quest screen...")
                 return
             await asyncio.sleep(0.1)
 
@@ -50,16 +39,16 @@ class GenericQuest:
         self.quest_uri = await self.bot.utils.get_current_url()
 
         while True:
-            if not self.navigated_to_quest_uri:
-                await self.bot.utils.go_to_url(
-                    self.quest_uri
-                )
-                self.navigated_to_quest_uri = True
-
-            used_ep = await self.ep_handler.use_ep()
-            if used_ep:
+            used_ap = await self.ap_handler.use_ap()
+            if used_ap:
                 self.navigated_to_quest_uri = False
                 continue
+
+            if not self.navigated_to_quest_uri:
+                await self.bot.utils.go_to_url(
+                    self.quest_uri,
+                )
+                self.navigated_to_quest_uri = True
 
             popup = await self.summon_handle.pick_summon()
             if popup:

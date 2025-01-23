@@ -41,7 +41,7 @@ class Ep:
 
             await self.wait_for_ep_response()
 
-            popup_ele_regex = re.compile("pop-usual pop-recover-stamina .* pop-show")
+            popup_ele_regex = re.compile("pop-usual pop-recover-stamina.*pop-show")
             while True:
                 is_visible = await self.utils.bs(
                     find=("div", {"class": popup_ele_regex})
