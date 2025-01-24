@@ -76,5 +76,11 @@ class EventsCommon:
                     return {event: self.events[event]}
 
         # Always check for "moved too fast" popup in battle
-        if await self.is_event_recent(BattleEnums.BATTLE_POPUP):
-            return {BattleEnums.BATTLE_POPUP: self.events[BattleEnums.BATTLE_POPUP]}
+        # and battle end event
+        important_events = [
+            BattleEnums.BATTLE_POPUP,
+            EventEnums.BATTLE_END_EVENT,
+        ]
+        for event in important_events:
+            if await self.is_event_recent(event):
+                return {event: self.events[event]}

@@ -30,7 +30,6 @@ class BattleTasks:
 
         # Sub-attributes
         self.in_battle = False
-        self.full_auto_enabled = False
         self.refreshed_on_event = {}
         self.last_hp_change_time = 0
         self.boss_hps = []
@@ -39,7 +38,6 @@ class BattleTasks:
         self.is_in_battle.start()
         self.enable_full_auto_in_loading_screen.start()
         self.refresh_after_event.start()
-        self.battle_done.start()
         self.is_battle_hanged.start()
 
     async def already_refresh(self, r_event):
@@ -121,29 +119,17 @@ class BattleTasks:
 
         await self.need_refresh()
 
-    @background_task(interval=0.5)
-    async def battle_done(self):
-        """
-        Background task to check if the battle is done.
-        """
-        if not self.bot.raids:
-            return
-
-        if self.battle.get(BattleEnums.BOSS_KILLED, False) or await self.is_boss_dead():
-            self.battle[BattleEnums.BOSS_KILLED] = False
-            if await self.battle_common.in_battle_url():
-                _log.debug("Battle is done, refreshing...")
-                await self.utils.refresh()
-
     @background_task(interval=0.1)
     async def enable_full_auto_in_loading_screen(self):
         """
         Background task to enable full auto in the loading screen.
         """
-        if await self.battle_common.in_battle_url():
-            if not self.battle.get(BattleEnums.FULL_AUTO, False):
-                if not await self.battle_common.is_queue_this_turn():
-                    await self.battle_common.enable_full_auto()
+        if self.battle.get(BattleEnums.FULL_AUTO, False):
+            return
+
+        if await self.events_common.is_event_recent(EventEnums.START_EVENT):
+            if not await self.battle_common.is_queue_this_turn():
+                await self.battle_common.enable_full_auto()
 
     @background_task(interval=5)
     async def is_battle_hanged(self):
