@@ -65,15 +65,15 @@ class EventsCommon:
             EventEnums.ABILITY_EVENT,
             EventEnums.SUMMON_EVENT,
         ]
-
         if na:
-            normal_atk_event = EventEnums.NORMAL_ATTACK_EVENT
-            if await self.is_event_recent(normal_atk_event):
-                return {normal_atk_event: self.events[normal_atk_event]}
-        else:
-            for event in refresh_events:
-                if await self.is_event_recent(event):
-                    return {event: self.events[event]}
+            refresh_events = [
+                EventEnums.NORMAL_ATTACK_EVENT,
+                EventEnums.SUMMON_EVENT,
+            ]
+
+        for event in refresh_events:
+            if await self.is_event_recent(event):
+                return {event: self.events[event]}
 
         # Always check for "moved too fast" popup in battle
         # and battle end event
