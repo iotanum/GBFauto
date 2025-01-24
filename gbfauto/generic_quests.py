@@ -33,7 +33,7 @@ class GenericQuest:
                 self.navigated_to_quest_uri = False
                 _log.info("Returning to the quest screen...")
                 return
-            await asyncio.sleep(0.1)
+            await asyncio.sleep(0.5)
 
     async def do_quest(self):
         self.quest_uri = await self.bot.utils.get_current_url()
@@ -52,7 +52,7 @@ class GenericQuest:
 
             popup = await self.summon_handle.pick_summon()
             if popup:
-                self.navigated_to_quest_uri = False
+                await self.utils.refresh()
                 continue
 
             await self.wait_for_battle_to_end()
