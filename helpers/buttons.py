@@ -136,21 +136,19 @@ class Press:
                     By.XPATH, self._support_summon_confirm_xpath
                 ).click()
                 print("Support summon confirmed.")
+                print("checking for verification..")
+                verif = self._bot.handle.handle_verification()
+                if verif:
+                    c_retries += 1
+                    try:
+                        self.support_summon(
+                            support_dict=support_dict,
+                            support_element_num=support_element_num,
+                            first_summon=first_summon,
+                        )
+                    except:
+                        pass
                 return False
-
-            print("checking for verification..")
-            verif = self._bot.handle.handle_verification()
-            if verif:
-                print("Verification found.")
-                c_retries += 1
-                try:
-                    self.support_summon(
-                        support_dict=support_dict,
-                        support_element_num=support_element_num,
-                        first_summon=first_summon,
-                    )
-                except:
-                    pass
 
     def attack_button(self):
         start = time.time()
