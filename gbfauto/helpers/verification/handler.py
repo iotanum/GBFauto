@@ -1,5 +1,6 @@
 import re
 import logging
+import asyncio
 
 from ultralytics import YOLO
 
@@ -36,6 +37,7 @@ class Verification:
             if await self.is_successful_verification():
                 break
             _log.info("Prediction was incorrect. Retrying...")
+            await asyncio.sleep(5)
 
     async def is_successful_verification(self):
         resp_regex = re.compile(".*\/c\/a\?.*")
