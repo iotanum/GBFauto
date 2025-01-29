@@ -21,24 +21,38 @@ class Utils:
         return await self.bot.page.content()
 
     async def go_to_main(self):
-        await self.bot.page.goto("http://game.granbluefantasy.jp/#mypage")
+        await self.bot.page.goto("https://game.granbluefantasy.jp/#mypage")
         await self.bot.page.wait_for_load_state()
 
-    async def go_to_url(self, url, ele=None):
-        _log.debug(f"Going to url: '{url}'")
-        await self.bot.page.goto(url)
-        await self.bot.page.wait_for_url(url)
-        if ele:
-            _log.debug(f"After going to '{url}', waiting for element: '{ele}'")
-            await self.bot.page.wait_for_selector(ele)
+    async def go_to_url(self, url, ele=None, retries=3, delay=2):
+        for attempt in range(retries):
+            try:
+                _log.debug(f"Attempt {attempt + 1}: Going to url: '{url}'")
+                await self.bot.page.goto(url)
+                await self.bot.page.wait_for_url(url)
+
+                if ele:
+                    _log.debug(f"After going to '{url}', waiting for element: '{ele}'")
+                    await self.bot.page.wait_for_selector(
+                        ele, timeout=10000
+                    )  # 10s timeout
+
+                return
+
+            except Exception as e:
+                _log.warning(f"Attempt {attempt + 1} failed: {e}")
+                if attempt < retries - 1:
+                    await asyncio.sleep(delay * (2**attempt))  # Exponential backoff
+                else:
+                    _log.error(f"Failed to go to {url} after {retries} attempts")
+                    raise
 
     async def go_to_locked_quest(self):
         await self.bot.page.goto(self.bot.questing.quest_url)
 
     async def get_current_url(self):
         try:
-            current_url = await self.bot.page.evaluate("window.location.href")
-            return current_url
+            return await self.bot.page.evaluate("window.location.href")
         except playwright._impl._errors.Error:
             return ""
 

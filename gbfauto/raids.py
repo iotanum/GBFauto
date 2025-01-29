@@ -64,9 +64,8 @@ class Raids:
             await asyncio.sleep(1)
 
     async def _get_raids(self):
-        return await self.utils.bs(
-            find_all=("div", {"class": "btn-multi-raid lis-raid search"})
-        )
+        class_regex = re.compile("btn-multi-raid lis-raid search.*")
+        return await self.utils.bs(find_all=("div", {"class": class_regex}))
 
     async def _get_most_suitable_raid(self):
         raids = await self._get_raids()
@@ -127,7 +126,7 @@ class Raids:
                 self.navigated_to_raids = False
                 return
 
-            await asyncio.sleep(0.1)
+            await asyncio.sleep(0.5)
 
         while True:
             _log.debug("Waiting for battle to end...")
@@ -135,7 +134,7 @@ class Raids:
                 self.navigated_to_raids = False
                 _log.info("Returning to raid filters screen...")
                 return
-            await asyncio.sleep(0.1)
+            await asyncio.sleep(0.5)
 
     async def refresh_raid_filter(self):
         disabled_ele = self.bot.page.locator("div.btn-search-refresh.disabled")
