@@ -1,6 +1,9 @@
 import logging
 import asyncio
 import re
+import os
+
+from dotenv import load_dotenv
 
 from gbfauto.helpers.summons.handle import SummonHandle
 from gbfauto.common.enums import BattleEnums, EventEnums
@@ -67,6 +70,12 @@ class Raids:
         class_regex = re.compile("btn-multi-raid lis-raid search.*")
         return await self.utils.bs(find_all=("div", {"class": class_regex}))
 
+    async def _get_raid_hp(self, raid):
+        hp_bar = await self.utils.bs(
+            parser=raid, find=("div", {"class": "prt-raid-gauge-inner"})
+        )
+        return int(re.search(r"\d+", hp_bar["style"]).group())
+
     async def _get_most_suitable_raid(self):
         raids = await self._get_raids()
 
@@ -76,17 +85,26 @@ class Raids:
 
         best_raid = None
         best_hp = float("-inf")
+        load_dotenv(".env", override=True)
+        upper_hp_limit = int(os.getenv("RAIDS_UPPER_HP_LIMIT", 100))
+        lower_hp_limit = int(os.getenv("RAIDS_LOWER_HP_LIMIT", 0))
+        for raid in raids:
+            raid_hp = await self._get_raid_hp(raid)
 
-        for idx, raid in enumerate(raids, 0):
-            hp_bar = await self.utils.bs(
-                parser=raid, find=("div", {"class": "prt-raid-gauge-inner"})
+            # take the highest hp raid that is within the hp limits
+            if raid_hp >= best_hp:
+                if upper_hp_limit >= raid_hp >= lower_hp_limit:
+                    _log.debug(
+                        f"Found a raid within hp limits. (^{upper_hp_limit}, v{lower_hp_limit})"
+                    )
+                    best_hp = raid_hp
+                    best_raid = raid
+
+        if not best_raid:
+            _log.info(
+                f"No raids found within hp limits. (^{upper_hp_limit}, v{lower_hp_limit})"
             )
-
-            raid_hp = int(re.search(r"\d+", hp_bar["style"]).group())
-
-            if raid_hp > best_hp:
-                best_hp = raid_hp
-                best_raid = raids[idx]
+            return None
 
         clickable_ele = await self.utils.bs(
             parser=best_raid, find=("div", {"class": "prt-button-cover"})
