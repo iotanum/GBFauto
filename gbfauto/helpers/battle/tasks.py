@@ -30,6 +30,7 @@ class BattleTasks:
 
         # Sub-attributes
         self.in_battle = False
+        self.refreshed = False
         self.refreshed_on_event = {}
         self.last_hp_change_time = 0
         self.boss_hps = []
@@ -67,6 +68,7 @@ class BattleTasks:
                 if not await self.already_refresh(r_event):
                     _log.debug(f"Refresh event found! {r_event}")
                     self.refreshed_on_event = r_event
+                    self.refreshed = True
                     await self.utils.refresh()
 
     async def is_boss_dead(self):
@@ -127,9 +129,10 @@ class BattleTasks:
         if self.battle.get(BattleEnums.FULL_AUTO, False):
             return
 
-        if await self.events_common.is_event_recent(EventEnums.START_EVENT):
+        if self.refreshed:
             if not await self.battle_common.is_queue_this_turn():
                 await self.battle_common.enable_full_auto()
+                self.refreshed = False
 
     @background_task(interval=5)
     async def is_battle_hanged(self):
