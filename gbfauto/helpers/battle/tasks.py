@@ -127,12 +127,14 @@ class BattleTasks:
         Background task to enable full auto in the loading screen.
         """
         if self.battle.get(BattleEnums.FULL_AUTO, False):
-            self.refreshed = False
             return
 
         if self.refreshed:
             if not await self.battle_common.is_queue_this_turn():
                 await self.battle_common.enable_full_auto()
+
+                if self.battle.get(BattleEnums.FULL_AUTO, False):
+                    self.refreshed = False
 
     @background_task(interval=5)
     async def is_battle_hanged(self):
