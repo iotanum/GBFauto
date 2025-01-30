@@ -129,7 +129,9 @@ class BattleTasks:
         if self.battle.get(BattleEnums.FULL_AUTO, False):
             return
 
-        if self.refreshed:
+        if self.refreshed or await self.events_common.is_event_recent(
+            EventEnums.START_EVENT
+        ):
             if not await self.battle_common.is_queue_this_turn():
                 await self.battle_common.enable_full_auto()
 
