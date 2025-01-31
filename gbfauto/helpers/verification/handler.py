@@ -60,12 +60,11 @@ class Verification:
             The verification popup element or False if not found.
         """
         _log.debug("Taking screenshot of verification image...")
-        popup_body_ele = await self.utils.bs(find=("div", {"class": "prt-popup-body"}))
-        xpath = await get_xpath_from_ele(popup_body_ele)
-        img_xpath = f"{xpath}//img"
-        locator = self.bot.page.locator(f"xpath={img_xpath}")
-        await locator.wait_for()
-        await locator.screenshot(path="verification.png")
+        popup_body_selector = "div.prt-popup-body"
+        popup_locator = self.bot.page.locator(popup_body_selector)
+        img_locator = popup_locator.locator("img")
+        await img_locator.wait_for()
+        await img_locator.screenshot(path="verification.png")
         _log.debug("Screenshot taken.")
 
     @staticmethod
