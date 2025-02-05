@@ -18,7 +18,6 @@ class BattleCommon:
         self.bot = bot
         self.utils = self.bot.utils
         self.battle = self.bot.battle
-        self.queues = self.bot.queues
         self.p_status = self.bot.p_status
 
     async def in_battle_url(self) -> bool:
@@ -39,7 +38,7 @@ class BattleCommon:
         Returns:
             Any: Current battle information.
         """
-        return self.battle[BattleEnums.CURRENT_BATTLE]
+        return self.battle.get(BattleEnums.CURRENT_BATTLE, 0)
 
     async def get_current_turn(self) -> typing.Any:
         """
@@ -48,7 +47,7 @@ class BattleCommon:
         Returns:
             Any: Current turn information.
         """
-        return self.battle[BattleEnums.CURRENT_TURN]
+        return self.battle.get(BattleEnums.CURRENT_TURN, 0)
 
     async def need_ap(self):
         """
@@ -131,26 +130,17 @@ class BattleCommon:
         """
         Enables full auto mode in the most efficient way using Playwright.
         """
-        fa_ele = self.bot.page.locator("div.txt-auto-setting")
-        if await fa_ele.count():
-            enabled_ele = fa_ele.locator("div.btn-ready-auto.anim-simple-fadein")
-            if not await enabled_ele.count():
-                # Sadly need to enable the key here to get the maximum responsiveness out of the bot
-                await fa_ele.click(force=True)
-                self.battle[BattleEnums.FULL_AUTO] = True
-                _log.debug(
-                    f"Updating '{BattleEnums.FULL_AUTO}' status to True in helper function."
-                )
+        try:
+            fa_ele = self.bot.page.locator("div.txt-auto-setting")
+            if await fa_ele.count() == 0:
+                return
+        except playwright._impl._errors.Error as e:
+            _log.error(f"Error while enabling full auto: {e}")
+            return
 
-    async def refreshed_on_this_event(self, event, refreshed_event):
-        """
-        Checks if the bot refreshed on this event.
-
-        Args:
-            event (dict): The event to check.
-            refreshed_event (dict): The refreshed event.
-
-        Returns:
-            bool: True if refreshed on this event, False otherwise.
-        """
-        return refreshed_event == event
+        await fa_ele.click()
+        # Sadly need to enable the key here to get the maximum responsiveness out of the bot
+        self.battle[BattleEnums.FULL_AUTO] = True
+        _log.debug(
+            f"Updating '{BattleEnums.FULL_AUTO}' status to True in helper function."
+        )
