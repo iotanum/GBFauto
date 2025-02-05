@@ -1,6 +1,7 @@
 import logging
 import asyncio
 import inspect
+import traceback
 
 _log = logging.getLogger(__name__)
 
@@ -110,9 +111,7 @@ class BackgroundTask:
                 self._current_loop += 1
 
             except Exception as e:
-                _log.error(
-                    f"Background task '{self.coro.__name__}' failed: {type(e).__name__}, {e}"
-                )
+                _log.error(f"{traceback.format_exc()}")
                 continue
 
 
