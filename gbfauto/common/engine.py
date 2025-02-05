@@ -6,9 +6,6 @@ from playwright_stealth import Stealth
 
 _log = logging.getLogger(__name__)
 
-CONTEXT_OPTIONS = {
-    "viewport": {"width": 560, "height": 760},
-}
 BROWSER_OPTIONS = {
     "headless": False,
     "handle_sigint": False,
@@ -16,13 +13,14 @@ BROWSER_OPTIONS = {
     "args": [
         "--hide-crash-restore-bubble",
         "--disable-infobars",
+        "--window-size=560,760",
     ],
     "ignore_default_args": ["--enable-automation", "--mute-audio"],
     "chromium_sandbox": True,
 }
 
 AUTH_PAGE = "http://game.granbluefantasy.jp/#authentication"
-_log.debug(f"Engine configuration: {BROWSER_OPTIONS}, {CONTEXT_OPTIONS}")
+_log.debug(f"Engine configuration: {BROWSER_OPTIONS}")
 
 
 async def _browser_events(browser):
@@ -45,7 +43,7 @@ async def launch_engine():
     _log.debug("Launching engine...")
     pw = await async_playwright().start()
     context = await pw.chromium.launch_persistent_context(
-        **BROWSER_OPTIONS, **CONTEXT_OPTIONS
+        **BROWSER_OPTIONS, no_viewport=True
     )
     await Stealth().apply_stealth_async(context)
     page = context.pages[0]
