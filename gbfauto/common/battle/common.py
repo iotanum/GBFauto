@@ -1,5 +1,6 @@
 import typing
 import logging
+import playwright
 
 from gbfauto.common.enums import BattleEnums
 
