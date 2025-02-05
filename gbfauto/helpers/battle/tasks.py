@@ -24,7 +24,6 @@ class BattleTasks:
         self.utils = self.bot.utils
         self.battle = self.bot.battle
         self.events = self.bot.events
-        self.queues = self.bot.queues
         self.battle_common = self.bot.battle_common
         self.events_common = self.bot.events_common
 
@@ -37,6 +36,7 @@ class BattleTasks:
         # Start background tasks
         self.is_in_battle.start()
         self.enable_full_auto_in_loading_screen.start()
+        # self.do_queue.start()
         self.refresh_after_event.start()
         self.is_battle_hanged.start()
 
@@ -126,8 +126,11 @@ class BattleTasks:
 
         await self.battle_common.enable_full_auto()
 
-                if self.battle.get(BattleEnums.FULL_AUTO, False):
-                    self.refreshed = False
+    @background_task(interval=0.1)
+    async def do_queue(self):
+        # if await self.events_common.is_event_recent(EventEnums.START_EVENT):
+            # one step at a time
+        await self.bot.queue.do_queue()
 
     @background_task(interval=5)
     async def is_battle_hanged(self):
