@@ -131,12 +131,12 @@ class BattleCommon:
         """
         Enables full auto mode in the most efficient way using Playwright.
         """
+        loading_screen_fa_ele_selector = "div.txt-auto-setting"
         try:
-            fa_ele = self.bot.page.locator("div.txt-auto-setting")
-            if await fa_ele.count() == 0:
-                return
+            fa_ele = self.bot.page.locator(loading_screen_fa_ele_selector)
+            await fa_ele.wait_for(timeout=0) # disable timeout to wait indefinitely
         except playwright._impl._errors.Error as e:
-            _log.error(f"Error while enabling full auto: {e}")
+            _log.error(f"Error while waiting for '{loading_screen_fa_ele_selector}': {e}")
             return
 
         await fa_ele.click()
