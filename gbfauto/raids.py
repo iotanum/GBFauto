@@ -155,14 +155,8 @@ class Raids:
             await asyncio.sleep(0.5)
 
     async def refresh_raid_filter(self):
-        await self.utils.disable_scroll()
-
-        disabled_ele = self.bot.page.locator("div.btn-search-refresh.disabled")
-        if await disabled_ele.count() > 0:
-            return
-
-        await self.bot.page.locator("div.btn-search-refresh").click()
-        await self.utils.enable_scroll()
+        refresh_locator = self.bot.page.locator("[class='btn-search-refresh']")
+        await refresh_locator.click()
 
     async def do_raids(self):
         self.raid_uri = await self.bot.utils.get_current_url()

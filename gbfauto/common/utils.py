@@ -88,20 +88,6 @@ class Utils:
         if element:
             await self.bot.page.wait_for_selector(element)
 
-    async def disable_scroll(self):
-        await self.bot.page.evaluate(
-            """() => {
-                document.body.style.overflow = 'hidden';
-            }"""
-        )
-
-    async def enable_scroll(self):
-        await self.bot.page.evaluate(
-            """() => {
-                document.body.style.overflow = 'auto';
-            }"""
-        )
-
 def find_siblings_in_executor(parent, child_name):
     return parent.find_all(child_name, recursive=False)
 
