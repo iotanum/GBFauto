@@ -157,6 +157,7 @@ class Raids:
     async def refresh_raid_filter(self):
         refresh_locator = self.bot.page.locator("[class='btn-search-refresh']")
         await refresh_locator.click()
+        await refresh_locator.wait_for()
 
     async def do_raids(self):
         self.raid_uri = await self.bot.utils.get_current_url()

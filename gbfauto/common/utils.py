@@ -14,7 +14,6 @@ class Utils:
     def __init__(self, bot):
         self.bot = bot
         self.events = self.bot.events
-        self.queues = self.bot.queues
         self.executor = ThreadPoolExecutor()
 
     async def get_page_content(self):
