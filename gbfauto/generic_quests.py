@@ -4,7 +4,7 @@ import asyncio
 from gbfauto.helpers.summons.handle import SummonHandle
 from gbfauto.common.enums import EventEnums
 from gbfauto.helpers.actions.ap import Ap
-
+from gbfauto.helpers.skills.parse_from_config import get_config_queues
 
 _log = logging.getLogger(__name__)
 

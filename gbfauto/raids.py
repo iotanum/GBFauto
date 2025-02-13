@@ -9,6 +9,7 @@ from gbfauto.helpers.summons.handle import SummonHandle
 from gbfauto.common.enums import BattleEnums, EventEnums
 from gbfauto.common.utils import get_response_body
 from gbfauto.helpers.actions.ep import Ep
+from gbfauto.helpers.skills.parse_from_config import get_config_queues
 
 
 _log = logging.getLogger(__name__)
@@ -164,6 +165,9 @@ class Raids:
         raid_list_ele_selector = "#prt-search-list > div > div"
 
         while True:
+            # update the queue from the config every battle start
+            self.bot.queue_from_config = await get_config_queues()
+
             if not self.navigated_to_raids:
                 await self.bot.utils.go_to_url(
                     self.raid_uri, ele=raid_list_ele_selector

@@ -1,10 +1,6 @@
 import logging
-import os
 
-from dotenv import load_dotenv
-
-from gbfauto.helpers.skills.validate_and_parse import validate_and_parse
-from gbfauto.common.tasks import background_task
+from gbfauto.helpers.skills.skills import Skills
 
 _log = logging.getLogger(__name__)
 
@@ -14,82 +10,46 @@ class Queue:
     Class to manage and validate from config queues.
     """
 
-    def __init__(self, skills):
+    def __init__(self, bot):
         """
         Initialize the Queue instance.
 
         Args:
-            skills: The skills instance associated with the bot.
+            bot: The bot instance.
         """
-        self.bot = skills.bot
-        self.queues = self.bot.queues
-        self.temp_queues = [
-            f"QUEUE_{battle}_{turn}"
-            for battle in range(1, 101)
-            for turn in range(1, 101)
-        ]
+        self.bot = bot
+        self.skills = Skills(self)
+        self.battle = self.bot.battle
+        self.battle_common = self.bot.battle_common
 
-        self.validate_and_parse_queues.start()
+    async def _is_queue_this_battle(self):
+        current_battle = await self.battle_common.get_current_battle()
+        return self.bot.queue_from_config.get(current_battle, None)
 
-    async def _unset_queues(self) -> None:
-        """
-        Unset existing queues from the environment.
-        """
-        for queue in self.temp_queues:
-            if os.getenv(queue):
-                del os.environ[queue]
+    async def _is_queue_this_turn(self, battle_queues):
+        current_turn = await self.battle_common.get_current_turn()
+        return battle_queues.get(current_turn, None)
 
-    async def _gather_queues_from_config(self) -> dict:
-        """
-        Find and organize existing queues from the environment.
+    async def _remove_step_from_queue(self, step):
+        current_battle = await self.battle_common.get_current_battle()
+        current_turn = await self.battle_common.get_current_turn()
 
-        Returns:
-            dict: A dictionary representing the queues organized by battle and turn numbers.
-        """
-        await self._unset_queues()
+        self.bot.queue_from_config[current_battle][current_turn]["steps"].remove(step)
+        _log.debug(f"Removed step from queue: {step}")
 
-        load_dotenv(override=True)
+    async def do_queue(self):
+        if not self.bot.queue_from_config:
+            return
 
-        queues = {}
-        found_queues = 0
+        battle_queues = await self._is_queue_this_battle()
+        if not battle_queues:
+            return
 
-        # Filter out non-existent queues and organize them into a dictionary
-        for queue_name in self.temp_queues:
-            if os.getenv(queue_name):
-                battle, turn = map(int, queue_name.split("_")[1:])
-                queue_value = os.getenv(queue_name)
-                queues.setdefault(battle, {}).setdefault(turn, queue_value)
-                found_queues += 1
+        turn_queue_list = await self._is_queue_this_turn(battle_queues)
+        if not turn_queue_list:
+            return
 
-        # _log.debug(f"Found '{found_queues}' queues in config.")
-
-        return queues
-
-    @background_task(interval=2)
-    async def validate_and_parse_queues(self) -> None:
-        """
-        Validate and parse the queues.
-
-        This function will process and validate the queues from the configuration.
-        """
-        self.queues.clear()
-
-        queues = await self._gather_queues_from_config()
-        for battle, turns in queues.items():
-            for turn, queues in turns.items():
-                queue = queues.split(" > ")
-                for step in queue:
-                    char, action, target, refresh = await validate_and_parse(step)
-
-                    self.queues.setdefault(battle, {}).setdefault(turn, [])
-
-                    self.queues[battle][turn].append(
-                        {
-                            "char": char,
-                            "action": action,
-                            "target": target,
-                            "refresh": refresh,
-                        }
-                    )
-
-        # _log.debug(f"Finished validating and parsing queues: {self.queues}")
+        step = turn_queue_list["steps"][0]
+        await self.skills.do_queue(step)
+        await self._remove_step_from_queue(step)
+        _log.debug(f"Current queue: {self.bot.queue_from_config}")

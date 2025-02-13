@@ -5,7 +5,7 @@ import time
 from gbfauto.events import Events
 from gbfauto.login import Login
 from gbfauto.questing import Questing
-from gbfauto.skills import Skills
+from gbfauto.helpers.skills.queue import Queue
 from gbfauto.common.utils import Utils
 
 from gbfauto.helpers.battle.tasks import BattleTasks
@@ -42,11 +42,11 @@ class Bot:
         self.p_status = dict()
         self.summons = dict()
         self.battle = dict()
-        self.queues = dict()
         self.popup = None
         self.startup_time = time.time()
         self.battle_count = 0
         self.raids = False
+        self.queue_from_config = None
 
         # Common attributes
         self.utils = Utils(self)
@@ -56,7 +56,7 @@ class Bot:
 
         # Main attributes
         self.events_module = Events(self)
-        self.skills = Skills(self)
+        self.queue = Queue(self)
         self.login = Login(self)
         self.questing = Questing(self)
         self.captcha = Verification(self)
