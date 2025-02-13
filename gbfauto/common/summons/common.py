@@ -29,7 +29,7 @@ class SummonsCommon:
         Returns:
             bool: True if in a summon selection screen, False otherwise.
         """
-        possible_uri = re.compile(".*quest\/supporter.*")
+        possible_uri = re.compile(".*(quest|replicard)\/supporter.*")
         current_url = await self.utils.get_current_url()
 
         match = re.search(possible_uri, current_url)
@@ -91,24 +91,24 @@ class SummonsCommon:
         """
         Updates the consumables status using Playwright.
         """
-        consumables_ele = self.bot.page.locator("div.txt-stamina")
+        while True:
+            consumables_ele = self.bot.page.locator("div.txt-stamina")
 
-        if await consumables_ele.count() > 0:
-            consumables_text = await consumables_ele.inner_text()
-            consumables_ele = consumables_ele.locator("span.txt-stamina-after")
             if await consumables_ele.count() > 0:
-                if "AP" in consumables_text:
-                    consumables_text = await consumables_ele.inner_text()
-                    self.p_status["current_ap"] = int(consumables_text.strip())
-                    _log.debug(f"Updating AP from summon screen: {self.p_status}")
-                    return True
-                if "EP" in consumables_text:
-                    consumables_text = await consumables_ele.inner_text()
-                    self.p_status["current_ep"] = int(consumables_text.strip())
-                    _log.debug(f"Updating EP from summon screen: {self.p_status}")
-                    return True
-
-        return False
+                consumables_text = await consumables_ele.inner_text()
+                consumables_ele = consumables_ele.locator("span.txt-stamina-after")
+                if await consumables_ele.count() > 0:
+                    if "AP" in consumables_text:
+                        consumables_text = await consumables_ele.inner_text()
+                        self.p_status["current_ap"] = int(consumables_text.strip())
+                        _log.debug(f"Updating AP from summon screen: {self.p_status}")
+                        return
+                    if "EP" in consumables_text:
+                        consumables_text = await consumables_ele.inner_text()
+                        self.p_status["current_ep"] = int(consumables_text.strip())
+                        _log.debug(f"Updating EP from summon screen: {self.p_status}")
+                        return
+            await asyncio.sleep(0.1)
 
     async def is_summon_clicked(self):
         """
@@ -133,8 +133,7 @@ class SummonsCommon:
                     find=("div", {"class": class_re, "style": style_re})
                 )
                 if visible:
-                    if await self.update_consumables_status():
-                        return True
+                    return True
 
             await asyncio.sleep(0.5)
 
@@ -146,12 +145,17 @@ class SummonsCommon:
 
         return await self.is_summon_clicked()
 
-    async def check_for_popups(self):
-        uri_regex = re.compile(".*deck_data_create.*|.*create_quest.*")
+    async def check_for_popups(self, shitbox):
+        if shitbox:
+            await self.update_aap_info_from_shitbox_resp()
+            if self.p_status["need_aap"]:
+                return True
+
+        uri_regex = re.compile(".*deck_data_create|create_quest.*")
         try:
             async with self.bot.page.expect_response(uri_regex) as resp:
-                response = await resp.value
-                body = await get_response_body(response)
+                body = await get_response_body(await resp.value)
+
                 if body:
                     _log.debug(f"A popup after confirming the summon: {body}")
                 if "error" in body.keys():
@@ -163,31 +167,35 @@ class SummonsCommon:
                     if "verification" in popup.get("body").lower():
                         _log.info("!!! Verification popup !!!")
                         await self.bot.captcha.handler()
-
                     return True
         except Exception as e:
             _log.error(f"Error: {str(e)}")
             return False
 
-    async def confirm_summon(self):
-        """
-        Clicks "confirm" for the summon.
-        """
-        regex = re.compile("btn-usual-ok.*")
-        confirm_ele = await self.utils.bs(find=("div", {"class": regex}))
+    async def update_aap_info_from_shitbox_resp(self):
+        uri_regex = re.compile(".*user_aap_recovery_info.*")
+        async with self.bot.page.expect_response(uri_regex) as resp:
+            body = await get_response_body(await resp.value)
+            current_aap = body.get("aap")
+            consume_aap = body.get("consume_aap")
+            self.p_status["current_ap"] = current_aap
+            self.p_status["need_aap"] = current_aap < consume_aap
 
-        await self.utils.click(confirm_ele)
+    async def confirm_summon(self, shitbox):
+        await self.update_consumables_status()
+        confirm_ele = self.bot.page.locator('[class^="btn-usual-ok"]')
+        await confirm_ele.click()
 
-        return await self.check_for_popups()
+        return await self.check_for_popups(shitbox)
 
-    async def is_in_summon_selection(self):
+    async def is_in_summon_selection(self, shitbox):
         while True:
             if await self.events_common.is_event_recent(EventEnums.SUMMON_SCREEN_EVENT):
                 _log.debug(
                     "Found an event for summon_screen, continuing with the process."
                 )
                 if await self.is_in_summon_selection_url():
-                    if await self.can_select_summon():
+                    if await self.can_select_summon() or shitbox:
                         return True
 
             await asyncio.sleep(0.1)

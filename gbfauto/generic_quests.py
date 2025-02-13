@@ -35,23 +35,37 @@ class GenericQuest:
                 return
             await asyncio.sleep(0.5)
 
-    async def do_quest(self):
+    async def handle_ap_usage(self, shitbox):
+        used_ap = await self.ap_handler.use_ap(shitbox=shitbox)
+        if used_ap:
+            self.navigated_to_quest_uri = False
+            return True
+
+    async def navigate_to_quest_uri(self):
+        if not self.navigated_to_quest_uri:
+            await self.bot.utils.go_to_url(
+                self.quest_uri,
+            )
+            self.navigated_to_quest_uri = True
+
+    async def do_quest(self, shitbox=False):
         self.quest_uri = await self.bot.utils.get_current_url()
 
         while True:
-            used_ap = await self.ap_handler.use_ap()
-            if used_ap:
-                self.navigated_to_quest_uri = False
-                continue
+            # update the queue from the config every battle start
+            self.bot.queue_from_config = await get_config_queues()
 
-            if not self.navigated_to_quest_uri:
-                await self.bot.utils.go_to_url(
-                    self.quest_uri,
-                )
-                self.navigated_to_quest_uri = True
+            if not shitbox:
+                ap_used = await self.handle_ap_usage(shitbox)
+                if ap_used:
+                    continue
 
-            popup = await self.summon_handle.pick_summon()
+            await self.navigate_to_quest_uri()
+
+            popup = await self.summon_handle.pick_summon(shitbox=shitbox)
             if popup:
+                if shitbox:
+                    await self.handle_ap_usage(shitbox)
                 await self.utils.refresh()
                 continue
 

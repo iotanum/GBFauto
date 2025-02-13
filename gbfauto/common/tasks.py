@@ -110,7 +110,7 @@ class BackgroundTask:
                 await self.coro(*args, **kwargs)
                 self._current_loop += 1
 
-            except Exception as e:
+            except Exception:
                 _log.error(f"{traceback.format_exc()}")
                 continue
 

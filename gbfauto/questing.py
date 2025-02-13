@@ -27,6 +27,7 @@ class Questing:
         self.url_action_mapping = {
             "#quest/assist": self.handle_raids,
             "#quest/supporter": self.handle_generic_quest,
+            "#replicard/supporter": self.handle_shit_box_quest,
         }
 
     async def wait_for_repeatable_quest(self) -> None:
@@ -59,3 +60,7 @@ class Questing:
         """
         _log.info("Locked on to generic quest.")
         await self.generic_q.do_quest()
+
+    async def handle_shit_box_quest(self) -> None:
+        _log.info("Locked on to Sandbox quest.")
+        await self.generic_q.do_quest(shitbox=True)

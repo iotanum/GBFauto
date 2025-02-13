@@ -129,7 +129,7 @@ class BattleTasks:
     @background_task(interval=0.1)
     async def do_queue(self):
         # if await self.events_common.is_event_recent(EventEnums.START_EVENT):
-            # one step at a time
+        # one step at a time
         await self.bot.queue.do_queue()
 
     @background_task(interval=5)

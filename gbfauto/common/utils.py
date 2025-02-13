@@ -87,6 +87,7 @@ class Utils:
         if element:
             await self.bot.page.wait_for_selector(element)
 
+
 def find_siblings_in_executor(parent, child_name):
     return parent.find_all(child_name, recursive=False)
 
