@@ -37,19 +37,20 @@ class EventsCommon:
         _log.debug(f"Updating '{event}' event time with current time.")
         await self._update_latest_event_time()
 
-    async def is_event_recent(self, event: EventEnums) -> bool:
+    async def is_event_recent(self, event: EventEnums, timeout=1) -> bool:
         """
         Checks if the event is recent based on a time threshold.
 
         Args:
             event (EventEnums): The event to check.
+            timeout (int): The time threshold to check against.
 
         Returns:
             bool: True if the event is recent, False otherwise.
         """
         try:
             event_time = time.time() - self.events[event]
-            return event_time is not None and event_time < 1
+            return event_time is not None and event_time < timeout
         except KeyError:
             return False
 

@@ -190,7 +190,9 @@ class SummonsCommon:
 
     async def is_in_summon_selection(self, shitbox):
         while True:
-            if await self.events_common.is_event_recent(EventEnums.SUMMON_SCREEN_EVENT):
+            if await self.events_common.is_event_recent(
+                EventEnums.SUMMON_SCREEN_EVENT, timeout=3
+            ):
                 _log.debug(
                     "Found an event for summon_screen, continuing with the process."
                 )

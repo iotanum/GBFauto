@@ -149,7 +149,9 @@ class Raids:
 
         while True:
             _log.debug("Waiting for battle to end...")
-            if await self.events_common.is_event_recent(EventEnums.RESULT_SCREEN_EVENT):
+            if await self.events_common.is_event_recent(
+                EventEnums.RESULT_SCREEN_EVENT, timeout=3
+            ):
                 self.navigated_to_raids = False
                 _log.info("Returning to raid filters screen...")
                 return
