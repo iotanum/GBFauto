@@ -1,6 +1,7 @@
 import typing
 import logging
 import playwright
+from playwright.async_api import Error
 
 from gbfauto.common.enums import BattleEnums
 
@@ -109,10 +110,14 @@ class BattleCommon:
         Returns:
             bool: True if visible, False otherwise.
         """
-        hp_ele = await self.bot.page.query_selector(
-            "div.btn-enemy-gauge.prt-enemy-percent.alive[style*='display: block;']"
-        )
-        return hp_ele is not None
+        try:
+            hp_ele = await self.bot.page.query_selector(
+                "div.btn-enemy-gauge.prt-enemy-percent.alive[style*='display: block;']"
+            )
+            return hp_ele
+        except Error:
+            _log.debug("Enemy HP element not found, probably refreshed the page.")
+            return False
 
     async def get_enemy_hp(self) -> typing.List[int]:
         """

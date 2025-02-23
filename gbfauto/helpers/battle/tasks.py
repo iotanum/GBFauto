@@ -138,7 +138,7 @@ class BattleTasks:
         Background task to check if the battle is hanged.
         """
         timeout = 10
-        if self.battle.get(BattleEnums.IN_BATTLE, False):
+        if await self.battle_common.in_battle_url():
             last_event_time = self.events[EventEnums.LATEST_EVENT]
             if await is_timeout(last_event_time, timeout):
                 if await is_timeout(self.last_hp_change_time, timeout):

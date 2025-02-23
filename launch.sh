@@ -1,8 +1,8 @@
 #!/bin/bash
 
-python3.11 -m venv ./venv
+python3.13 -m venv ./venv
 source venv/bin/activate
 pip install --upgrade pip
 pip install -r req --upgrade
 playwright install
-python -u launch.py
+PYTHON_JIT=1 python -u launch.py
