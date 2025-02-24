@@ -32,7 +32,6 @@ class SummonsTasks:
         if element and summons:
             key, value = list(element.items())[0]
 
-            # -1 because the list starts at 0
             self.summons[SummonEnums.SUPPORT_ELEMENT_NUM] = key
             self.summons[SummonEnums.SUPPORT_ELEMENT] = value
             self.summons[SummonEnums.SUPPORT_SUMMONS_TO_PICK] = summons

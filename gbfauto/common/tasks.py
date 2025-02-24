@@ -42,8 +42,8 @@ class BackgroundTask:
         self.interval = interval
         self.count = count
         self._task = None
-        self._running = False  # Prevent overlaps
-        self._instance = None  # Store instance for bound methods
+        self._instance = None
+        self._task_lock = asyncio.Lock()
 
     def __get__(self, instance, owner):
         """Ensures proper method binding when used in a class."""
@@ -62,19 +62,14 @@ class BackgroundTask:
 
     async def _run(self, *args, **kwargs):
         """Loop execution of the task at the specified interval."""
-        for _ in range(self.count) if self.count else iter(int, 1):
-            if self._running:
-                await asyncio.sleep(self.interval)
-                continue  # Skip iteration if still running
-
-            self._running = True
-            try:
-                await self.coro(*args, **kwargs)
-            except Exception:
-                _log.exception("Error in background task")
-            finally:
-                self._running = False
-
+        count_iter = range(self.count) if self.count else iter(int, 1)
+        for _ in count_iter:
+            # Ensure that only one instance of the task runs at a time
+            async with self._task_lock:
+                try:
+                    await self.coro(*args, **kwargs)
+                except Exception:
+                    _log.exception(f"Error in background task: {self.coro.__name__}")
             await asyncio.sleep(self.interval)  # Delay before next execution
 
 
