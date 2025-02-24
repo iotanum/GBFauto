@@ -1,7 +1,6 @@
 import logging
 import os
 import time
-from playwright.async_api import Error
 from dotenv import load_dotenv
 
 from gbfauto.common.tasks import background_task
@@ -112,12 +111,7 @@ class BattleTasks:
         if self.battle.get(BattleEnums.FULL_AUTO, False):
             return
 
-        try:
-            await self.battle_common.enable_full_auto()
-        except Error as e:
-            _log.error(f"Error while waiting for FA in loading screen: {e}")
-            await self.utils.refresh()
-            return
+        await self.battle_common.enable_full_auto()
 
     @background_task(interval=0.1)
     async def do_queue(self):

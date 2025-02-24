@@ -54,7 +54,7 @@ class EventsCommon:
         except KeyError:
             return False
 
-    async def is_refresh_event_recent(self, na=False) -> bool | dict:
+    async def is_refresh_event_recent(self, na=False, timeout=3) -> bool | dict:
         """
         Checks if the refresh event is recent based on a time threshold.
 
@@ -73,7 +73,7 @@ class EventsCommon:
             ]
 
         for event in refresh_events:
-            if await self.is_event_recent(event):
+            if await self.is_event_recent(event, timeout=timeout):
                 return {event: self.events[event]}
 
         # Always check for "moved too fast" popup in battle
@@ -83,7 +83,7 @@ class EventsCommon:
             EventEnums.BATTLE_END_EVENT,
         ]
         for event in important_events:
-            if await self.is_event_recent(event):
+            if await self.is_event_recent(event, timeout=timeout):
                 return {event: self.events[event]}
 
         return False

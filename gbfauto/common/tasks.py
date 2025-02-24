@@ -68,8 +68,9 @@ class BackgroundTask:
             async with self._task_lock:
                 try:
                     await self.coro(*args, **kwargs)
-                except Exception:
+                except Exception as e:
                     _log.exception(f"Error in background task: {self.coro.__name__}")
+                    _log.error(f"Error details: {e}")
             await asyncio.sleep(self.interval)  # Delay before next execution
 
 
