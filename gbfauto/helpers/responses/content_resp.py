@@ -109,13 +109,9 @@ class ContentResponse:
         Updates the blue box count.
         """
         # "11" is the key for blue boxes in reward_list
-        nested_keys = [
-            ["option", "result_data", "rewards", "reward_list", "11"]
-        ]
+        nested_keys = [["option", "result_data", "rewards", "reward_list", "11"]]
 
-        blue_boxes = await multiple_keys_exists(
-            r_body, nested_keys, resp_url=resp.url
-        )
+        blue_boxes = await multiple_keys_exists(r_body, nested_keys, resp_url=resp.url)
 
         # set a default upon first encounter
         if not self.p_status.get("blue_boxes"):

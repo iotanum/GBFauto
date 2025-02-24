@@ -138,7 +138,7 @@ class Raids:
         """
         Waits for the battle to end.
         """
-        while not self.battle[BattleEnums.IN_BATTLE]:
+        while not self.battle.get(BattleEnums.IN_BATTLE, False):
             _log.debug("Waiting for battle to start...")
             if await self.events_common.is_event_recent(EventEnums.RESULT_SCREEN_EVENT):
                 _log.info("Too slow, fellas. Returning to raid filters screen...")

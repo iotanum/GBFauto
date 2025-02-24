@@ -1,6 +1,5 @@
 import typing
 import logging
-import playwright
 from playwright.async_api import Error
 
 from gbfauto.common.enums import BattleEnums
@@ -136,15 +135,10 @@ class BattleCommon:
         """
         Enables full auto mode in the most efficient way using Playwright.
         """
-        try:
-            fa_loading_screen_locator = self.bot.page.locator("div.txt-auto-setting")
-            await fa_loading_screen_locator.click(timeout=0)
-            # Sadly need to enable the key here to get the maximum responsiveness out of the bot
-            self.battle[BattleEnums.FULL_AUTO] = True
-            _log.debug(
-                f"Updating '{BattleEnums.FULL_AUTO}' status to True in helper function."
-            )
-
-        except playwright._impl._errors.Error as e:
-            _log.error(f"Error while waiting for FA in loading screen: {e}")
-            return
+        fa_loading_screen_locator = self.bot.page.locator("div.txt-auto-setting")
+        await fa_loading_screen_locator.click(timeout=0)
+        # Sadly need to enable the key here to get the maximum responsiveness out of the bot
+        self.battle[BattleEnums.FULL_AUTO] = True
+        _log.debug(
+            f"Updating '{BattleEnums.FULL_AUTO}' status to True in helper function."
+        )
