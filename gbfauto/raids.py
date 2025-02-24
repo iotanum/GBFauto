@@ -203,5 +203,6 @@ class Raids:
             self.bot.battle_count += 1
             _log.info(
                 f"Total battles: {self.bot.battle_count}\n"
-                f"Avg time per battle: {await self.bot.get_avg_time_per_battle()}s"
+                f"Avg time per battle: {await self.bot.get_avg_time_per_battle()}s\n"
+                f"Blue boxes: {self.p_status.get('blue_boxes', 0)}"
             )

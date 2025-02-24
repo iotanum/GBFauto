@@ -104,6 +104,26 @@ class ContentResponse:
         """
         await self.events_common.update_event_time(event=event)
 
+    async def _update_blue_box_count(self, r_body, resp):
+        """
+        Updates the blue box count.
+        """
+        # "11" is the key for blue boxes in reward_list
+        nested_keys = [
+            ["option", "result_data", "rewards", "reward_list", "11"]
+        ]
+
+        blue_boxes = await multiple_keys_exists(
+            r_body, nested_keys, resp_url=resp.url
+        )
+
+        # set a default upon first encounter
+        if not self.p_status.get("blue_boxes"):
+            self.p_status["blue_boxes"] = 0
+
+        if blue_boxes:
+            self.p_status["blue_boxes"] += len(blue_boxes.keys())
+
     async def _update_battle_status(self, r_body, resp):
         """
         Updates the battle status based on the response.
@@ -119,6 +139,7 @@ class ContentResponse:
         if result_resp_regex.match(resp.url):
             self.battle[BattleEnums.BOSS_KILLED] = True
             self.battle[BattleEnums.BOSS_HPS] = {}
+            await self._update_blue_box_count(r_body, resp)
             await self._update_event_time()
             await self._update_event_time(event=EventEnums.RESULT_SCREEN_EVENT)
 
