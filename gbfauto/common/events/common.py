@@ -85,3 +85,5 @@ class EventsCommon:
         for event in important_events:
             if await self.is_event_recent(event):
                 return {event: self.events[event]}
+
+        return False

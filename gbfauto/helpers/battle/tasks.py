@@ -40,15 +40,6 @@ class BattleTasks:
         self.refresh_after_event.start()
         self.is_battle_hanged.start()
 
-    async def already_refresh(self, r_event):
-        """
-        Checks if the bot already refreshed this turn.
-
-        Returns:
-            bool: True if the bot already refreshed this turn, False otherwise.
-        """
-        return r_event == self.refreshed_on_event
-
     async def need_refresh(self, na=False):
         """
         Checks if the bot needs to refresh.
@@ -56,12 +47,9 @@ class BattleTasks:
         Returns:
             bool: True if the bot needs to refresh, False otherwise.
         """
-        if (
-            self.battle.get(BattleEnums.IN_BATTLE, False)
-            or await self.battle_common.in_battle_url()
-        ):
+        if await self.battle_common.in_battle_url():
             if r_event := await self.events_common.is_refresh_event_recent(na=na):
-                if not await self.already_refresh(r_event):
+                if not r_event == self.refreshed_on_event:
                     _log.debug(f"Refresh event found! {r_event}")
                     self.refreshed_on_event = r_event
                     await self.utils.refresh()
