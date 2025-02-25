@@ -139,23 +139,21 @@ class Raids:
         Waits for the battle to end.
         """
         while not self.battle.get(BattleEnums.IN_BATTLE, False):
-            _log.debug("Waiting for battle to start...")
             if await self.events_common.is_event_recent(EventEnums.RESULT_SCREEN_EVENT):
                 _log.info("Too slow, fellas. Returning to raid filters screen...")
                 self.navigated_to_raids = False
                 return
 
-            await asyncio.sleep(0.5)
+            await asyncio.sleep(0.05)
 
         while True:
-            _log.debug("Waiting for battle to end...")
             if await self.events_common.is_event_recent(
                 EventEnums.RESULT_SCREEN_EVENT, timeout=3
             ):
                 self.navigated_to_raids = False
                 _log.info("Returning to raid filters screen...")
                 return
-            await asyncio.sleep(0.5)
+            await asyncio.sleep(0.05)
 
     async def refresh_raid_filter(self):
         refresh_locator = self.bot.page.locator("[class='btn-search-refresh']")

@@ -1,4 +1,5 @@
 import logging
+import asyncio
 
 from gbfauto.helpers.responses.responses import Responses
 from gbfauto.helpers.requests.requests import ValidRequests
@@ -57,7 +58,7 @@ class Events:
         Args:
             response: The response object.
         """
-        await self.responses.handle(response)
+        asyncio.create_task(self.responses.handle(response))
 
     async def initialize_events(self):
         """
