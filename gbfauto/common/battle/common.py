@@ -137,7 +137,7 @@ class BattleCommon:
         """
         try:
             fa_loading_screen_locator = self.bot.page.locator("div.txt-auto-setting")
-            await fa_loading_screen_locator.click(timeout=0)
+            await fa_loading_screen_locator.click(timeout=0, no_wait_after=True)
             # Sadly need to enable the key here to get the maximum responsiveness out of the bot
             self.battle[BattleEnums.FULL_AUTO] = True
             _log.debug(
