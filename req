@@ -1,7 +1,7 @@
-playwright==1.49.1
+playwright==1.50.0
 git+https://github.com/Mattwmaster58/playwright_stealth@rc4
 python-dotenv
 ruff
-beautifulsoup4==4.12.3
-lxml==5.3.0
-ultralytics==8.3.63
+beautifulsoup4==4.13.3
+lxml==5.3.1
+ultralytics==8.3.79
