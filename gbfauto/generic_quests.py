@@ -28,12 +28,13 @@ class GenericQuest:
         Waits for the battle to end.
         """
         while True:
-            _log.debug("Waiting for battle to end...")
-            if await self.events_common.is_event_recent(EventEnums.RESULT_SCREEN_EVENT):
+            if await self.events_common.is_event_recent(
+                EventEnums.RESULT_SCREEN_EVENT, timeout=3
+            ):
                 self.navigated_to_quest_uri = False
                 _log.info("Returning to the quest screen...")
                 return
-            await asyncio.sleep(0.5)
+            await asyncio.sleep(0.05)
 
     async def handle_ap_usage(self, shitbox):
         used_ap = await self.ap_handler.use_ap(shitbox=shitbox)
