@@ -48,7 +48,7 @@ class Events:
         Args:
             request: The request object.
         """
-        if ValidRequests.is_valid(request.url):
+        if ValidRequests.is_valid(request):
             _log.debug(f"[EVENT][REQUEST]: {request.url}")
 
     async def on_response(self, response):
