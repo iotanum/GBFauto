@@ -5,4 +5,9 @@ class ValidRequests:
 
     @classmethod
     def is_valid(cls, response):
-        return any(str(val) in response for val in cls.__dict__.values())
+        for attr_name, val in cls.__dict__.items():
+            if "__" in attr_name:
+                continue
+            if str(val) in response.url:
+                return val
+        return None  # Not a valid response

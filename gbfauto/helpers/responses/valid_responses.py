@@ -22,6 +22,8 @@ class ValidResponses:
             str or None: The valid response type if valid, None otherwise.
         """
         for attr_name, val in cls.__dict__.items():
+            if "__" in attr_name:
+                continue
             if str(val) in response.url and response.request.resource_type == "xhr":
                 return val
         return None  # Not a valid response

@@ -131,7 +131,7 @@ class ContentResponse:
         _log.debug(f"Trying to update 'battle_status' from '{resp.url}'")
 
         # if it's a result response, update required keys for battle
-        result_resp_regex = re.compile(".*result.*\/content.*")
+        result_resp_regex = re.compile(".*result.*/content.*")
         if result_resp_regex.match(resp.url):
             self.battle[BattleEnums.BOSS_KILLED] = True
             self.battle[BattleEnums.BOSS_HPS] = {}

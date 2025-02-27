@@ -1,3 +1,19 @@
+[project]
+name = "GBFAuto"
+version = "1.0.0"
+requires-python = ">=3.13"
+description = "Project that automates GBF tasks."
+readme = "README.md"
+dependencies = [
+    "beautifulsoup4==4.13.3",
+    "lxml==5.3.1",
+    "playwright==1.50.0",
+    "playwright-stealth",
+    "python-dotenv>=1.0.1",
+    "ruff>=0.9.7",
+    "ultralytics==8.3.79",
+]
+
 [tool.ruff]
 # Exclude a variety of commonly ignored directories.
 exclude = [
@@ -81,3 +97,6 @@ skip = [
     "venv",
     "alembic"
 ]
+
+[tool.uv.sources]
+playwright-stealth = { git = "https://github.com/Mattwmaster58/playwright_stealth", rev = "rc4" }

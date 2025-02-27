@@ -124,7 +124,7 @@ class Raids:
     async def _try_entering_raid(self, raid_ele):
         await self.utils.click(raid_ele)
 
-        quest_start_re = re.compile(".*quest\/check_.*start.*")
+        quest_start_re = re.compile(".*quest/check_.*start.*")
         async with self.bot.page.expect_response(quest_start_re) as resp:
             response = await resp.value
             body = await get_response_body(response)

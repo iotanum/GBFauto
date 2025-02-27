@@ -29,7 +29,7 @@ class SummonsCommon:
         Returns:
             bool: True if in a summon selection screen, False otherwise.
         """
-        possible_uri = re.compile(".*(quest|replicard)\/supporter.*")
+        possible_uri = re.compile(".*(quest|replicard)/supporter.*")
         current_url = await self.utils.get_current_url()
 
         match = re.search(possible_uri, current_url)

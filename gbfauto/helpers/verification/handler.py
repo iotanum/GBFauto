@@ -40,7 +40,7 @@ class Verification:
             await asyncio.sleep(5)
 
     async def is_successful_verification(self):
-        resp_regex = re.compile(".*\/c\/a\?.*")
+        resp_regex = re.compile(".*/c/a?.*")
         _log.debug("Waiting to see if prediction was correct...")
         async with self.bot.page.expect_response(resp_regex) as resp:
             response = await resp.value
