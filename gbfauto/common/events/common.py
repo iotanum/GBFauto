@@ -37,7 +37,7 @@ class EventsCommon:
         _log.debug(f"Updating '{event}' event time with current time.")
         await self._update_latest_event_time()
 
-    async def is_event_recent(self, event: EventEnums, timeout=1) -> bool:
+    async def is_event_recent(self, event: EventEnums, timeout=1):
         """
         Checks if the event is recent based on a time threshold.
 
@@ -50,7 +50,9 @@ class EventsCommon:
         """
         try:
             event_time = time.time() - self.events[event]
-            return event_time is not None and event_time < timeout
+            if event_time and event_time < timeout:
+                # Remove the event if it's recent
+                return self.events.pop(event)
         except KeyError:
             return False
 
@@ -73,17 +75,17 @@ class EventsCommon:
             ]
 
         for event in refresh_events:
-            if await self.is_event_recent(event, timeout=timeout):
-                return {event: self.events[event]}
+            if event_time := await self.is_event_recent(event, timeout=timeout):
+                return {event: event_time}
 
         # Always check for "moved too fast" popup in battle
         # and battle end event
         important_events = [
             BattleEnums.BATTLE_POPUP,
-            EventEnums.BATTLE_END_EVENT,
+            # EventEnums.BATTLE_END_EVENT,
         ]
         for event in important_events:
-            if await self.is_event_recent(event, timeout=timeout):
-                return {event: self.events[event]}
+            if event_time := await self.is_event_recent(event, timeout=timeout):
+                return {event: event_time}
 
         return False
