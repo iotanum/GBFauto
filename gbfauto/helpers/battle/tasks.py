@@ -61,10 +61,6 @@ class BattleTasks:
             bool: True if the boss is dead, False otherwise.
         """
         boss_hps = await self.battle_common.get_enemy_hp()
-        if boss_hps != self.boss_hps:
-            self.boss_hps = boss_hps
-            self.last_hp_change_time = time.time()
-
         if boss_hps:
             all_dead = all(hp == 0 for hp in boss_hps)
             if all_dead:
@@ -128,8 +124,7 @@ class BattleTasks:
         if await self.battle_common.in_battle_url():
             last_event_time = self.events[EventEnums.LATEST_EVENT]
             if await is_timeout(last_event_time, timeout):
-                if await is_timeout(self.last_hp_change_time, timeout):
-                    _log.info(
-                        f"Battle hanged! Both last event and HP didn't change for {timeout}s, refreshing..."
-                    )
-                    await self.utils.refresh()
+                _log.info(
+                    f"Battle hanged! Both last event and HP didn't change for {timeout}s, refreshing..."
+                )
+                await self.utils.refresh()
