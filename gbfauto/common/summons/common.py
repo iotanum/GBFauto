@@ -35,6 +35,7 @@ class SummonsCommon:
         match = re.search(possible_uri, current_url)
         if match:
             return True
+        return False
 
     async def get_summon_list(self):
         """
@@ -196,8 +197,15 @@ class SummonsCommon:
                 _log.debug(
                     "Found an event for summon_screen, continuing with the process."
                 )
-                if await self.is_in_summon_selection_url():
-                    if await self.can_select_summon() or shitbox:
-                        return True
+                break
+
+            await asyncio.sleep(0.1)
+
+        while True:
+            if await self.is_in_summon_selection_url():
+                _log.debug("In summon selection screen.")
+                if await self.can_select_summon() or shitbox:
+                    _log.debug("Can select summon.")
+                    return True
 
             await asyncio.sleep(0.1)
