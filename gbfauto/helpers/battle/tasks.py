@@ -1,5 +1,6 @@
 import logging
 import os
+import asyncio
 import time
 from dotenv import load_dotenv
 
@@ -39,19 +40,18 @@ class BattleTasks:
         self.refresh_after_event.start()
         self.is_battle_hanged.start()
 
-    async def need_refresh(self, na=False):
+    async def event_refresh(self, na=False):
         """
         Checks if the bot needs to refresh.
 
         Returns:
             bool: True if the bot needs to refresh, False otherwise.
         """
-        if await self.battle_common.in_battle_url():
-            if r_event := await self.events_common.is_refresh_event_recent(na=na):
-                if not r_event == self.refreshed_on_event:
-                    _log.debug(f"Refresh event found! {r_event}")
-                    self.refreshed_on_event = r_event
-                    await self.utils.refresh()
+        if r_event := await self.events_common.is_refresh_event_recent(na=na):
+            if not r_event == self.refreshed_on_event:
+                _log.debug(f"Refresh event found! {r_event}")
+                self.refreshed_on_event = r_event
+                await self.utils.refresh()
 
     async def is_boss_dead(self):
         """
@@ -90,14 +90,14 @@ class BattleTasks:
         """
         Background task to enable full auto in battle.
         """
-        load_dotenv(".env", override=True)
-        enabled = os.getenv("FA_REFRESH", False)
-        if not enabled:
-            # Always refresh after normal attacks
-            await self.need_refresh(na=True)
-            return
+        while True:
+            load_dotenv(".env", override=True)
+            enabled = os.getenv("FA_REFRESH", False)
+            if await self.battle_common.in_battle_url():
+                # always refresh on summons and normal attacks
+                await self.event_refresh(na=True if not enabled else False)
 
-        await self.need_refresh()
+            await asyncio.sleep(0.05)
 
     @background_task(interval=0.1)
     async def enable_full_auto_in_loading_screen(self):
