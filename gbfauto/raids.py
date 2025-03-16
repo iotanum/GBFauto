@@ -144,7 +144,7 @@ class Raids:
                 self.navigated_to_raids = False
                 return
 
-            await asyncio.sleep(0.05)
+            await asyncio.sleep(0)
 
         while True:
             if await self.events_common.is_event_recent(
@@ -153,7 +153,7 @@ class Raids:
                 self.navigated_to_raids = False
                 _log.info("Returning to raid filters screen...")
                 return
-            await asyncio.sleep(0.05)
+            await asyncio.sleep(0)
 
     async def refresh_raid_filter(self):
         refresh_locator = self.bot.page.locator("[class='btn-search-refresh']")
