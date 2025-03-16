@@ -97,7 +97,7 @@ class BattleTasks:
                 # always refresh on summons and normal attacks
                 await self.event_refresh(na=True if not enabled else False)
 
-            await asyncio.sleep(0.05)
+            await asyncio.sleep(0)
 
     @background_task(interval=0.1)
     async def enable_full_auto_in_loading_screen(self):

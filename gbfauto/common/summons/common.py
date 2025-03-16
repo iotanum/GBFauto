@@ -109,7 +109,7 @@ class SummonsCommon:
                         self.p_status["current_ep"] = int(consumables_text.strip())
                         _log.debug(f"Updating EP from summon screen: {self.p_status}")
                         return
-            await asyncio.sleep(0.1)
+            await asyncio.sleep(0)
 
     async def is_summon_clicked(self):
         """
@@ -136,7 +136,7 @@ class SummonsCommon:
                 if visible:
                     return True
 
-            await asyncio.sleep(0.5)
+            await asyncio.sleep(0)
 
     async def click_best_summon(self, best_summon):
         """
@@ -152,7 +152,7 @@ class SummonsCommon:
             if self.p_status["need_aap"]:
                 return True
 
-        uri_regex = re.compile(".*deck_data_create|create_quest.*")
+        uri_regex = re.compile(".*(deck_data_create|create_quest).*")
         try:
             async with self.bot.page.expect_response(uri_regex) as resp:
                 body = await get_response_body(await resp.value)
@@ -185,7 +185,7 @@ class SummonsCommon:
     async def confirm_summon(self, shitbox):
         await self.update_consumables_status()
         confirm_ele = self.bot.page.locator('[class^="btn-usual-ok"]')
-        await confirm_ele.click()
+        await confirm_ele.click(no_wait_after=True)
 
         return await self.check_for_popups(shitbox)
 
@@ -199,7 +199,7 @@ class SummonsCommon:
                 )
                 break
 
-            await asyncio.sleep(0.1)
+            await asyncio.sleep(0)
 
         while True:
             if await self.is_in_summon_selection_url():
@@ -208,4 +208,4 @@ class SummonsCommon:
                     _log.debug("Can select summon.")
                     return True
 
-            await asyncio.sleep(0.1)
+            await asyncio.sleep(0)
