@@ -1,5 +1,6 @@
 import logging
 import re
+import asyncio
 
 import playwright
 
@@ -135,9 +136,15 @@ class ContentResponse:
         if result_resp_regex.match(resp.url):
             self.battle[BattleEnums.BOSS_KILLED] = True
             self.battle[BattleEnums.BOSS_HPS] = {}
-            await self._update_blue_box_count(r_body, resp)
-            await self._update_event_time()
-            await self._update_event_time(event=EventEnums.RESULT_SCREEN_EVENT)
+
+            # should wait until everythign is done?
+            async with asyncio.TaskGroup() as tg:
+                if "empty" not in resp.url:
+                    tg.create_task(self._update_blue_box_count(r_body, resp))
+                tg.create_task(self._update_event_time())
+                tg.create_task(
+                    self._update_event_time(event=EventEnums.RESULT_SCREEN_EVENT)
+                )
 
     async def _update_summon_resp_status(self, r_body, resp):
         """

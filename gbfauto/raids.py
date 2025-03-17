@@ -2,7 +2,7 @@ import logging
 import asyncio
 import re
 import os
-
+from playwright.async_api import TimeoutError as PlaywrightTimeoutError
 from dotenv import load_dotenv
 
 from gbfauto.helpers.summons.handle import SummonHandle
@@ -156,9 +156,13 @@ class Raids:
             await asyncio.sleep(0)
 
     async def refresh_raid_filter(self):
-        refresh_locator = self.bot.page.locator("[class='btn-search-refresh']")
-        await refresh_locator.click()
-        await refresh_locator.wait_for()
+        try:
+            refresh_locator = self.bot.page.locator("[class='btn-search-refresh']")
+            await refresh_locator.click()
+            await refresh_locator.wait_for()
+        except PlaywrightTimeoutError:
+            _log.error("Couldn't refresh the raid filter.")
+            await self.utils.refresh(element="#prt-search-list > div > div")
 
     async def do_raids(self):
         self.raid_uri = await self.bot.utils.get_current_url()
