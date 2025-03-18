@@ -40,12 +40,12 @@ class ContentResponse:
         exclude_keys = ["data"]
         return {k: r_body[k] for k in set(list(r_body.keys())) - set(exclude_keys)}
 
-    async def _update_current_ep(self, p_status, resp):
+    async def _update_current_ep(self, r_body, resp):
         """
         Updates the current Event Points (EP) for the player.
 
         Args:
-            p_status (dict): The player's status.
+            r_body (dict): Response body.
             resp: The response object.
         """
         nested_keys = [
@@ -54,9 +54,7 @@ class ContentResponse:
             ["option", "user_status", "now_battle_point"],
         ]
 
-        current_ep = await multiple_keys_exists(
-            p_status, nested_keys, resp_url=resp.url
-        )
+        current_ep = await multiple_keys_exists(r_body, nested_keys, resp_url=resp.url)
 
         if current_ep is not None:
             _log.debug(f"Updating 'p_status' 'current_ep' with '{current_ep}'")
@@ -146,6 +144,37 @@ class ContentResponse:
                     self._update_event_time(event=EventEnums.RESULT_SCREEN_EVENT)
                 )
 
+    async def _is_auto_select_enabled(self, r_body, resp):
+        """
+        Checks if auto select is enabled.
+
+        Args:
+            r_body (dict): The response body.
+            resp: The response object.
+
+        Returns:
+            bool: True if auto select is enabled, False otherwise.
+        """
+        nested_key = [["option", "auto_select"]]
+        auto_select = await multiple_keys_exists(r_body, nested_key, resp_url=resp.url)
+        if isinstance(auto_select, dict):
+            return True
+
+        return False
+
+    async def _update_summon_auto_select(self, r_body, resp):
+        """
+        Updates the auto select status for summons.
+
+        Args:
+            r_body (dict): The response body.
+            resp: The response object.
+        """
+        _log.debug(f"Trying to update 'summon_auto_select' from '{resp.url}'")
+
+        if auto_select := await self._is_auto_select_enabled(r_body, resp):
+            self.battle[BattleEnums.AUTO_SELECT] = auto_select
+
     async def _update_summon_resp_status(self, r_body, resp):
         """
         Updates summon response status based on the response.
@@ -158,6 +187,7 @@ class ContentResponse:
 
         result_resp_regex = re.compile(".*quest/content/supporter.*")
         if result_resp_regex.match(resp.url):
+            await self._update_summon_auto_select(r_body, resp)
             await self._update_event_time(event=EventEnums.SUMMON_SCREEN_EVENT)
 
     async def _check_for_popup(self, r_body):

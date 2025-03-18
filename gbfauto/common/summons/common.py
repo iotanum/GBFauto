@@ -2,7 +2,7 @@ import logging
 import re
 import asyncio
 
-from gbfauto.common.enums import SummonEnums, EventEnums
+from gbfauto.common.enums import SummonEnums, EventEnums, BattleEnums
 from gbfauto.common.utils import get_response_body
 
 _log = logging.getLogger(__name__)
@@ -21,6 +21,7 @@ class SummonsCommon:
         self.summons = self.bot.summons
         self.p_status = self.bot.p_status
         self.events_common = self.bot.events_common
+        self.battle = self.bot.battle
 
     async def is_in_summon_selection_url(self) -> bool:
         """
@@ -206,6 +207,9 @@ class SummonsCommon:
                 _log.debug("In summon selection screen.")
                 if await self.can_select_summon() or shitbox:
                     _log.debug("Can select summon.")
+                    return True
+                if self.battle[BattleEnums.AUTO_SELECT]:
+                    _log.debug("Auto select enabled.")
                     return True
 
             await asyncio.sleep(0)

@@ -19,6 +19,7 @@ class BattleEnums:
     FULL_AUTO = "full_auto"
     FINAL_BATTLE = "final_battle"
     BATTLE_POPUP = "battle_popup"
+    AUTO_SELECT = "auto_select"
 
 
 class EventEnums:
