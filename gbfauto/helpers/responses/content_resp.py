@@ -134,6 +134,7 @@ class ContentResponse:
         if result_resp_regex.match(resp.url):
             self.battle[BattleEnums.BOSS_KILLED] = True
             self.battle[BattleEnums.BOSS_HPS] = {}
+            self.battle[BattleEnums.AUTO_SELECT] = False
 
             # should wait until everythign is done?
             async with asyncio.TaskGroup() as tg:
@@ -170,10 +171,11 @@ class ContentResponse:
             r_body (dict): The response body.
             resp: The response object.
         """
-        _log.debug(f"Trying to update 'summon_auto_select' from '{resp.url}'")
+        _log.debug(f"Trying to update '{BattleEnums.AUTO_SELECT}' from '{resp.url}'")
 
-        if auto_select := await self._is_auto_select_enabled(r_body, resp):
-            self.battle[BattleEnums.AUTO_SELECT] = auto_select
+        self.battle[BattleEnums.AUTO_SELECT] = await self._is_auto_select_enabled(
+            r_body, resp
+        )
 
     async def _update_summon_resp_status(self, r_body, resp):
         """

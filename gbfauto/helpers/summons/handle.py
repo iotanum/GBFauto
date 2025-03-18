@@ -16,7 +16,9 @@ class SummonHandle:
     async def pick_summon(self, shitbox=False):
         # Wait until the bot is in the summon selection screen
         await self.summons_common.is_in_summon_selection(shitbox)
-        full_summon_process = not (self.battle[BattleEnums.AUTO_SELECT] or shitbox)
+        full_summon_process = not (
+            self.battle.get(BattleEnums.AUTO_SELECT, False) or shitbox
+        )
 
         # If shitbox or auto select is disabled - go through the whole process
         if full_summon_process:
