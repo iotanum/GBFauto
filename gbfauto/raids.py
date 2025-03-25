@@ -155,12 +155,24 @@ class Raids:
                 return
             await asyncio.sleep(0)
 
+    async def check_filter_response_data(self):
+        uri_regex = re.compile(".*search/assist_list.*")
+        async with self.bot.page.expect_response(uri_regex) as resp:
+            resp = await resp.value
+            body = await get_response_body(resp)
+
+            assist_data = body.get("assist_raids_data")
+            if assist_data:
+                return True
+            return False
+
     async def refresh_raid_filter(self):
         try:
             refresh_locator = self.bot.page.locator("[class='btn-search-refresh']")
             await refresh_locator.click()
-            await refresh_locator.wait_for()
-        except PlaywrightTimeoutError:
+            if not await self.check_filter_response_data():
+                await refresh_locator.wait_for()
+        except (PlaywrightTimeoutError, Exception):
             _log.error("Couldn't refresh the raid filter.")
             await self.utils.refresh(element="#prt-search-list > div > div")
 
