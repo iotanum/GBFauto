@@ -1,7 +1,8 @@
 import logging
 import time
+import os
 
-
+from dotenv import load_dotenv
 from gbfauto.common.enums import EventEnums, BattleEnums
 
 _log = logging.getLogger(__name__)
@@ -56,35 +57,33 @@ class EventsCommon:
         except KeyError:
             return False
 
-    async def is_refresh_event_recent(self, na=False, timeout=3) -> bool | dict:
+    async def is_refresh_event_recent(
+        self, always_refresh=False, timeout=3
+    ) -> bool | dict:
         """
         Checks if the refresh event is recent based on a time threshold.
 
         Returns:
             bool: True if the refresh event is recent, False otherwise.
         """
+        load_dotenv(".env", override=True)
+        summ_refresh_enabled = os.getenv("REFRESH_ON_SUMMON_CALL", True)
+
         refresh_events = [
+            BattleEnums.BATTLE_POPUP,
             EventEnums.NORMAL_ATTACK_EVENT,
-            EventEnums.ABILITY_EVENT,
             EventEnums.SUMMON_EVENT,
         ]
-        if na:
-            refresh_events = [
-                EventEnums.NORMAL_ATTACK_EVENT,
-                EventEnums.SUMMON_EVENT,
-            ]
+
+        # FA_REFRESH is enabled
+        if always_refresh:
+            refresh_events.append(EventEnums.ABILITY_EVENT)
+
+        # remove if explicitly disabled
+        if not summ_refresh_enabled:
+            refresh_events.remove(EventEnums.SUMMON_EVENT)
 
         for event in refresh_events:
-            if event_time := await self.is_event_recent(event, timeout=timeout):
-                return {event: event_time}
-
-        # Always check for "moved too fast" popup in battle
-        # and battle end event
-        important_events = [
-            BattleEnums.BATTLE_POPUP,
-            # EventEnums.BATTLE_END_EVENT,
-        ]
-        for event in important_events:
             if event_time := await self.is_event_recent(event, timeout=timeout):
                 return {event: event_time}
 

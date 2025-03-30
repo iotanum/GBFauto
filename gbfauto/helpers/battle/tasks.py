@@ -40,14 +40,16 @@ class BattleTasks:
         self.refresh_after_event.start()
         self.is_battle_hanged.start()
 
-    async def event_refresh(self, na=False):
+    async def event_refresh(self, always_refresh=False):
         """
         Checks if the bot needs to refresh.
 
         Returns:
             bool: True if the bot needs to refresh, False otherwise.
         """
-        if r_event := await self.events_common.is_refresh_event_recent(na=na):
+        if r_event := await self.events_common.is_refresh_event_recent(
+            always_refresh=always_refresh
+        ):
             if not r_event == self.refreshed_on_event:
                 _log.debug(f"Refresh event found! {r_event}")
                 self.refreshed_on_event = r_event
@@ -92,10 +94,10 @@ class BattleTasks:
         """
         while True:
             load_dotenv(".env", override=True)
-            enabled = os.getenv("FA_REFRESH", False)
+            fa_refresh_enabled = os.getenv("FA_REFRESH", False)
             if await self.battle_common.in_battle_url():
                 # always refresh on summons and normal attacks
-                await self.event_refresh(na=True if not enabled else False)
+                await self.event_refresh(always_refresh=fa_refresh_enabled)
 
             await asyncio.sleep(0)
 

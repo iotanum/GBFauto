@@ -41,10 +41,10 @@ class Utils:
             except Exception as e:
                 _log.warning(f"Attempt {attempt + 1} failed: {e}")
                 if attempt < retries - 1:
+                    await self.refresh(element=ele if ele else "body")
                     await asyncio.sleep(delay * (2**attempt))  # Exponential backoff
                 else:
                     _log.error(f"Failed to go to {url} after {retries} attempts")
-                    await self.refresh(element=ele if ele else "body")
                     raise
 
     async def go_to_locked_quest(self):
