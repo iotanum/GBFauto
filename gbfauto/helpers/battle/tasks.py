@@ -109,6 +109,9 @@ class BattleTasks:
         if self.battle.get(BattleEnums.FULL_AUTO, False):
             return
 
+        if not await self.battle_common.in_battle_url():
+            return
+
         await self.battle_common.enable_full_auto()
 
     @background_task(interval=0.1)
