@@ -33,3 +33,4 @@ class EventEnums:
     SUMMON_CONFIRMED_EVENT = "summon_confirmed_event"
     BATTLE_END_EVENT = "battle_end_event"
     RESULT_SCREEN_EVENT = "result_screen_event"
+    ABILITY_REFRESH_EVENT = "ability_refresh_event"

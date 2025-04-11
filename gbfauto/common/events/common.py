@@ -73,6 +73,7 @@ class EventsCommon:
             BattleEnums.BATTLE_POPUP,
             EventEnums.NORMAL_ATTACK_EVENT,
             EventEnums.SUMMON_EVENT,
+            EventEnums.ABILITY_REFRESH_EVENT,
         ]
 
         # FA_REFRESH is enabled

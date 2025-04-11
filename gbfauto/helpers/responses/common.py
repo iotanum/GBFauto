@@ -25,61 +25,25 @@ class Common:
         self.events_common = self.bot.events_common
 
     # Various checks  -------------------------------------------------
-    async def is_gauge_change_event(self, event):
+    async def is_correct_event(self, event, event_type=None):
         """
-        Checks if the event is a boss gauge change event.
-
-        Args:
-            event: The event to check.
-
-        Returns:
-            bool: True if it's a boss gauge change event, False otherwise.
+        Checks if the event_type from event is correct.
         """
-        return isinstance(event, dict) and event.get("cmd") == "boss_gauge"
+        return isinstance(event, dict) and event.get("cmd") in event_type
 
-    async def is_win_event(self, event):
+    async def gather_event(self, scenario, event_type, return_all=False):
         """
-        Checks if the event indicates a win.
-
-        Args:
-            event: The event to check.
-
-        Returns:
-            bool: True if it's a win event, False otherwise.
+        Gathers the correct event from the given scenario.
         """
-        return isinstance(event, dict) and event.get("cmd") in {"win", "finished"}
-
-    async def gather_win_event(self, scenario):
-        """
-        Gathers the win event from the given scenario.
-
-        Args:
-            scenario (list): List of events in the scenario.
-
-        Returns:
-            dict or None: The win event if found, None otherwise.
-        """
+        events = []
         for event in scenario:
-            if await self.is_win_event(event):
-                _log.debug(f"Win event found: '{event.get('cmd')}'")
-                return event
+            if await self.is_correct_event(event, event_type):
+                _log.debug(f"Event '{event_type}' found: '{event.get('cmd')}'")
+                events.append(event)
+                if not return_all:
+                    return event
 
-    async def gather_gauge_change_events(self, scenario):
-        """
-        Gathers boss gauge change events from the given scenario.
-
-        Args:
-            scenario (list): List of events in the scenario.
-
-        Returns:
-            list: List of boss gauge change events.
-        """
-        boss_gauge_events = [
-            event for event in scenario if await self.is_gauge_change_event(event)
-        ]
-        boss_positions = [event.get("pos") + 1 for event in boss_gauge_events]
-        _log.debug(f"Boss gauge change events found for bosses: {boss_positions}")
-        return boss_gauge_events
+        return events
 
     @staticmethod
     async def _get_boss_id(hp_event):
@@ -130,10 +94,12 @@ class Common:
         scenarios = await keys_exists(r_body, "scenario", resp_url=resp.url)
 
         if scenarios:
-            boss_gauge_events = await self.gather_gauge_change_events(scenarios)
+            boss_gauge_events = await self.gather_event(
+                scenarios, {"boss_gauge"}, return_all=True
+            )
             await self.update_boss_hp(boss_gauge_events)
 
-            win_event = await self.gather_win_event(scenarios)
+            win_event = await self.gather_event(scenarios, {"win", "finished"})
             if win_event:
                 self.battle[BattleEnums.BOSS_KILLED] = True
                 self.battle[BattleEnums.BOSS_HPS] = {}

@@ -1,5 +1,7 @@
 import typing
 import logging
+from typing import Optional, List
+
 from playwright.async_api import Error
 
 from gbfauto.common.enums import BattleEnums
@@ -118,12 +120,9 @@ class BattleCommon:
             _log.debug("Enemy HP element not found, probably refreshed the page.")
             return False
 
-    async def get_enemy_hp(self) -> typing.List[int]:
+    async def get_enemy_hp(self) -> Optional[List[int]]:
         """
         Gets the enemy HP information.
-
-        Returns:
-            list: List of enemy HPs.
         """
         if await self.can_see_enemy_hp():
             hp_eles = await self.bot.page.query_selector_all(
