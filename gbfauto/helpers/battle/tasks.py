@@ -93,6 +93,12 @@ class BattleTasks:
         Background task to enable full auto in battle.
         """
         while True:
+            # Do not refresh if it's not the final battle
+            total_battles = self.battle.get(BattleEnums.TOTAL_BATTLES, 0)
+            current_battle = self.battle.get(BattleEnums.CURRENT_BATTLE, 0)
+            if total_battles != current_battle:
+                return
+
             load_dotenv(".env", override=True)
             fa_refresh_enabled = os.getenv("FA_REFRESH", False)
             if await self.battle_common.in_battle_url():
