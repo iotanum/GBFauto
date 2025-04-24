@@ -2,6 +2,7 @@ import logging
 import asyncio
 import re
 import os
+
 from playwright.async_api import TimeoutError as PlaywrightTimeoutError
 from dotenv import load_dotenv
 
@@ -10,7 +11,6 @@ from gbfauto.common.enums import BattleEnums, EventEnums
 from gbfauto.common.utils import get_response_body
 from gbfauto.helpers.actions.ep import Ep
 from gbfauto.helpers.skills.parse_from_config import get_config_queues
-
 
 _log = logging.getLogger(__name__)
 
@@ -23,197 +23,182 @@ class Raids:
         self.p_status = self.bot.p_status
         self.ep_handler = Ep(self.bot)
         self.events_common = self.bot.events_common
-
-        # For Signal Handling
-        # self.keyboard_interrupted = self.bot.keyboard_interrupted
-
-        # Common
-        self.raid_filter_assigned = False
         self.popup = self.bot.popup
         self.battle = self.bot.battle
+
+        self.raid_filter_assigned = False
         self.raid_uri = None
         self.navigated_to_raids = True
+        self.raid_type = None
+        self.filter_slot = None
+        self.raid_list_ele_selector = None
 
-    async def _get_raid_filter(self):
-        try:
-            raid_slot_ele = await self.utils.bs(
-                find=("div", {"class": "prt-search-switch"})
-            )
-            active_raid_slot_ele = await self.utils.bs(
-                parser=raid_slot_ele, find=("div", {"class": "active"})
-            )
-            return (
-                active_raid_slot_ele.get("data-slot") if active_raid_slot_ele else None
-            )
-        except (TypeError, AttributeError, RuntimeError) as e:
-            _log.error("An error occurred while getting raid filter: %s", str(e))
-            return None
+        self.raid_filter_uri_regex = re.compile(
+            r"(.*search/assist_list.*)|(.*quest/assist_list.*)"
+        )
 
-    async def _confirm_raid_slot(self, raid_slot):
+    async def _get_filter_response(self, assign_slot=False):
+        async with self.bot.page.expect_response(
+            self.raid_filter_uri_regex
+        ) as resp_info:
+            resp = await resp_info.value
+            body = await get_response_body(resp)
+
+            if assign_slot:
+                self.raid_type = "raid" if "search" in resp.url else "event"
+                self.raid_list_ele_selector = (
+                    "#prt-search-list > div > div"
+                    if self.raid_type == "raid"
+                    else "[class='prt-assist-frame']"
+                )
+                self.filter_slot = resp.url.split("/")[-1][0]
+
+            return body.get("assist_raids_data")
+
+    async def _prompt_and_assign_filter_slot(self):
         while True:
-            confirm = input(f"\nConfirm raid slot '{raid_slot}'? (y/n): ").lower()
+            await self._get_filter_response(assign_slot=True)
+            confirm = input(
+                f"\nConfirm '{self.raid_type}' slot '{self.filter_slot}'? (y/n): "
+            ).lower()
             if confirm in ("y", "n"):
-                return confirm == "y"
-            else:
-                _log.error("\nInvalid input. Please enter 'y' for yes or 'n' for no.")
-
-    async def _assign_raid_slot(self):
-        while True:
-            raid_slot = await self._get_raid_filter()
-            if raid_slot:
-                _log.debug(f"Found raid slot '{raid_slot}'.")
-                if await self._confirm_raid_slot(raid_slot):
-                    self.raid_filter_assigned = True
-                    return
-            await asyncio.sleep(1)
+                self.raid_filter_assigned = confirm == "y"
+                return self.raid_filter_assigned
+            _log.error("Invalid input. Please enter 'y' or 'n'.")
 
     async def _get_raids(self):
-        class_regex = re.compile("btn-multi-raid lis-raid search.*")
-        return await self.utils.bs(find_all=("div", {"class": class_regex}))
+        return await self.utils.bs(
+            find_all=("div", {"class": re.compile(r"btn-multi-raid lis-raid.*")})
+        )
 
-    async def _get_raid_hp(self, raid):
+    async def _extract_hp_from_raid(self, raid):
         hp_bar = await self.utils.bs(
             parser=raid, find=("div", {"class": "prt-raid-gauge-inner"})
         )
         return int(re.search(r"\d+", hp_bar["style"]).group())
 
-    async def _get_most_suitable_raid(self):
-        raids = await self._get_raids()
+    async def _filter_best_raid(self, raids):
+        load_dotenv(".env", override=True)
+        upper_hp = int(os.getenv("RAIDS_UPPER_HP_LIMIT", 100))
+        lower_hp = int(os.getenv("RAIDS_LOWER_HP_LIMIT", 0))
 
+        best_raid = None
+        best_hp = float("-inf")
+
+        for raid in raids:
+            hp = await self._extract_hp_from_raid(raid)
+            if lower_hp <= hp <= upper_hp and hp >= best_hp:
+                best_hp = hp
+                best_raid = raid
+
+        return best_raid
+
+    async def _select_best_raid(self):
+        raids = await self._get_raids()
         if not raids:
             _log.info("No raids found.")
             return None
 
-        best_raid = None
-        best_hp = float("-inf")
-        load_dotenv(".env", override=True)
-        upper_hp_limit = int(os.getenv("RAIDS_UPPER_HP_LIMIT", 100))
-        lower_hp_limit = int(os.getenv("RAIDS_LOWER_HP_LIMIT", 0))
-        for raid in raids:
-            raid_hp = await self._get_raid_hp(raid)
-
-            # take the highest hp raid that is within the hp limits
-            if raid_hp >= best_hp:
-                if upper_hp_limit >= raid_hp >= lower_hp_limit:
-                    _log.debug(
-                        f"Found a raid within hp limits. (^{upper_hp_limit}, v{lower_hp_limit})"
-                    )
-                    best_hp = raid_hp
-                    best_raid = raid
-
+        best_raid = await self._filter_best_raid(raids)
         if not best_raid:
-            _log.info(
-                f"No raids found within hp limits. (^{upper_hp_limit}, v{lower_hp_limit})"
-            )
+            _log.info("No raids found within HP limits.")
             return None
 
-        clickable_ele = await self.utils.bs(
+        return await self.utils.bs(
             parser=best_raid, find=("div", {"class": "prt-button-cover"})
         )
 
-        return clickable_ele
-
-    async def check_for_entry_popups(self, body):
-        if "error" in body.keys():
-            _log.info("Raid already ended, possibly.")
+    async def _handle_entry_popup(self, body):
+        if "error" in body:
+            _log.info("Raid already ended.")
             return True
         if popup := body.get("popup"):
-            _log.info(f"Popup while joining the raid: {popup['body']}")
+            _log.info(f"Popup during join: {popup['body']}")
             return True
+        return False
 
-    async def _try_entering_raid(self, raid_ele):
+    async def _enter_raid(self, raid_ele):
         await self.utils.click(raid_ele)
-
-        quest_start_re = re.compile(".*quest/check_.*start.*")
-        async with self.bot.page.expect_response(quest_start_re) as resp:
-            response = await resp.value
-            body = await get_response_body(response)
-            popup = await self.check_for_entry_popups(body)
-            if popup:
-                return
-
-        return True
-
-    async def wait_for_battle_to_end(self):
-        """
-        Waits for the battle to end.
-        """
-        while not self.battle.get(BattleEnums.IN_BATTLE, False):
-            if await self.events_common.is_event_recent(EventEnums.RESULT_SCREEN_EVENT):
-                _log.info("Too slow, fellas. Returning to raid filters screen...")
-                self.navigated_to_raids = False
-                return
-
-            await asyncio.sleep(0)
-
-        while True:
-            if await self.events_common.is_event_recent(
-                EventEnums.RESULT_SCREEN_EVENT, timeout=3
-            ):
-                self.navigated_to_raids = False
-                _log.info("Returning to raid filters screen...")
-                return
-            await asyncio.sleep(0)
-
-    async def check_filter_response_data(self):
-        uri_regex = re.compile(".*search/assist_list.*")
-        async with self.bot.page.expect_response(uri_regex) as resp:
-            resp = await resp.value
-            body = await get_response_body(resp)
-
-            assist_data = body.get("assist_raids_data")
-            if assist_data:
-                return True
+        try:
+            async with self.bot.page.expect_response(
+                re.compile(".*quest/check_.*start.*")
+            ) as resp_info:
+                resp = await resp_info.value
+                body = await get_response_body(resp)
+                if await self._handle_entry_popup(body):
+                    return False
+            return True
+        except PlaywrightTimeoutError:
+            _log.warning("Timed out during raid entry.")
             return False
 
-    async def refresh_raid_filter(self):
+    async def _refresh_filter(self):
+        selector = (
+            "[class='btn-switch-list event active']"
+            if self.raid_type == "event"
+            else "[class='btn-search-refresh']"
+        )
         try:
-            refresh_locator = self.bot.page.locator("[class='btn-search-refresh']")
-            await refresh_locator.click()
-            if not await self.check_filter_response_data():
-                await refresh_locator.wait_for()
-        except (PlaywrightTimeoutError, Exception):
-            _log.error("Couldn't refresh the raid filter.")
-            await self.utils.refresh(element="#prt-search-list > div > div")
+            refresh_btn = self.bot.page.locator(selector)
+            if self.raid_type == "event":
+                await asyncio.sleep(0.5)
+            await refresh_btn.click()
+            if not await self._get_filter_response():
+                await refresh_btn.wait_for()
+        except Exception as e:
+            _log.error(f"Error refreshing filter: {e}")
+            await self.utils.refresh(element=self.raid_list_ele_selector)
+
+    async def _wait_for_battle_to_end(self):
+        while not self.battle.get(BattleEnums.IN_BATTLE, False):
+            if await self.events_common.is_event_recent(EventEnums.RESULT_SCREEN_EVENT):
+                _log.info("Battle already finished. Returning to raids...")
+                self.navigated_to_raids = False
+                return
+            await asyncio.sleep(0)
+
+        while not await self.events_common.is_event_recent(
+            EventEnums.RESULT_SCREEN_EVENT, timeout=3
+        ):
+            await asyncio.sleep(0)
+
+        _log.info("Returning to raids screen...")
+        self.navigated_to_raids = False
 
     async def do_raids(self):
-        self.raid_uri = await self.bot.utils.get_current_url()
-        raid_list_ele_selector = "#prt-search-list > div > div"
+        self.raid_uri = await self.utils.get_current_url()
 
         while True:
-            # update the queue from the config every battle start
             self.bot.queue_from_config = await get_config_queues()
 
             if not self.navigated_to_raids:
-                await self.bot.utils.go_to_url(
-                    self.raid_uri, ele=raid_list_ele_selector
+                await self.utils.go_to_url(
+                    self.raid_uri, ele=self.raid_list_ele_selector
                 )
                 self.navigated_to_raids = True
 
             if not self.raid_filter_assigned:
-                await self._assign_raid_slot()
+                await self._prompt_and_assign_filter_slot()
 
-            used_ep = await self.ep_handler.use_ep()
-            if used_ep:
-                await self.utils.refresh(element=raid_list_ele_selector)
+            if await self.ep_handler.use_ep():
+                await self.utils.refresh(element=self.raid_list_ele_selector)
                 continue
 
-            raid_xpath = await self._get_most_suitable_raid()
-            if not raid_xpath:
-                await self.refresh_raid_filter()
+            raid_target = await self._select_best_raid()
+            if not raid_target:
+                await self._refresh_filter()
                 continue
 
-            success_entry = await self._try_entering_raid(raid_xpath)
-            if not success_entry:
-                await self.utils.refresh(element=raid_list_ele_selector)
+            if not await self._enter_raid(raid_target):
+                await self.utils.refresh(element=self.raid_list_ele_selector)
                 continue
 
-            popup = await self.summon_handle.pick_summon()
-            if popup:
+            if await self.summon_handle.pick_summon():
                 self.navigated_to_raids = False
                 continue
 
-            await self.wait_for_battle_to_end()
+            await self._wait_for_battle_to_end()
+
             self.bot.battle_count += 1
             _log.info(
                 f"Total battles: {self.bot.battle_count}\n"
