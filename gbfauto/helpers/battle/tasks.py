@@ -32,6 +32,7 @@ class BattleTasks:
         self.refreshed_on_event = {}
         self.last_hp_change_time = 0
         self.boss_hps = []
+        self.cutoff_logged = False
 
         # Start background tasks
         self.is_in_battle.start()
@@ -53,6 +54,7 @@ class BattleTasks:
             if not r_event == self.refreshed_on_event:
                 _log.debug(f"Refresh event found! {r_event}")
                 self.refreshed_on_event = r_event
+                self.cutoff_logged = False
                 await self.utils.refresh()
 
     async def is_boss_dead(self):
@@ -118,6 +120,18 @@ class BattleTasks:
         if not await self.battle_common.in_battle_url():
             return
 
+        # Check for full-auto turn cutoff
+        load_dotenv(".env", override=True)
+        turn_cutoff = int(os.getenv("RAIDS_CUTOFF_TURN", 420))
+        current_turn = self.battle.get(BattleEnums.CURRENT_TURN, 0)
+        if current_turn >= turn_cutoff:
+            if not self.cutoff_logged:
+                _log.debug(
+                    f"Current turn '{current_turn}' is greater than or equal to cutoff '{turn_cutoff}', disabling full auto."
+                )
+                self.cutoff_logged = True
+            return
+
         await self.battle_common.enable_full_auto()
 
     @background_task(interval=0.1)
@@ -138,4 +152,5 @@ class BattleTasks:
                 _log.info(
                     f"Battle hanged! Both last event and HP didn't change for {timeout}s, refreshing..."
                 )
+                self.cutoff_logged = False
                 await self.utils.refresh()
